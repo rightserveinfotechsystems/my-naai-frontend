@@ -63,7 +63,7 @@ const Layout = ({ children }) => {
         <div className="mt-auto d-flex flex-column gap-2">
           {/* Profile Section */}
           <div className="d-flex align-items-center gap-3 p-2 rounded sidebar-profile">
-            <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+            <div className="bg-white text-white rounded-circle d-flex align-items-center justify-content-center"
                  style={{ width: '40px', height: '40px' }}>
               <span style={{ fontSize: '1.2rem' }}>👤</span>
             </div>
