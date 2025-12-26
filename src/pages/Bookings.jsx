@@ -262,8 +262,9 @@ const Bookings = () => {
         >
           <div style={{ minHeight: '320px', backgroundColor: 'white' }}>
             <table className="table table-hover mb-0" >
-              <thead className="table-light position-sticky top-0 bg-white border-bottom border-2" style={{ zIndex: '10' }}>
+              <thead className="table-light position-sticky top-0 bg-white border-bottom z-10">
                 <tr>
+                  <th style={{ minWidth: '50px', maxWidth: '60px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom text-center">No.</th>
                   <th style={{ minWidth: '120px', maxWidth: '140px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">User</th>
                   <th style={{ minWidth: '120px', maxWidth: '150px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Salon</th>
                   <th style={{ minWidth: '100px', maxWidth: '130px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Service</th>
@@ -273,8 +274,11 @@ const Bookings = () => {
                 </tr>
               </thead>
               <tbody>
-                {paginated.map((booking) => (
+                {paginated.map((booking, index) => (
                   <tr key={booking.id}>
+                    <td className="fw-medium text-center px-2 px-md-3 py-2 text-muted">
+                      {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
+                    </td>
                     <td className="fw-semibold px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '140px' }}>{booking.userName}</td>
                     <td className="px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '150px' }}>{booking.salonName}</td>
                     <td className="px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '130px' }}>{booking.serviceName}</td>
@@ -290,7 +294,7 @@ const Bookings = () => {
                 ))}
                 {paginated.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="text-center text-muted py-5 bg-white">
+                    <td colSpan={7} className="text-center text-muted py-5 bg-white">
                       No bookings found
                     </td>
                   </tr>

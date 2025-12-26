@@ -1,22 +1,25 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
+// Mock user data - in real app this would come from context/state management
 const mockUser = {
   name: "Admin User",
   email: "admin@salonharmony.com",
   role: "Administrator",
-  avatar: "👤", 
+  avatar: "👤", // Could be an image URL in real app
   joinDate: "January 2024",
   lastLogin: "Today at 10:30 AM"
 };
 
+// Test comment to verify file is editable
 
 const ProfileDropdown = ({ isOpen, onClose, position = 'mobile' }) => {
   const navigate = useNavigate();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [activeSection, setActiveSection] = useState(null); 
+  const [activeSection, setActiveSection] = useState(null); // 'edit-profile' or 'settings'
 
+  // Check if mobile screen
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -33,9 +36,11 @@ const ProfileDropdown = ({ isOpen, onClose, position = 'mobile' }) => {
   };
 
   const handleLogoutConfirm = () => {
+    // Handle logout logic
     console.log("User logged out - navigating to login");
     setShowLogoutConfirm(false);
     onClose();
+    // Navigate to login page
     setTimeout(() => {
       navigate("/login");
     }, 100);
@@ -70,15 +75,16 @@ const ProfileDropdown = ({ isOpen, onClose, position = 'mobile' }) => {
                 top: '70px',
                 right: '10px',
                 width: '280px',
-                maxHeight: 'calc(100vh - 100px)',
+                height: 'calc(70vh - 70px)', 
                 minHeight: activeSection ? '500px' : 'auto'
               }
             : {
                 position: 'fixed',
-                top: '80px', // Position below header
-                left: '180px', // Position to the right of sidebar (sidebar width + padding)
-                width: '320px', // Fixed width for desktop overlay
-                maxHeight: 'calc(100vh - 120px)',
+                top: '80px', 
+                left: '50%', 
+                transform: 'translateX(-50%)', 
+                width: '320px', 
+                height: 'calc(60vh - 80px)', 
                 minHeight: activeSection ? '500px' : 'auto',
                 zIndex: 9999
               }
@@ -92,7 +98,7 @@ const ProfileDropdown = ({ isOpen, onClose, position = 'mobile' }) => {
         <div className="p-3 border-bottom bg-light rounded-top-3">
           <div className="d-flex align-items-center gap-3">
             <div
-              className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+              className="bg-white text-white rounded-circle d-flex align-items-center justify-content-center"
               style={{ width: '50px', height: '50px', fontSize: '1.5rem' }}
             >
               {mockUser.avatar}
@@ -107,7 +113,7 @@ const ProfileDropdown = ({ isOpen, onClose, position = 'mobile' }) => {
         {/* Inline Content Sections */}
         {activeSection === 'edit-profile' && (
           <div className="p-3 border-bottom">
-            <div className="d-flex align-items-center justify-content-between mb-3">
+            {/* <div className="d-flex align-items-center justify-content-between mb-3">
               <h6 className="mb-0 fw-bold">Edit Profile</h6>
               <button
                 className="btn btn-sm btn-outline-secondary"
@@ -116,7 +122,7 @@ const ProfileDropdown = ({ isOpen, onClose, position = 'mobile' }) => {
                 <i className="bi bi-arrow-left me-1"></i>
                 Back
               </button>
-            </div>
+            </div> */}
             <div className="row g-3">
               <div className="col-12">
                 <label className="form-label small fw-medium">Name</label>
@@ -232,7 +238,7 @@ const ProfileDropdown = ({ isOpen, onClose, position = 'mobile' }) => {
 
             {/* Action Buttons */}
             <div className="d-grid gap-2">
-              <button
+              {/* <button
                 className="btn btn-outline-primary btn-sm"
                 onClick={() => {
                   console.log("Edit Profile clicked");
@@ -241,9 +247,9 @@ const ProfileDropdown = ({ isOpen, onClose, position = 'mobile' }) => {
               >
                 <i className="bi bi-pencil me-2"></i>
                 Edit Profile
-              </button>
+              </button> */}
 
-              <button
+              {/* <button
                 className="btn btn-outline-secondary btn-sm"
                 onClick={() => {
                   console.log("Settings clicked");
@@ -252,7 +258,7 @@ const ProfileDropdown = ({ isOpen, onClose, position = 'mobile' }) => {
               >
                 <i className="bi bi-gear me-2"></i>
                 Settings
-              </button>
+              </button> */}
 
               <hr className="my-2" />
 
@@ -275,7 +281,7 @@ const ProfileDropdown = ({ isOpen, onClose, position = 'mobile' }) => {
       {showLogoutConfirm && (
         <div
           className="modal fade show d-block"
-          style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1080 }}
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 9999 }}
           tabIndex="-1"
         >
           <div className="modal-dialog modal-dialog-centered">
