@@ -334,6 +334,46 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                   </div>
                 </div>
 
+{/* Salon Status */}
+                <div className="col-12 col-md-6">
+                  <label className="form-label fw-semibold mb-2">Status <span className="text-danger">*</span></label>
+                  <div className="d-flex flex-column gap-2">
+                    <div className="form-check">
+                      <input
+                        className="form-check-input"
+                        type="radio"
+                        name="status"
+                        id="active"
+                        value="active"
+                        checked={formData.status === "active"}
+                        onChange={handleInputChange}
+                        required
+                        disabled={isSubmitting}
+                      />
+                      <label className="form-check-label fw-medium" htmlFor="active">
+                        <i className="bi bi-check-circle-fill text-success me-2"></i>Active
+                      </label>
+                    </div>
+                    <div className="form-check">
+                      <input
+                        className="form-check-input"
+                        type="radio"
+                        name="status"
+                        id="inactive"
+                        value="inactive"
+                        checked={formData.status === "inactive"}
+                        onChange={handleInputChange}
+                        required
+                        disabled={isSubmitting}
+                      />
+                      <label className="form-check-label fw-medium" htmlFor="inactive">
+                        <i className="bi bi-x-circle-fill text-danger me-2"></i>Inactive
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+
                 <div className="col-12">
                   <label className="form-label fw-semibold">Services <span className="text-danger">*</span></label>
                   {formData.services.map((service, index) => (
