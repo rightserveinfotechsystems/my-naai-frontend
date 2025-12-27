@@ -1337,7 +1337,7 @@ img {
 
   /* Sidebar for 768px - Compact width */
   .sidebar {
-    width: 140px !important;
+    width: 166px !important;
     background: #0f1c1a !important;
     color: #e5efee !important;
     min-height: 100vh !important;
@@ -1355,6 +1355,7 @@ img {
     border-radius: 0.5rem !important;
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04) !important;
     margin: 0 !important;
+    overflow-x: auto !important;
   }
 
   .table {
@@ -1375,32 +1376,32 @@ img {
 
   /* Specific column widths for 768px - Compact layout */
   .table th:nth-child(1), .table td:nth-child(1) {
-    min-width: 120px !important;
+    min-width: 20px !important;
     max-width: 140px !important;
     width: 120px !important;
   }
   .table th:nth-child(2), .table td:nth-child(2) {
-    min-width: 120px !important;
+    min-width: 50px !important;
     max-width: 150px !important;
     width: 130px !important;
   }
   .table th:nth-child(3), .table td:nth-child(3) {
-    min-width: 100px !important;
+    min-width: 90px !important;
     max-width: 130px !important;
     width: 100px !important;
   }
   .table th:nth-child(4), .table td:nth-child(4) {
-    min-width: 130px !important;
+    min-width: 90px !important;
     max-width: 160px !important;
     width: 130px !important;
   }
   .table th:nth-child(5), .table td:nth-child(5) {
-    min-width: 80px !important;
+    min-width: 60px !important;
     max-width: 110px !important;
     width: 80px !important;
   }
   .table th:nth-child(6), .table td:nth-child(6) {
-    min-width: 100px !important;
+    min-width: 70px !important;
     max-width: 120px !important;
     width: 100px !important;
   }

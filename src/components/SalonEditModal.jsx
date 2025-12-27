@@ -507,12 +507,18 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                       className="d-flex bg2 flex-column align-items-center justify-content-center p-4 border rounded bg-light text-secondary cursor-pointer"
                       style={{ borderStyle: 'dashed !important', borderWidth: '2px', cursor: 'pointer' }}
                     >
-                      <div className="mb-2 p-3 bg3 rounded-circle bg-white shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
-                          <path fillRule="evenodd" d="M4.406 1.342A5.53 5.53 0 0 1 8 0c2.69 0 4.923 2 5.166 4.579C14.758 4.804 16 6.137 16 7.773 16 9.614 14.118 11.002 12.244 11.002h-2.026a.5.5 0 0 1-.5-.5V7.854l1.646 1.647a.5.5 0 0 0 .708-.708l-2.5-2.5a.5.5 0 0 0-.708 0l-2.5 2.5a.5.5 0 0 1-.708-.708L7.5 7.854V10.5a.5.5 0 0 1-.5.5h-1.793c-2.112 0-3.518-1.559-3.518-3.468C1.696 5.996 2.825 4.515 4.406 1.342z" />
-                        </svg>
+                      <div className="mb-2 p-3 mt-2 bg-black text-white rounded-circle shadow-sm d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                        {/* <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" viewBox="0 0 16 16">
+                          <path d="M4.502 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+                          <path d="M14.002 13a2 2 0 0 1-2 2h-10a2 2 0 0 1-2-2V5A2 2 0 0 1 2.002 3h4a2 2 0 0 1 2 2v7a2 2 0 0 0 2 2z"/>
+                          <path d="M2.002 2a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 1 1-1h-3.5a.5.5 0 0 0 0 1h3a.5.5 0 0 0 .5-.5V2a.5.5 0 0 0-.5-.5h-12z"/>
+                          <path d="m2.002 3a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 0-1h-9a.5.5 0 0 0-.5.5zM9.002 6.5a.5.5 0 0 0-.5-.5h-2a.5.5 0 0 0 0 1h2a.5.5 0 0 0 .5-.5zM11.002 6.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0 0 1h1a.5.5 0 0 0 .5-.5z"/>
+                        </svg> */}
+                        <i className="bi bi-cloud-upload-fill fs-4"></i>
                       </div>
-                      <span className="fw-medium text-dark bg1">Click to upload images</span>
+                      <div className="text-center">
+                      
+                      </div>
                     </label>
                   </div>
 
@@ -523,7 +529,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                           <img
                             src={image.preview}
                             className="img-fluid rounded shadow-sm border w-100"
-                            style={{ height: '80px', objectFit: 'cover', display: 'block' }}
+                            style={{ height: '80px', objectFit: 'fill', display: 'block' }}
                             alt={`Preview ${index + 1}`}
                           />
                           <button
