@@ -1,4 +1,5 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { useState } from "react";
 import Layout from "../components/Layout.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import { salons } from "../data/mockData.js";
@@ -6,6 +7,7 @@ import { salons } from "../data/mockData.js";
 const SalonDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [selectedImage, setSelectedImage] = useState(null);
   const salon = salons.find((s) => s.id === id);
 
   if (!salon) return <Layout><div className="text-center py-5"><h4>Salon not found</h4></div></Layout>;
@@ -19,6 +21,14 @@ const SalonDetail = () => {
     "/images/image6.jpeg",
     "/images/image7.jpeg",
   ];
+
+  const openImageViewer = (imageSrc) => {
+    setSelectedImage(imageSrc);
+  };
+
+  const closeImageViewer = () => {
+    setSelectedImage(null);
+  };
 
   const PAGE_MAX_WIDTH = '1400px';
 
@@ -58,7 +68,13 @@ const SalonDetail = () => {
                     <div className="row g-2">
                       {galleryImages.map((img, idx) => (
                         <div key={idx} className={idx % 3 === 0 ? "col-12" : "col-6"}>
-                          <img src={img} className="img-fluid rounded-3 w-100" style={{ height: '180px', objectFit: 'cover' }} alt="salon" />
+                          <img
+                            src={img}
+                            className="img-fluid rounded-3 w-100 cursor-pointer hover-lift"
+                            style={{ height: '180px', objectFit: 'cover' }}
+                            alt="salon"
+                            onClick={() => openImageViewer(img)}
+                          />
                         </div>
                       ))}
                     </div>
@@ -131,6 +147,88 @@ const SalonDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Image Viewer Modal */}
+      {selectedImage && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+          style={{
+            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+            zIndex: 9999,
+            backdropFilter: 'blur(5px)'
+          }}
+          onClick={closeImageViewer}
+        >
+          <div className="position-relative p-3">
+            {/* Close Button */}
+            <button
+              className="btn btn-light rounded-circle position-absolute top-0 end-0 m-3 shadow-lg"
+              style={{ zIndex: 10000, width: '40px', height: '40px' }}
+              onClick={(e) => {
+                e.stopPropagation();
+                closeImageViewer();
+              }}
+            >
+              <i className="bi bi-x-lg"></i>
+            </button>
+
+            {/* Image */}
+            <img
+              src={selectedImage}
+              alt="Salon Gallery"
+              className="img-fluid rounded-3 shadow-lg"
+              style={{
+                maxWidth: '90vw',
+                maxHeight: '90vh',
+                objectFit: 'contain'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            />
+
+            {/* Image Counter */}
+            <div className="position-absolute bottom-0 start-50 translate-middle-x mb-3">
+              <div className="bg-dark bg-opacity-75 text-white px-3 py-2 rounded-pill small">
+                {galleryImages.indexOf(selectedImage) + 1} / {galleryImages.length}
+              </div>
+            </div>
+
+            {/* Navigation Arrows */}
+            {galleryImages.length > 1 && (
+              <>
+                {/* Previous */}
+                {galleryImages.indexOf(selectedImage) > 0 && (
+                  <button
+                    className="btn btn-light rounded-circle position-absolute top-50 start-0 translate-middle-y ms-3 shadow-lg"
+                    style={{ width: '50px', height: '50px' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const currentIndex = galleryImages.indexOf(selectedImage);
+                      setSelectedImage(galleryImages[currentIndex - 1]);
+                    }}
+                  >
+                    <i className="bi bi-chevron-left"></i>
+                  </button>
+                )}
+
+                {/* Next */}
+                {galleryImages.indexOf(selectedImage) < galleryImages.length - 1 && (
+                  <button
+                    className="btn btn-light rounded-circle position-absolute top-50 end-0 translate-middle-y me-3 shadow-lg"
+                    style={{ width: '50px', height: '50px' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const currentIndex = galleryImages.indexOf(selectedImage);
+                      setSelectedImage(galleryImages[currentIndex + 1]);
+                    }}
+                  >
+                    <i className="bi bi-chevron-right"></i>
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </Layout>
   );
 };

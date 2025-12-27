@@ -2243,15 +2243,15 @@ img {
 
 @media (min-width: 769px) and (max-width: 1024px) {
   .salon-detail-wrapper {
-    height: calc(100dvh - 120px) !important;
-    height: calc(100vh - 120px) !important;
+    height: calc(100dvh - 50px) !important;
+    height: calc(100vh - 50px) !important;
   }
 }
 
 @media (min-width: 1025px) and (max-width: 1280px) {
   .salon-detail-wrapper {
-    height: calc(100dvh - 130px) !important;
-    height: calc(100vh - 130px) !important;
+    height: calc(100dvh - 80px) !important;
+    height: calc(100vh - 80px) !important;
   }
 }
 
