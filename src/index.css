@@ -2273,8 +2273,8 @@ img {
 
 @media (min-width: 1441px) and (max-width: 1600px) {
   .salon-detail-wrapper {
-    height: calc(100dvh - 160px) !important;
-    height: calc(100vh - 160px) !important;
+    height: calc(100dvh - 100px) !important;
+    height: calc(100vh - 60px) !important;
         padding: 0 0.25rem !important;
 
   }
