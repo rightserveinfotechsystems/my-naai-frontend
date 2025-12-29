@@ -279,6 +279,37 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                   />
                 </div>
 
+                {/* 9. Latitude (Optional) */}
+                <div className="col-12 col-md-4">
+                  <label className="form-label fw-semibold">Latitude</label>
+                  <input
+                    type="number"
+                    step="any"
+                    className="form-control"
+                    name="latitude"
+                    value={formData.latitude || ""}
+                    onChange={handleInputChange}
+                    disabled={isSubmitting}
+                    placeholder="28.6139"
+                  />
+                </div>
+
+                {/* 10. Longitude (Optional) */}
+                <div className="col-12 col-md-4">
+                  <label className="form-label fw-semibold">Longitude</label>
+                  <input
+                    type="number"
+                    step="any"
+                    className="form-control"
+                    name="longitude"
+                    value={formData.longitude || ""}
+                    onChange={handleInputChange}
+                    disabled={isSubmitting}
+                    placeholder="77.2090"
+                  />
+                </div>
+
+
                 {/* Salon Type */}
                 <div className="col-12 col-md-6">
                   <label className="form-label fw-semibold mb-2">Salon Type : <span className="text-danger">*</span></label>
@@ -334,7 +365,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                   </div>
                 </div>
 
-{/* Salon Status */}
+                {/* Salon Status */}
                 <div className="col-12 col-md-6">
                   <label className="form-label fw-semibold mb-2">Status <span className="text-danger">*</span></label>
                   <div className="d-flex flex-column gap-2">
@@ -557,7 +588,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                         <i className="bi bi-cloud-upload-fill fs-4"></i>
                       </div>
                       <div className="text-center">
-                      
+
                       </div>
                     </label>
                   </div>
