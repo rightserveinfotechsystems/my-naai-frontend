@@ -17,7 +17,7 @@ export const salons = [
   {
     id: "1",
     name: "Glamour Studio",
-    city: "New York",
+    city: "Katol",
     address: "123 Fifth Avenue, Manhattan, NY 10001",
     phone: "+91 2125550101",
     email: "info@glamourstudio.com",
@@ -52,7 +52,7 @@ export const salons = [
   {
     id: "2",
     name: "Serenity Spa & Salon",
-    city: "Los Angeles",
+    city: "Warud",
     address: "456 Sunset Boulevard, LA 90028",
     phone: "+91 3235550202",
     email: "hello@serenityspa.com",
@@ -74,201 +74,6 @@ export const salons = [
     closingTime: "21:00",
     workingDays: ["Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
   },
-  {
-    id: "3",
-    name: "Urban Cuts",
-    city: "Chicago",
-    address: "789 Michigan Avenue, Chicago, IL 60611",
-    phone: "+1 312-555-0303",
-    email: "book@urbancuts.com",
-    status: "active",
-    rating: 4.6,
-    images: [
-      "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=800"
-    ],
-    services: [
-      { id: "s8", name: "Men's Haircut", duration: 30, price: 35 },
-      { id: "s9", name: "Beard Trim", duration: 20, price: 20 },
-      { id: "s10", name: "Hot Towel Shave", duration: 30, price: 30 }
-    ],
-    openingTime: "08:00",
-    closingTime: "19:00",
-    workingDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-  },
-  {
-    id: "4",
-    name: "Beauty Haven",
-    city: "Miami",
-    address: "321 Ocean Drive, Miami Beach, FL 33139",
-    phone: "+1 305-555-0404",
-    email: "contact@beautyhaven.com",
-    status: "inactive",
-    rating: 4.4,
-    images: [
-      "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800",
-      "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800"
-    ],
-    services: [
-      { id: "s11", name: "Makeup Session", duration: 60, price: 100 },
-      { id: "s12", name: "Eyebrow Threading", duration: 15, price: 15 },
-      { id: "s13", name: "Eyelash Extensions", duration: 90, price: 150 }
-    ],
-    openingTime: "09:00",
-    closingTime: "18:00",
-    workingDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-  },
-  {
-    id: "5",
-    name: "Classic Barbershop",
-    city: "New York",
-    address: "555 Broadway, New York, NY 10012",
-    phone: "+1 212-555-0505",
-    email: "info@classicbarber.com",
-    status: "active",
-    rating: 4.7,
-    images: [
-      "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800"
-    ],
-    services: [
-      { id: "s14", name: "Classic Cut", duration: 40, price: 40 },
-      { id: "s15", name: "Fade", duration: 35, price: 35 },
-      { id: "s16", name: "Kids Haircut", duration: 25, price: 25 }
-    ],
-    openingTime: "07:00",
-    closingTime: "20:00",
-    workingDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-  },
-  {
-    id: "6",
-    name: "Zen Wellness Spa",
-    city: "San Francisco",
-    address: "888 Market Street, San Francisco, CA 94102",
-    phone: "+1 415-555-0606",
-    email: "relax@zenwellness.com",
-    status: "active",
-    rating: 4.9,
-    images: [
-      "https://images.unsplash.com/photo-1540555700478-4be289fbec68?w=800"
-    ],
-    services: [
-      { id: "s17", name: "Thai Massage", duration: 90, price: 140 },
-      { id: "s18", name: "Aromatherapy", duration: 60, price: 95 },
-      { id: "s19", name: "Hot Stone Therapy", duration: 75, price: 130 }
-    ],
-    openingTime: "10:00",
-    closingTime: "22:00",
-    workingDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-  },
-
-  {
-    id: "7",
-    name: "Zen Wellness Spa",
-    city: "San Francisco",
-    address: "888 Market Street, San Francisco, CA 94102",
-    phone: "+1 415-555-0606",
-    email: "relax@zenwellness.com",
-    status: "active",
-    rating: 4.9,
-    images: [
-      "https://images.unsplash.com/photo-1540555700478-4be289fbec68?w=800"
-    ],
-    services: [
-      { id: "s17", name: "Thai Massage", duration: 90, price: 140 },
-      { id: "s18", name: "Aromatherapy", duration: 60, price: 95 },
-      { id: "s19", name: "Hot Stone Therapy", duration: 75, price: 130 }
-    ],
-    openingTime: "10:00",
-    closingTime: "22:00",
-    workingDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-  },
-
-  {
-    id: "8",
-    name: "Zen Wellness Spa",
-    city: "San Francisco",
-    address: "888 Market Street, San Francisco, CA 94102",
-    phone: "+1 415-555-0606",
-    email: "relax@zenwellness.com",
-    status: "active",
-    rating: 4.9,
-    images: [
-      "https://images.unsplash.com/photo-1540555700478-4be289fbec68?w=800"
-    ],
-    services: [
-      { id: "s17", name: "Thai Massage", duration: 90, price: 140 },
-      { id: "s18", name: "Aromatherapy", duration: 60, price: 95 },
-      { id: "s19", name: "Hot Stone Therapy", duration: 75, price: 130 }
-    ],
-    openingTime: "10:00",
-    closingTime: "22:00",
-    workingDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-  },
-
-  {
-    id: "9",
-    name: "Zen Wellness Spa",
-    city: "San Francisco",
-    address: "888 Market Street, San Francisco, CA 94102",
-    phone: "+1 415-555-0606",
-    email: "relax@zenwellness.com",
-    status: "active",
-    rating: 4.9,
-    images: [
-      "https://images.unsplash.com/photo-1540555700478-4be289fbec68?w=800"
-    ],
-    services: [
-      { id: "s17", name: "Thai Massage", duration: 90, price: 140 },
-      { id: "s18", name: "Aromatherapy", duration: 60, price: 95 },
-      { id: "s19", name: "Hot Stone Therapy", duration: 75, price: 130 }
-    ],
-    openingTime: "10:00",
-    closingTime: "22:00",
-    workingDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-  },
-
-  {
-    id: "10",
-    name: "Zen Wellness Spa",
-    city: "San Francisco",
-    address: "888 Market Street, San Francisco, CA 94102",
-    phone: "+1 415-555-0606",
-    email: "relax@zenwellness.com",
-    status: "active",
-    rating: 4.9,
-    images: [
-      "https://images.unsplash.com/photo-1540555700478-4be289fbec68?w=800"
-    ],
-    services: [
-      { id: "s17", name: "Thai Massage", duration: 90, price: 140 },
-      { id: "s18", name: "Aromatherapy", duration: 60, price: 95 },
-      { id: "s19", name: "Hot Stone Therapy", duration: 75, price: 130 }
-    ],
-    openingTime: "10:00",
-    closingTime: "22:00",
-    workingDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-  },
-
-  {
-    id: "11",
-    name: "Zen Wellness Spa",
-    city: "San Francisco",
-    address: "888 Market Street, San Francisco, CA 94102",
-    phone: "+1 415-555-0606",
-    email: "relax@zenwellness.com",
-    status: "active",
-    rating: 4.9,
-    images: [
-      "https://images.unsplash.com/photo-1540555700478-4be289fbec68?w=800"
-    ],
-    services: [
-      { id: "s17", name: "Thai Massage", duration: 90, price: 140 },
-      { id: "s18", name: "Aromatherapy", duration: 60, price: 95 },
-      { id: "s19", name: "Hot Stone Therapy", duration: 75, price: 130 }
-    ],
-    openingTime: "10:00",
-    closingTime: "22:00",
-    workingDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-  }
 ];
 
 export const bookings = [

@@ -1,0 +1,491 @@
+import { useMemo, useState, useCallback, useEffect } from "react";
+import Layout from "../components/Layout.jsx";
+import PageHeader from "../components/PageHeader.jsx";
+import Pagination from "../components/Pagination.jsx";
+import SearchInput from "../components/SearchInput.jsx";
+import { bookings as bookingData, salons } from "../data/mockData.js";
+
+const ITEMS_PER_PAGE = 20;
+
+const salonrequest = () => {
+  const [salonFilter, setSalonFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("");
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [selectedBookings, setSelectedBookings] = useState(new Set());
+  const [selectAll, setSelectAll] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Simulate loading on mount and filter changes
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 800); // 800ms loading delay
+    return () => clearTimeout(timer);
+  }, [salonFilter, dateFilter, search, currentPage]);
+
+  const filtered = useMemo(() => {
+    const result = bookingData.filter((booking) => {
+      const matchesSalon = salonFilter === "all" || booking.salonId === salonFilter;
+      const matchesDate = !dateFilter || booking.date === dateFilter;
+      const matchesSearch = !search ||
+        booking.salonName.toLowerCase().includes(search.toLowerCase()) ||
+        booking.salonOwnerName?.toLowerCase().includes(search.toLowerCase());
+      return matchesSalon && matchesDate && matchesSearch;
+    });
+    return result;
+  }, [salonFilter, dateFilter, search]);
+
+  const totalPages = Math.max(Math.ceil(filtered.length / ITEMS_PER_PAGE), 1);
+  const paginated = filtered.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  // Select All functionality
+  const handleSelectAll = useCallback((e) => {
+    const checked = e.target.checked;
+    setSelectAll(checked);
+    if (checked) {
+      const selectedIds = new Set(paginated.map(b => b.id));
+      setSelectedBookings(selectedIds);
+    } else {
+      setSelectedBookings(new Set());
+    }
+  }, [paginated]);
+
+  // Individual checkbox
+  const handleSelectBooking = useCallback((bookingId, checked) => {
+    setSelectedBookings(prev => {
+      const newSet = new Set(prev);
+      if (checked) {
+        newSet.add(bookingId);
+      } else {
+        newSet.delete(bookingId);
+      }
+      setSelectAll(newSet.size === paginated.length && paginated.length > 0);
+      return newSet;
+    });
+  }, [paginated.length]);
+
+  // Bulk Delete
+  const handleBulkDelete = useCallback(() => {
+    if (selectedBookings.size === 0) {
+      alert('Please select at least one salon request to delete.');
+      return;
+    }
+
+    if (window.confirm(`Are you sure you want to delete ${selectedBookings.size} salon request(s)?`)) {
+      setIsLoading(true);
+      // API call for bulk delete
+      console.log('Bulk delete bookings:', Array.from(selectedBookings));
+      setTimeout(() => {
+        setSelectedBookings(new Set());
+        setSelectAll(false);
+        setIsLoading(false);
+      }, 1000);
+    }
+  }, [selectedBookings.size]);
+
+  // Single Delete
+  const handleDelete = useCallback((bookingId) => {
+    if (window.confirm('Are you sure you want to delete this salon request?')) {
+      setIsLoading(true);
+      console.log('Delete booking:', bookingId);
+      setTimeout(() => {
+        setSelectedBookings(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(bookingId);
+          return newSet;
+        });
+        setIsLoading(false);
+      }, 800);
+    }
+  }, []);
+
+  const handleFilterChange = useCallback((setter) => (e) => {
+    setter(e.target.value);
+    setCurrentPage(1);
+    setSelectedBookings(new Set());
+    setSelectAll(false);
+  }, []);
+
+  const handleDateChange = useCallback((e) => {
+    setDateFilter(e.target.value);
+    setCurrentPage(1);
+    setSelectedBookings(new Set());
+    setSelectAll(false);
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setSalonFilter("all");
+    setDateFilter("");
+    setSearch("");
+    setCurrentPage(1);
+    setSelectedBookings(new Set());
+    setSelectAll(false);
+  }, []);
+
+  const selectedCount = selectedBookings.size;
+
+  return (
+    <Layout>
+      <div className="page-content min-vh-100 d-flex flex-column gap-2 gap-md-3 p-2 p-md-3">
+
+        {/* FILTERS + PAGINATION + BULK ACTIONS */}
+        <div className="card shadow-sm mb-1 mb-md-3 bg-white bookings-filter-sticky">
+          <div className="card-body p-2 p-md-3">
+            {/* DESKTOP LAYOUT */}
+            <div className="d-none d-md-block">
+              <div className="row g-2 g-md-3 align-items-end">
+                <div className="col-12 col-lg-6">
+                  <div className="row g-2">
+                    <div className="col-12 col-md-6">
+                      <SearchInput
+                        value={search}
+                        onChange={(val) => {
+                          setSearch(val);
+                          setCurrentPage(1);
+                          setSelectedBookings(new Set());
+                          setSelectAll(false);
+                        }}
+                        placeholder="Search by salon name or owner..."
+                      />
+                    </div>
+
+                    <div className="col-12 col-md-3">
+                      <select
+                        className="form-select form-select-sm"
+                        value={salonFilter}
+                        onChange={handleFilterChange(setSalonFilter)}
+                      >
+                        <option value="all">All Salons</option>
+                        {salons.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="col-12 col-md-3">
+                      <input
+                        type="date"
+                        className="form-control form-control-sm"
+                        value={dateFilter}
+                        onChange={handleDateChange}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-12 col-lg-6 d-flex flex-column flex-sm-row gap-2 justify-content-end align-items-end">
+                  {/* Bulk Actions */}
+                  {selectedCount > 0 && !isLoading && (
+                    <div className="d-flex align-items-center gap-2">
+                      <span className="text-muted small">
+                        {selectedCount}
+                      </span>
+                      <button
+                        className="btn btn-danger btn-sm"
+                        onClick={handleBulkDelete}
+                        disabled={isLoading}
+                      >
+                        <i className="fa-solid fa-trash me-1"></i>
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="d-flex justify-content-end align-items-center flex-wrap gap-2 gap-md-3 w-100 w-sm-auto">
+                    <div className="flex-grow-1 flex-shrink-0 min-w-0" style={{ minWidth: '200px' }}>
+                      <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                        size="sm"
+                      />
+                    </div>
+
+                    <button
+                      className="btn btn-outline-secondary btn-sm px-md-3 flex-shrink-0"
+                      onClick={handleClearFilters}
+                      disabled={isLoading}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* MOBILE LAYOUT */}
+            <div className="d-md-none">
+              <div className="d-flex flex-column gap-2">
+                <div className="row g-2 align-items-center">
+                  <div className="col-auto">
+                    <button
+                      className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
+                      onClick={() => setShowMobileFilters(!showMobileFilters)}
+                      type="button"
+                      style={{ minWidth: 'auto', padding: '0.25rem 0.5rem' }}
+                      disabled={isLoading}
+                    >
+                      <i className="fa-solid fa-filter"></i>
+                      {(salonFilter !== "all" || dateFilter) ? (
+                        <span className="badge bg-secondary ms-1" style={{ fontSize: '0.65rem', padding: '0.15rem 0.3rem' }}>!</span>
+                      ) : null}
+                    </button>
+                  </div>
+                  <div className="col">
+                    <SearchInput
+                      value={search}
+                      onChange={(val) => {
+                        setSearch(val);
+                        setCurrentPage(1);
+                        setSelectedBookings(new Set());
+                        setSelectAll(false);
+                      }}
+                      placeholder="Search..."
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+
+                {/* Mobile Bulk Actions */}
+                {selectedCount > 0 && !isLoading && (
+                  <div className="alert alert-warning d-flex justify-content-between align-items-center">
+                    <span className="small">{selectedCount}</span>
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={handleBulkDelete}
+                      disabled={isLoading}
+                    >
+                      <i className="fa-solid fa-trash"></i>
+                    </button>
+                  </div>
+                )}
+
+                {showMobileFilters && (
+                  <div className="card border bg-light mt-2">
+                    <div className="card-body p-3">
+                      <div className="d-flex flex-column gap-2">
+                        <div>
+                          <label className="form-label small mb-1 fw-semibold">All Salons</label>
+                          <select
+                            className="form-select form-select-sm"
+                            value={salonFilter}
+                            onChange={handleFilterChange(setSalonFilter)}
+                            disabled={isLoading}
+                          >
+                            <option value="all">All Salons</option>
+                            {salons.map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="form-label small mb-1 fw-semibold">Date</label>
+                          <input
+                            type="date"
+                            className="form-control form-control-sm"
+                            value={dateFilter}
+                            onChange={handleDateChange}
+                            disabled={isLoading}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="row g-2">
+                  <div className="col-12 d-flex justify-content-end">
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={setCurrentPage}
+                      size="sm"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* LOADING OVERLAY */}
+        {isLoading && (
+          <div className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark bg-opacity-50 z-50" style={{ minHeight: '100vh' }}>
+            <div className="text-center text-white">
+              {/* <div className="spinner-border spinner-border-lg mb-3" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div> */}
+            </div>
+          </div>
+        )}
+
+        {/* DESKTOP TABLE */}
+        <div
+          className={`table-responsive d-none d-md-block mb-2 mb-md-3 bg-white bookings-table-scroll ${isLoading ? 'opacity-50' : ''}`}
+          style={{
+            maxHeight: 'calc(100dvh - 160px)',
+            maxHeight: 'calc(100vh - 160px)',
+            overflow: 'auto'
+          }}
+        >
+          <div style={{ minHeight: '320px', backgroundColor: 'white' }}>
+            {isLoading ? (
+              <div className="d-flex justify-content-center align-items-center py-5">
+                <div className="spinner-border spinner-border-sm me-2" role="status"></div>
+                <span className="text-muted">Loading...</span>
+              </div>
+            ) : (
+              <table className="table table-hover mb-0">
+                <thead className="table-light position-sticky top-0 bg-white border-bottom z-10">
+                  <tr>
+                    <th style={{ width: '50px' }} className="px-2 py-2 border-bottom text-center">
+                      <input
+                        type="checkbox"
+                        checked={selectAll}
+                        onChange={handleSelectAll}
+                        disabled={isLoading}
+                      />
+                    </th>
+                    <th style={{ width: '60px' }} className="px-2 py-2 border-bottom text-center fw-medium">No.</th>
+                    <th style={{ width: '160px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Salon Owner</th>
+                    <th style={{ width: '150px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Salon Name</th>
+                    <th style={{ width: '220px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Address</th>
+                    <th style={{ width: '140px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Mobile</th>
+                    <th style={{ width: '160px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Date & Time</th>
+                    <th style={{ width: '80px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginated.map((booking, index) => (
+                    <tr key={booking.id}>
+                      <td className="px-2 py-2 text-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedBookings.has(booking.id)}
+                          onChange={(e) => handleSelectBooking(booking.id, e.target.checked)}
+                          disabled={isLoading}
+                        />
+                      </td>
+                      <td className="px-2 py-2 text-center fw-medium text-muted small">
+                        {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
+                      </td>
+                      <td className="fw-semibold px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '160px' }}>
+                        {booking.salonOwnerName || 'N/A'}
+                      </td>
+                      <td className="px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '150px' }}>
+                        {booking.salonName}
+                      </td>
+                      <td className="px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '220px' }}>
+                        {booking.salonAddress || 'N/A'}
+                      </td>
+                      <td className="fw-semibold px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '140px' }}>
+                        {booking.salonMobile || 'N/A'}
+                      </td>
+                      <td className="px-2 px-md-3 py-2">
+                        <div className="small">
+                          <div>{booking.date}</div>
+                          <div className="text-muted">{booking.time}</div>
+                        </div>
+                      </td>
+                      <td className="text-center px-2 px-md-3 py-2">
+                        <button
+                          className="btn fontcolor btn-sm"
+                          onClick={() => handleDelete(booking.id)}
+                          title="Delete"
+                          disabled={isLoading}
+                        >
+                          <i className="fa-solid fa-trash"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {paginated.length === 0 && !isLoading && (
+                    <tr>
+                      <td colSpan={9} className="text-center text-muted py-5 bg-white">
+                        No bookings found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+
+        {/* MOBILE CARDS */}
+        <div className={`d-md-none bg-white bookings-mobile-cards ${isLoading ? 'opacity-50' : ''}`}>
+          {isLoading ? (
+            <div className="d-flex justify-content-center align-items-center py-5">
+              <div className="spinner-border spinner-border-sm me-2" role="status"></div>
+              <span className="text-muted">Loading...</span>
+            </div>
+          ) : (
+            <>
+              {paginated.map((booking, index) => (
+                <div key={booking.id} className="mb-3">
+                  {/* Number Badge */}
+                  <div className="d-flex align-items-center mb-2">
+                    <span className="badge bg-light text-dark fw-medium small me-2">
+                      #{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
+                    </span>
+                  </div>
+                  <div className="card shadow-sm border-0 bg-white">
+                    <div className="card-body p-3">
+                      <div className="d-flex justify-content-between align-items-start mb-2">
+                        <div className="form-check me-3">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            checked={selectedBookings.has(booking.id)}
+                            onChange={(e) => handleSelectBooking(booking.id, e.target.checked)}
+                            id={`mobile-${booking.id}`}
+                            disabled={isLoading}
+                          />
+                        </div>
+                        <div className="flex-grow-1 pe-2 min-w-0">
+                          <div className="fw-semibold text-truncate">{booking.salonName}</div>
+                          <div className="text-muted small text-truncate">Owner: {booking.salonOwnerName || 'N/A'}</div>
+                        </div>
+                        <button
+                          className="btn btn-danger btn-sm ms-2"
+                          onClick={() => handleDelete(booking.id)}
+                          title="Delete"
+                          disabled={isLoading}
+                        >
+                          <i className="fa-solid fa-trash"></i>
+                        </button>
+                      </div>
+                      <div className="text-muted small mb-2 text-truncate">{booking.salonAddress || 'N/A'}</div>
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <div className="small text-truncate">{booking.salonMobile || 'N/A'}</div>
+                      </div>
+                      <div className="small">
+                        <div>{booking.date}</div>
+                        <div className="text-muted">{booking.time}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {paginated.length === 0 && (
+                <div className="alert alert-light border mb-0 text-center py-4 bg-white">
+                  No bookings found
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </Layout>
+  );
+};
+
+export default salonrequest;

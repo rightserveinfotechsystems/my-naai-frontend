@@ -234,7 +234,7 @@ const Users = () => {
                           </td>
                           <td className="text-end pe-4">
                             <button
-                              className="btn btn-sm btn-outline-danger px-3 py-1 d-inline-flex align-items-center gap-1"
+                              className="btn btn-sm fontcolor px-3 py-1 d-inline-flex align-items-center gap-1"
                               onClick={() => deleteUser(user.id)}
                             >
                               <FaTrash size={14} />
@@ -281,7 +281,7 @@ const Users = () => {
                             <div className="d-flex justify-content-between align-items-center pt-2 border-top">
                               <small className="text-muted">{user.createdAt}</small>
                               <button
-                                className="btn btn-sm btn-outline-danger px-3 py-1 d-inline-flex align-items-center gap-1"
+                                className="btn btn-sm fontcolor px-3 py-1 d-inline-flex align-items-center gap-1"
                                 onClick={() => deleteUser(user.id)}
                               >
                                 <FaTrash size={14} />
