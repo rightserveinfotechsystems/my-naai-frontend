@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import ProfileDropdown from "./ProfileDropdown.jsx";
-
+import ChangePasswordModal from "./ChangePasswordModal.jsx";
+import { useUser } from "../contexts/UserContext.jsx";
+import { ClipboardList, Store, CalendarCheck } from "lucide-react";
 // Icons definitions (SVG)
 const Icons = {
   Salon: () => (
@@ -23,16 +25,18 @@ const Icons = {
 
 const navItems = [
   { path: "/", label: "User Management", icon: <Icons.Users /> },
-  { path: "/salons", label: "Salon Management", icon: <Icons.Scissors /> },
-  { path: "/bookings", label: "Booking Management", icon: <Icons.Calendar /> },
-  { path: "/salonrequest", label: "Salon Request" , icon: <Icons.Salon/> },
+  { path: "/salons", label: "Salon Management", icon: <Store size={20} /> },
+  { path: "/bookings", label: "Booking Management", icon: <CalendarCheck size={20} /> },
+  { path: "/salonrequest", label: "Salon Request", icon: <ClipboardList size={20} /> },
 ];
 
 const Layout = ({ children }) => {
   const [open, setOpen] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false); // NEW: Logout modal state
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false); // Change password modal state
   const navigate = useNavigate();
+  const { user, logout } = useUser();
 
   // Profile dropdown close handler
   const handleProfileClose = () => {
@@ -46,7 +50,7 @@ const Layout = ({ children }) => {
 
   const handleLogoutConfirm = () => {
     console.log("User logged out - navigating to login");
-    localStorage.removeItem('token');
+    logout();
     setShowLogoutModal(false);
     setTimeout(() => {
       navigate("/login");
@@ -57,16 +61,36 @@ const Layout = ({ children }) => {
     setShowLogoutModal(false);
   };
 
+  const handleChangePassword = () => {
+    setShowChangePasswordModal(true);
+  };
+
+  // Fallback user data if no user is loaded
+  const displayUser = user || {
+    name: "Admin User",
+    email: "admin@salonharmony.com",
+    role: "Administrator"
+  };
+
   return (
     <div className="app-shell d-flex">
       {/* Desktop Sidebar */}
       <aside className="sidebar d-none d-md-flex flex-column p-3 gap-3 position-sticky top-0 vh-100">
-        <div className="d-flex flex-column gap-2 mb-3">
-          <Link className="d-flex align-items-center gap-2 text-white fw-semibold fs-5 text-decoration-none">
-             Salon
+        <div className="d-flex flex-column align-items-center gap-2 mb-3">
+          <Link
+            to="/"
+            className="d-flex justify-content-center align-items-center text-decoration-none"
+          >
+            <img
+              src="/images/mynaai_logo.jpeg"
+              alt="Salon Logo"
+              className="object-fit-contain"
+              style={{ maxHeight: "50px" }}
+            />
           </Link>
         </div>
-        <nav className="nav flex-column gap-1">
+
+        <nav className="nav flex-column gap-1 sidebarmt">
           {navItems.map((item) => (
             <NavLink
               key={item.path}
@@ -84,14 +108,18 @@ const Layout = ({ children }) => {
 
         <div className="mt-auto d-flex flex-column gap-2">
           {/* Profile Section */}
-          <div className="d-flex align-items-center gap-3 p-2 rounded sidebar-profile">
+          <div
+            className="d-flex align-items-center gap-3 p-2 rounded sidebar-profile"
+            style={{ cursor: 'pointer' }}
+            onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+          >
             <div className="bg-white text-primary rounded-circle d-flex align-items-center justify-content-center"
               style={{ width: '40px', height: '40px' }}>
               <span style={{ fontSize: '1.2rem' }}>👤</span>
             </div>
             <div className="flex-grow-1">
-              <div className="text-white fw-medium small">Admin User</div>
-              <div className="text-white-50 small">Administrator</div>
+              <div className="text-white fw-medium small">{displayUser.name}</div>
+              <div className="text-white-50 small">{displayUser.role}</div>
             </div>
           </div>
 
@@ -149,12 +177,19 @@ const Layout = ({ children }) => {
         </div>
       )}
 
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        show={showChangePasswordModal}
+        onClose={() => setShowChangePasswordModal(false)}
+      />
+
       {/* Desktop Profile Dropdown - positioned outside sidebar */}
       <div className="d-none d-md-block">
         {showProfileDropdown && (
           <ProfileDropdown
             isOpen={showProfileDropdown}
             onClose={() => setShowProfileDropdown(false)}
+            onChangePassword={handleChangePassword}
             position="desktop"
           />
         )}
@@ -201,6 +236,7 @@ const Layout = ({ children }) => {
           <ProfileDropdown
             isOpen={showProfileDropdown}
             onClose={() => setShowProfileDropdown(false)}
+            onChangePassword={handleChangePassword}
             position="mobile"
           />
         </div>
