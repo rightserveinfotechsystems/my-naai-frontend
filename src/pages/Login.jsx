@@ -1,48 +1,47 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
-import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useUser } from "../contexts/UserContext.jsx";
+import { adminAPI } from "../services/communication.jsx";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { fetchUserProfile } = useUser();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) {
-      setError("Please enter email and password");
+      toast.error("Please enter email and password");
       return;
     }
     setLoading(true);
-    setError("");
 
-    try{
-      const resposne = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/admin/login`,
-      {email,password}
-      );
-   
+    const result = await adminAPI.login({ email, password });
 
-    if(resposne.data?.status === "SUCCESS"){
-      localStorage.setItem("token", resposne.data.data.token);
-
-      alert("Login Successfull");
-      //naviagte
+    if (result.success) {
+      localStorage.setItem("token", result.data.token);
+      toast.success("Login Successful!", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      // Fetch user profile data after successful login
+      await fetchUserProfile();
       navigate("/");
-    }else{
-      setError(resposne.data?.message || "Login Failed")
+    } else {
+      toast.error(result.message || "Login Failed");
     }
-  }catch(error){
-    console.log(error);
-    setError(error.resposne?.data.message || "Something went wrong. Please try again.");
-  }
-  finally{
+
     setLoading(false);
-  }
   };
+
+
+
 
   return (
     <div className="login-container">
@@ -71,9 +70,8 @@ const Login = () => {
           </div>
 
           <div className="form-group">
-            <label className="form-label d-flex flex-column  justify-content-between align-items-start ">
+            <label className="form-label d-flex flex-column justify-content-between align-items-start">
               <span>Password</span>
-              
             </label>
 
             <div className="input-wrapper position-relative">
@@ -96,17 +94,7 @@ const Login = () => {
             </div>
           </div>
 
-          {error && (
-            <div className="error-message">
-              {error}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            className="submit-btn"
-            disabled={loading}
-          >
+          <button type="submit" className="submit-btn" disabled={loading}>
             {loading ? (
               <span className="spinner"></span>
             ) : (
@@ -114,25 +102,24 @@ const Login = () => {
             )}
           </button>
 
-         <label className="form-label d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
-              {/* <span>Forgot Password?</span> */}
-              <a
-                href="#"
-                className="forgot-link text-nowrap"
-                onClick={(e) => e.preventDefault()}
-              >
-                Forgot Password?
-              </a>
-            </label>
         </form>
 
-        <div className="login-footer">
-          {/* <p>
-            Don't have an account?
-             <a href="/register" className="register-link">Sign up</a>
-          </p> */}
-        </div>
+        <div className="login-footer"></div>
       </div>
+
+      <ToastContainer
+        position="top-right"
+        autoClose={4000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+
     </div>
   );
 };

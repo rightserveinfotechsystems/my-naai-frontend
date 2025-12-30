@@ -1,27 +1,47 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react"; // useEffect add kiya
 import Layout from "../components/Layout.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import SearchInput from "../components/SearchInput.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import Pagination from "../components/Pagination.jsx";
 import { FaTrash } from "react-icons/fa";
-import { users as initialUsers } from "../data/mockData.js";
+import { userAPI } from "../services/communication.jsx";
 
 const ITEMS_PER_PAGE = 20;
 
 const Users = () => {
-  const [users, setUsers] = useState(initialUsers);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [form, setForm] = useState({ name: "", email: "", phone: "", status: "active" });
   const [selectedUsers, setSelectedUsers] = useState([]);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+
+    const result = await userAPI.getUsers();
+
+    if (result.success && result.data?.users) {
+      setUsers(result.data.users);
+    } else {
+      console.error("API Error:", result.message);
+      setUsers([]);
+    }
+
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+  
 
   const filtered = useMemo(() => {
     return users.filter(
       (user) =>
-        user.name.toLowerCase().includes(search.toLowerCase()) ||
-        user.email.toLowerCase().includes(search.toLowerCase()) ||
-        user.phone.includes(search)
+        (user.fullName || "").toLowerCase().includes(search.toLowerCase()) ||
+        (user.email || "").toLowerCase().includes(search.toLowerCase()) ||
+        (user.phoneNumber || "").includes(search)
     );
   }, [users, search]);
 
@@ -31,19 +51,15 @@ const Users = () => {
     currentPage * ITEMS_PER_PAGE
   );
 
-  const showPagination = totalPages > 1;
-
   const handleUserSelect = (userId) => {
     setSelectedUsers(prev =>
-      prev.includes(userId)
-        ? prev.filter(id => id !== userId)
-        : [...prev, userId]
+      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
     );
   };
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      setSelectedUsers(paginated.map(user => user.id));
+      setSelectedUsers(paginated.map(user => user.userId)); // Backend me userId use ho raha hai
     } else {
       setSelectedUsers([]);
     }
@@ -51,20 +67,20 @@ const Users = () => {
 
   const handleSelectAllMobile = (e) => {
     if (e.target.checked) {
-      setSelectedUsers(filtered.map(user => user.id));
+      setSelectedUsers(filtered.map(user => user.userId));
     } else {
       setSelectedUsers([]);
     }
   };
 
   const deleteSelectedUsers = () => {
-    setUsers(users.filter(user => !selectedUsers.includes(user.id)));
+    setUsers(users.filter(user => !selectedUsers.includes(user.userId)));
     setSelectedUsers([]);
     setCurrentPage(1);
   };
 
   const deleteUser = (id) => {
-    setUsers(users.filter((u) => u.id !== id));
+    setUsers(users.filter((u) => u.userId !== id));
     setSelectedUsers(prev => prev.filter(selectedId => selectedId !== id));
   };
 
@@ -102,7 +118,7 @@ const Users = () => {
                   <div className="row g-2 g-md-3 align-items-center">
 
                     {/* LEFT: Search */}
-                    <div className="col-12 col-md-auto" style={{ flex: '1 1 auto', minWidth: '200px', maxWidth: '30%  ' }}>
+                    <div className="col-12 col-md-auto" style={{ flex: '1 1 auto', minWidth: '200px', maxWidth: '30% ' }}>
                       <SearchInput
                         value={search}
                         onChange={(val) => {
@@ -115,31 +131,9 @@ const Users = () => {
 
                     {/* RIGHT END: Actions + Pagination */}
                     <div className="col-12 col-md d-flex align-items-center justify-content-md-end gap-2 flex-wrap mt-2">
-
-                      {/* Bulk Actions (Select All, Delete & Clear) */}
                       <div className="d-flex gap-1 flex-wrap align-items-center">
-                        {/* <button
-                          className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1"
-                          onClick={() => {
-                            if (selectedUsers.length === paginated.length && paginated.length > 0) {
-                              setSelectedUsers([]);
-                            } else {
-                              setSelectedUsers(paginated.map(user => user.id));
-                            }
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            className="form-check-input me-1 mt-0"
-                            checked={selectedUsers.length === paginated.length && paginated.length > 0}
-                            readOnly
-                          />
-                          Select All
-                        </button> */}
-
                         <button
-                          className={`btn btn-sm btn-danger d-flex align-items-center gap-1 ${selectedUsers.length > 0 ? '' : 'opacity-50 cursor-not-allowed'
-                            }`}
+                          className={`btn btn-sm btn-danger d-flex align-items-center gap-1 ${selectedUsers.length > 0 ? '' : 'opacity-50 cursor-not-allowed'}`}
                           onClick={selectedUsers.length > 0 ? deleteSelectedUsers : undefined}
                           disabled={selectedUsers.length === 0}
                         >
@@ -148,8 +142,7 @@ const Users = () => {
                         </button>
 
                         <button
-                          className={`btn btn-sm btn-outline-secondary ${selectedUsers.length > 0 ? '' : 'opacity-50 cursor-not-allowed'
-                            }`}
+                          className={`btn btn-sm btn-outline-secondary ${selectedUsers.length > 0 ? '' : 'opacity-50 cursor-not-allowed'}`}
                           onClick={selectedUsers.length > 0 ? () => setSelectedUsers([]) : undefined}
                           disabled={selectedUsers.length === 0}
                         >
@@ -157,10 +150,8 @@ const Users = () => {
                         </button>
                       </div>
 
-                      {/* Vertical Divider (Optional - Sirf desktop par dikhega) */}
                       <div className="d-none d-md-block border-start mx-1" style={{ height: '24px' }}></div>
 
-                      {/* Pagination - Ab ye bilkul right corner mein push ho jayega */}
                       <div className="mt-0">
                         <Pagination
                           currentPage={currentPage}
@@ -177,7 +168,7 @@ const Users = () => {
                 <div className="table-responsive d-none d-md-block"
                   style={{ maxHeight: '83vh', overflowY: 'auto' }}>
                   <table className="table table-hover mb-0 align-middle">
-                    <thead className="table-light position-sticky  top-0 bg-white border-bottom z-10">
+                    <thead className="table-light position-sticky top-0 bg-white border-bottom z-10">
                       <tr>
                         <th scope="col" className="py-2 ps-4 pe-2 w-auto">
                           <div className="form-check m-0">
@@ -199,54 +190,54 @@ const Users = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {paginated.map((user, index) => (
-                        <tr key={user.id} className="align-middle">
+                      {loading ? (
+                        <tr><td colSpan={7} className="text-center py-5">Loading users...</td></tr>
+                      ) : paginated.map((user, index) => (
+                        <tr key={user.userId} className="align-middle">
                            <td className="ps-4 pe-2">
                             <div className="form-check m-0">
                               <input
                                 className="form-check-input shadow-none"
                                 type="checkbox"
-                                checked={selectedUsers.includes(user.id)}
-                                onChange={() => handleUserSelect(user.id)}
+                                checked={selectedUsers.includes(user.userId)}
+                                onChange={() => handleUserSelect(user.userId)}
                               />
                             </div>
                           </td>
                           <td className="ps-3 pe-2 fw-medium text-muted">
                             {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
                           </td>
-                         
+                          
                           <td className="fw-semibold pe-3">
                             <div className="text-truncate" style={{ maxWidth: '180px' }}>
-                              {user.name}
+                              {user.fullName} 
                             </div>
                           </td>
                           <td className="pe-3">
                             <div className="small fw-medium text-truncate" style={{ maxWidth: '220px' }}>
                               {user.email}
                             </div>
-                            <div className="text-muted small text-truncate">{user.phone}</div>
+                            <div className="text-muted small text-truncate">{user.phoneNumber}</div> 
                           </td>
                           <td className="pe-1">
-                            <StatusBadge status={user.status} />
+                            <StatusBadge status={user.isActive ? "active" : "inactive"} />
                           </td>
                           <td className="text-muted text-end small pe-5 ">
-                            {user.createdAt}
+                            {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                           </td>
                           <td className="text-end pe-4">
                             <button
                               className="btn btn-sm fontcolor px-3 py-1 d-inline-flex align-items-center gap-1"
-                              onClick={() => deleteUser(user.id)}
+                              onClick={() => deleteUser(user.userId)}
                             >
                               <FaTrash size={14} />
                             </button>
                           </td>
                         </tr>
                       ))}
-                      {paginated.length === 0 && (
+                      {!loading && paginated.length === 0 && (
                         <tr>
-                          <td colSpan={7} className="text-center text-muted py-5">
-                            No users found
-                          </td>
+                          <td colSpan={7} className="text-center text-muted py-5">No users found</td>
                         </tr>
                       )}
                     </tbody>
@@ -257,7 +248,7 @@ const Users = () => {
                 <div className="d-md-none px-3 pb-4" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
                   <div className="row g-3">
                     {paginated.map((user) => (
-                      <div key={user.id} className="col-12">
+                      <div key={user.userId} className="col-12">
                         <div className="card border-0 shadow-sm">
                           <div className="card-body py-3 px-3">
                             <div className="d-flex justify-content-between align-items-start mb-2">
@@ -266,23 +257,23 @@ const Users = () => {
                                   <input
                                     className="form-check-input"
                                     type="checkbox"
-                                    checked={selectedUsers.includes(user.id)}
-                                    onChange={() => handleUserSelect(user.id)}
+                                    checked={selectedUsers.includes(user.userId)}
+                                    onChange={() => handleUserSelect(user.userId)}
                                   />
                                 </div>
                                 <div className="flex-grow-1 pe-2">
-                                  <h6 className="mb-1 fw-semibold text-truncate">{user.name}</h6>
+                                  <h6 className="mb-1 fw-semibold text-truncate">{user.fullName}</h6>
                                   <div className="text-muted small text-truncate">{user.email}</div>
-                                  <small className="text-muted d-block text-truncate">{user.phone}</small>
+                                  <small className="text-muted d-block text-truncate">{user.phoneNumber}</small>
                                 </div>
                               </div>
-                              <StatusBadge status={user.status} />
+                              <StatusBadge status={user.isActive ? "active" : "inactive"} />
                             </div>
                             <div className="d-flex justify-content-between align-items-center pt-2 border-top">
-                              <small className="text-muted">{user.createdAt}</small>
+                              <small className="text-muted">{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</small>
                               <button
                                 className="btn btn-sm fontcolor px-3 py-1 d-inline-flex align-items-center gap-1"
-                                onClick={() => deleteUser(user.id)}
+                                onClick={() => deleteUser(user.userId)}
                               >
                                 <FaTrash size={14} />
                               </button>
@@ -291,14 +282,8 @@ const Users = () => {
                         </div>
                       </div>
                     ))}
-                    {paginated.length === 0 && (
-                      <div className="col-12 text-center py-5 text-muted">
-                        No users found
-                      </div>
-                    )}
                   </div>
                 </div>
-
 
               </div>
             </div>
