@@ -104,10 +104,10 @@ export const adminAPI = {
 
 // ==================== USER MANAGEMENT ====================
 export const userAPI = {
-  // Get all users
+  // Get all users - using POST method as per backend requirement
   getUsers: async () => {
     try {
-      const response = await api.get('/api/users/get-user-list');
+      const response = await api.post('/api/users/get-user-list', {});
       return {
         success: response.data?.status === "SUCCESS",
         data: response.data?.data,
