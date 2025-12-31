@@ -6,12 +6,13 @@ import SearchInput from "../components/SearchInput.jsx";
 import Pagination from "../components/Pagination.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import SalonEditModal from "../components/SalonEditModal.jsx";
+import { salonAPI } from "../services/communication.jsx";
 
 const ITEMS_PER_PAGE = 20;
 
 const Salons = () => {
   const navigate = useNavigate();
-  
+
   // States
   const [salons, setSalons] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,6 +21,7 @@ const Salons = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [scrollPosition, setScrollPosition] = useState(0);
 
   // Modal states
   const [showModal, setShowModal] = useState(false);
@@ -30,56 +32,97 @@ const Salons = () => {
    * API Se Data Fetch Karne Ka Function
    */
   const fetchSalons = useCallback(async () => {
+    // Save current scroll position before loading new data
+    setScrollPosition(window.pageYOffset || document.documentElement.scrollTop);
+    setLoading(true);
+
+    // Check if token exists before making API call
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.warn("No token found, redirecting to login");
+      navigate("/login");
+      setLoading(false);
+      return;
+    }
+
+    // Prepare API parameters
+    const apiParams = {
+      page: currentPage,
+      searchString: search,
+      cityFilter: cityFilter === 'all' ? undefined : cityFilter
+    };
+
+    console.log("Making salon API call with params:", apiParams);
+
+    let result;
     try {
-      setLoading(true);
-      const token = localStorage.getItem("token");
+      result = await salonAPI.getSalons(apiParams);
+      console.log("Salon API result:", result);
+    } catch (error) {
+      console.error("Salon API error caught:", error);
+      result = {
+        success: false,
+        message: error.response?.data?.message || "Network error",
+        error: error.response?.data
+      };
+    }
 
-      if (!token) {
-        console.warn("Token nahi mila, login page par redirect ho raha hai...");
-        navigate("/login");
-        return;
-      }
+    if (result.success) {
+      // API se aane wala data state mein save kar rahe hain
+      console.log("Setting salons data:", result.data.barberShops);
+      setSalons(result.data.barberShops || []);
+    } else {
+      // Check if it's an authentication error
+      const isAuthError = result.message === "Invalid token payload" ||
+                         result.message?.includes("token") ||
+                         result.message?.includes("unauthorized") ||
+                         result.message?.includes("authenticate") ||
+                         result.error?.status === 401;
 
-      const response = await fetch("http://72.60.195.95:3006/api/barbers/get-barbers-list", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({}) // Backend ko empty object chahiye
-      });
-
-      const result = await response.json();
-
-      if (result.status === "SUCCESS") {
-        // API se aane wala data state mein save kar rahe hain
-        setSalons(result.data.barberShops || []);
-      } else if (result.message === "Invalid token payload") {
-        // Agar token expire ho gaya ho
-        alert("Session expired. Please login again.");
+      if (isAuthError) {
+        console.error("Authentication error, redirecting to login");
         localStorage.removeItem("token");
+        alert("Session expired. Please login again.");
         navigate("/login");
       } else {
-        console.error("API Error:", result.message);
+        console.error("API Error:", result.message, result.error);
+        // Set empty array for non-auth errors
+        setSalons([]);
+        // Show user-friendly message
+        console.warn("Could not load salons. Using empty list.");
       }
-    } catch (error) {
-      console.error("Network Error:", error);
-    } finally {
-      setLoading(false);
     }
-  }, [navigate]);
+
+    setLoading(false);
+  }, [navigate, currentPage, search, cityFilter]);
 
   // Page load hote hi API call karega
   useEffect(() => {
     fetchSalons();
   }, [fetchSalons]);
 
+  // Restore scroll position after loading completes
+  useEffect(() => {
+    if (!loading && scrollPosition > 0) {
+      // Small delay to ensure DOM is updated and prevent unwanted scrolling
+      const timeoutId = setTimeout(() => {
+        window.scrollTo({
+          top: scrollPosition,
+          behavior: 'instant' // Use instant to prevent smooth scrolling conflicts
+        });
+        setScrollPosition(0); // Reset after restoring
+      }, 150);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [loading, scrollPosition]);
+
   /**
    * Filter Logic (Search aur Dropdowns ke liye)
    */
   const filtered = useMemo(() => {
     return salons.filter((salon) => {
-      const name = salon.shopName || "";
+      const name = salon.shopName || salon.salonName || salon.name || "";
       const address = salon.address || "";
       const status = salon.isActive ? "active" : "inactive";
 
@@ -110,7 +153,7 @@ const Salons = () => {
 
   const handleEditSalon = (salon) => {
     setModalMode("edit");
-    setEditingSalonId(salon.barberId);
+    setEditingSalonId(salon.salonId || salon.barberId || salon.id);
     setShowModal(true);
   };
 
@@ -205,28 +248,37 @@ const Salons = () => {
             <p className="mb-0 text-muted">No salons found matching your criteria.</p>
           </div>
         ) : (
-          /* SALON GRID */
-          <div className="row row-cols-1 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-3 mb-4">
-            {paginated.map((salon) => (
-              <div className="col" key={salon.barberId}>
+          /* SALON GRID - with smooth scrolling */
+          <div
+            className="row row-cols-1 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-3 mb-4"
+            style={{
+              minHeight: '400px',
+              scrollBehavior: 'smooth'
+            }}
+          >
+            {paginated.map((salon, index) => (
+              <div className="col" key={salon.barberId || salon.id || salon.salonId || index}>
                 <div 
                   className="card h-100 shadow-sm border-0 hover-lift-sm transition-all"
                   style={{ cursor: 'pointer', borderRadius: '12px', overflow: 'hidden' }}
-                  onClick={() => navigate(`/salons/${salon.barberId}`)}
+                  onClick={() => navigate(`/salons/${salon.salonId || salon.barberId || salon.id}`)}
                 >
                   <div className="ratio ratio-16x9 bg-light">
-                    <img 
-                      src={salon.shopLogo || "https://via.placeholder.com/400x225?text=No+Logo"} 
-                      className="card-img-top" 
-                      alt={salon.shopName}
+                    <img
+                      src={salon.imageUrl || salon.shopLogo || "https://via.placeholder.com/400x225?text=No+Image"}
+                      className="card-img-top"
+                      alt={salon.shopName || salon.salonName || salon.name}
                       style={{ objectFit: "cover" }}
+                      onError={(e) => {
+                        e.target.src = "https://via.placeholder.com/400x225?text=No+Image";
+                      }}
                     />
                   </div>
 
                   <div className="card-body p-3">
                     <div className="d-flex justify-content-between align-items-start mb-2">
                       <h6 className="card-title mb-0 fw-bold text-truncate" style={{maxWidth: '75%'}}>
-                        {salon.shopName}
+                        {salon.shopName || salon.salonName || salon.name}
                       </h6>
                       <span className="badge bg-warning-subtle text-dark border-0">
                         ★ {salon.rating || "0.0"}

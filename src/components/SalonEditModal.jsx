@@ -1,38 +1,133 @@
 import { useState, useEffect } from "react";
 import { cities } from "../data/mockData.js";
+import { salonAPI } from "../services/communication.jsx";
 
 const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
+    // Basic salon info
     name: "",
+    ownerName: "",
+    phoneNumber: "",
+    email: "",
+
+    // Address fields
+    addressLine1: "",
+    addressLine2: "",
     city: "",
-    address: "",
-    rating: 4.5,
-    status: "active",
+    state: "",
+    pincode: "",
+
+    // Additional info
+    imageUrl: "",
+    genderType: "UNISEX",
+    latitude: "",
+    longitude: "",
+
+    // Services
     services: [],
+
+    // Business hours
+    openingTime: "09:00",
+    closingTime: "21:00",
+    breakStartTime: "13:00",
+    breakEndTime: "14:00",
+    holidayDays: []
 
   });
 
   const [images, setImages] = useState([]);
 
-  // Reset form when modal opens/closes
+  // Load salon data for editing or reset form for adding
   useEffect(() => {
-    if (showModal) {
-      if (modalMode === "add") {
-        setFormData({
-          name: "",
-          city: "",
-          address: "",
-          rating: 4.5,
-          status: "active",
+    const loadSalonData = async () => {
+      if (showModal) {
+        if (modalMode === "edit" && editingSalonId) {
+          try {
+            // Load existing salon data for editing
+            console.log("Loading salon data for editing:", editingSalonId);
+
+            const result = await salonAPI.getSalonById(editingSalonId);
+            if (result.success && result.data) {
+              const salon = result.data;
+              console.log("Loaded salon data:", salon);
+
+              // Map API data to form structure
+              setFormData({
+                name: salon.salonName || salon.shopName || salon.name || "",
+                ownerName: salon.ownerName || "",
+                phoneNumber: salon.phoneNumber || "",
+                email: salon.email || "",
+                addressLine1: salon.addressLine1 || salon.address || "",
+                addressLine2: salon.addressLine2 || "",
+                city: salon.city || "",
+                state: salon.state || "",
+                pincode: salon.pincode || "",
+                imageUrl: salon.imageUrl || salon.shopLogo || "",
+                genderType: salon.genderType || "UNISEX",
+                latitude: salon.latitude || "",
+                longitude: salon.longitude || "",
+                services: salon.services ? salon.services.map(service => ({
+                  name: service.serviceName || service.name || "",
+                  price: service.price || "",
+                  duration: service.durationMinutes || service.duration || "",
+                  description: service.description || ""
+                })) : [],
+                openingTime: salon.businessHours?.[0]?.openingTime || "09:00",
+                closingTime: salon.businessHours?.[0]?.closingTime || "21:00",
+                breakStartTime: salon.businessHours?.[0]?.breakStartTime || "13:00",
+                breakEndTime: salon.businessHours?.[0]?.breakEndTime || "14:00",
+                holidayDays: salon.businessHours?.[0]?.holidayDays || []
+              });
+
+              console.log("Salon data loaded for editing");
+            } else {
+              console.error("Failed to load salon data:", result.message);
+              alert(`Failed to load salon data: ${result.message}`);
+            }
+          } catch (error) {
+            console.error("Error loading salon data:", error);
+            alert("Failed to load salon data for editing");
+          }
+        } else if (modalMode === "add") {
+          // Reset form for adding new salon
+          setFormData({
+            // Basic salon info
+            name: "",
+            ownerName: "",
+            phoneNumber: "",
+            email: "",
+
+            // Address fields
+            addressLine1: "",
+            addressLine2: "",
+            city: "",
+            state: "",
+            pincode: "",
+
+          // Additional info
+          imageUrl: "",
+          genderType: "UNISEX",
+          latitude: "",
+          longitude: "",
+
+          // Services
           services: [],
-          openingTime: "9:00 AM - 9:00 PM",
-          images: []
-        });
+
+          // Business hours
+          openingTime: "09:00",
+          closingTime: "21:00",
+          breakStartTime: "13:00",
+          breakEndTime: "14:00",
+          holidayDays: []
+          });
+        }
+        setImages([]);
       }
-      setImages([]);
-    }
-  }, [showModal, modalMode]);
+    };
+
+    loadSalonData();
+  }, [showModal, modalMode, editingSalonId]);
 
   const handleServiceChange = (index, field, value) => {
     const newServices = [...formData.services];
@@ -80,24 +175,67 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+      // Transform form data to match API structure
+      const apiData = {
+        salonName: formData.name,
+        ownerName: formData.ownerName || "",
+        phoneNumber: formData.phoneNumber,
+        email: formData.email,
+        addressLine1: formData.addressLine1 || "",
+        addressLine2: formData.addressLine2 || "",
+        city: formData.city,
+        state: formData.state || "",
+        pincode: formData.pincode || "",
+        imageUrl: formData.imageUrl || "",
+        genderType: formData.genderType || "UNISEX",
+        latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+        longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+        services: formData.services.map(service => ({
+          serviceName: service.name,
+          durationMinutes: parseInt(service.duration) || 30,
+          price: parseFloat(service.price) || 0,
+          description: service.description || ""
+        })),
+        businessHours: [{
+          openingTime: formData.openingTime || "09:00",
+          closingTime: formData.closingTime || "21:00",
+          breakStartTime: formData.breakStartTime || "13:00",
+          breakEndTime: formData.breakEndTime || "14:00",
+          holidayDays: formData.holidayDays || []
+        }]
+      };
 
-    const submitData = {
-      ...(modalMode === "edit" && { id: editingSalonId }),
-      ...formData,
-      images: images.map(img => img.file)
-    };
+      console.log("Submitting salon data:", apiData);
 
-    console.log(`${modalMode === "add" ? "New" : "Updated"} salon:`, submitData);
-    handleCloseModal();
+      // Call appropriate API based on mode
+      let result;
+      if (modalMode === "edit" && editingSalonId) {
+        // Update existing salon
+        result = await salonAPI.updateSalon(editingSalonId, apiData);
+      } else {
+        // Create new salon
+        result = await salonAPI.createSalon(apiData);
+      }
 
-    // Show success message
-    alert(`${modalMode === "add" ? "Salon added" : "Salon updated"} successfully with ${images.length} images!`);
+      if (result.success) {
+        console.log(`${modalMode === "edit" ? "Salon updated" : "Salon created"} successfully:`, result.data);
+        alert(`Salon ${modalMode === "edit" ? "updated" : "created"} successfully!`);
+        handleCloseModal();
 
-    // Call success callback
-    if (onSuccess) {
-      onSuccess();
+        // Call success callback
+        if (onSuccess) {
+          onSuccess();
+        }
+      } else {
+        console.error(`Failed to ${modalMode === "edit" ? "update" : "create"} salon:`, result.message);
+        alert(`Failed to ${modalMode === "edit" ? "update" : "create"} salon: ${result.message}`);
+      }
+    } catch (error) {
+      console.error("Error creating salon:", error);
+      alert("An error occurred while creating the salon. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -210,22 +348,36 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                   />
                 </div>
 
-                {/* 5. Address Line */}
-                <div className="col-12">
-                  <label className="form-label fw-semibold">Address Line <span className="text-danger">*</span></label>
-                  <textarea
+                {/* 5. Address Line 1 */}
+                <div className="col-12 col-md-6">
+                  <label className="form-label fw-semibold">Address Line 1 <span className="text-danger">*</span></label>
+                  <input
+                    type="text"
                     className="form-control"
-                    name="address"
-                    rows="2"
-                    value={formData.address}
+                    name="addressLine1"
+                    value={formData.addressLine1 || ""}
                     onChange={handleInputChange}
                     required
                     disabled={isSubmitting}
-                    placeholder="Enter complete address"
+                    placeholder="Shop/Flat number, Street"
                   />
                 </div>
 
-                {/* 6. City */}
+                {/* 6. Address Line 2 */}
+                <div className="col-12 col-md-6">
+                  <label className="form-label fw-semibold">Address Line 2</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    name="addressLine2"
+                    value={formData.addressLine2 || ""}
+                    onChange={handleInputChange}
+                    disabled={isSubmitting}
+                    placeholder="Landmark, Area"
+                  />
+                </div>
+
+                {/* 7. City */}
                 <div className="col-12 col-md-4">
                   <label className="form-label fw-semibold">City <span className="text-danger">*</span></label>
                   <select
@@ -243,7 +395,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                   </select>
                 </div>
 
-                {/* 7. State */}
+                {/* 8. State */}
                 <div className="col-12 col-md-4">
                   <label className="form-label fw-semibold">State <span className="text-danger">*</span></label>
                   <select
@@ -279,8 +431,8 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                   />
                 </div>
 
-                {/* 9. Latitude (Optional) */}
-                <div className="col-12 col-md-4">
+                {/* 9. Latitude */}
+                <div className="col-12 col-md-6">
                   <label className="form-label fw-semibold">Latitude</label>
                   <input
                     type="number"
@@ -294,8 +446,8 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                   />
                 </div>
 
-                {/* 10. Longitude (Optional) */}
-                <div className="col-12 col-md-4">
+                {/* 10. Longitude */}
+                <div className="col-12 col-md-6">
                   <label className="form-label fw-semibold">Longitude</label>
                   <input
                     type="number"
@@ -307,6 +459,37 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                     disabled={isSubmitting}
                     placeholder="77.2090"
                   />
+                </div>
+
+                {/* 11. Image URL */}
+                <div className="col-12 col-md-6">
+                  <label className="form-label fw-semibold">Image URL</label>
+                  <input
+                    type="url"
+                    className="form-control"
+                    name="imageUrl"
+                    value={formData.imageUrl || ""}
+                    onChange={handleInputChange}
+                    disabled={isSubmitting}
+                    placeholder="https://example.com/salon.jpg"
+                  />
+                </div>
+
+                {/* 10. Gender Type */}
+                <div className="col-12 col-md-6">
+                  <label className="form-label fw-semibold">Gender Type <span className="text-danger">*</span></label>
+                  <select
+                    className="form-select"
+                    name="genderType"
+                    value={formData.genderType || "UNISEX"}
+                    onChange={handleInputChange}
+                    required
+                    disabled={isSubmitting}
+                  >
+                    <option value="MALE">Male</option>
+                    <option value="FEMALE">Female</option>
+                    <option value="UNISEX">Unisex</option>
+                  </select>
                 </div>
 
 

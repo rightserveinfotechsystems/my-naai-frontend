@@ -30,8 +30,11 @@ const Login = () => {
         position: "top-right",
         autoClose: 3000,
       });
-      // Fetch user profile data after successful login
-      await fetchUserProfile();
+
+      // Note: Profile fetching is handled by UserContext automatically
+      // No need to call fetchUserProfile() here as it will be called
+      // when the UserProvider detects the token
+
       navigate("/");
     } else {
       toast.error(result.message || "Login Failed");
