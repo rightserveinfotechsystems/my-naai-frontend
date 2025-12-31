@@ -174,22 +174,27 @@ export const adminAPI = {
 
 // ==================== USER MANAGEMENT ====================
 export const userAPI = {
-  getUsers: async () => {
-    try {
-      const response = await api.post('/api/users/get-user-list', {});
-      return {
-        success: response.data?.status === "SUCCESS",
-        data: response.data?.data,
-        message: response.data?.message
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: error.response?.data?.message || "Failed to fetch users",
-        error: error.response?.data
-      };
-    }
-  },
+  getUsers: async (payload) => {
+  try {
+    const response = await api.post(
+      '/api/users/get-user-list',
+      payload   
+    );
+
+    return {
+      success: response.data?.status === "SUCCESS",
+      data: response.data?.data,
+      message: response.data?.message
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error.response?.data?.message || "Failed to fetch users",
+      error: error.response?.data
+    };
+  }
+},
+
 
   // Create new user
   createUser: async (userData) => {
@@ -612,37 +617,65 @@ export const bookingAPI = {
 
 // ==================== SALON REQUEST MANAGEMENT ====================
 export const salonRequestAPI = {
-  getSalonRequests: async () => {
-    return {
-      success: true,
-      data: [],
-      message: "Salon requests endpoint not implemented yet"
-    };
+  getSalonRequests: async ({ page = 1, salonNameFilter = "", requestDate = "", searchString = "" }) => {
+    try {
+      const payload = {
+        page,
+        salonNameFilter,
+        requestDate,
+        searchString
+      };
+
+      const response = await api.post('/api/salonrequest/get-list', payload);
+
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data,
+        message: response.data?.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to fetch salon requests",
+        error: error.response?.data
+      };
+    }
   },
 
-  getSalonRequestById: async (requestId) => {
-    return {
-      success: false,
-      message: "Salon request endpoint not implemented yet",
-      data: null
-    };
+
+  deleteSalonRequests: async (requestIds) => {
+    try {
+      const res = await api.post("/api/salonrequest/delete-request", {
+        requestIds
+      });
+
+      return {
+        success: res.data?.status === "SUCCESS",
+        message: res.data?.message
+      };
+    } catch (err) {
+      return {
+        success: false,
+        message: err.response?.data?.message || "Delete failed"
+      };
+    }
   },
 
-  approveSalonRequest: async (requestId, approvalData) => {
-    return {
-      success: false,
-      message: "Salon request approval endpoint not implemented yet",
-      data: null
-    };
-  },
+  // approveSalonRequest: async (requestId, approvalData) => {
+  //   return {
+  //     success: false,
+  //     message: "Salon request approval endpoint not implemented yet",
+  //     data: null
+  //   };
+  // },
 
-  rejectSalonRequest: async (requestId, rejectionData) => {
-    return {
-      success: false,
-      message: "Salon request rejection endpoint not implemented yet",
-      data: null
-    };
-  }
+  // rejectSalonRequest: async (requestId, rejectionData) => {
+  //   return {
+  //     success: false,
+  //     message: "Salon request rejection endpoint not implemented yet",
+  //     data: null
+  //   };
+  // }
 };
 
 // ==================== DASHBOARD/STATS ====================
