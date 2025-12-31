@@ -99,7 +99,8 @@ export const adminAPI = {
       data: profileData,
       message: "Profile updated successfully"
     };
-  }
+  },
+
 };
 
 // ==================== USER MANAGEMENT ====================
@@ -158,23 +159,7 @@ export const userAPI = {
     }
   },
 
-  // Delete user
-  deleteUser: async (userId) => {
-    try {
-      const response = await api.delete(`/api/users/${userId}`);
-      return {
-        success: response.data?.status === "SUCCESS",
-        data: response.data?.data,
-        message: response.data?.message
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: error.response?.data?.message || "Failed to delete user",
-        error: error.response?.data
-      };
-    }
-  },
+
 
   // Get user by ID
   getUserById: async (userId) => {
@@ -192,7 +177,49 @@ export const userAPI = {
         error: error.response?.data
       };
     }
+  },
+  changeUserStatus: async (userId) => {
+    try {
+      const response = await api.post('/api/users/change-user-status', {
+        userId
+      });
+
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data,
+        message: response.data?.message
+      };
+    } catch (error) {
+      console.error("Change status API error:", error);
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to change user status",
+        error: error.response?.data
+      };
+    }
+  },
+  deleteUsers: async (userIds) => {
+    try {
+      const response = await api.post("/api/users/delete-user", {
+        userIds
+      });
+
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data,
+        message: response.data?.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message:
+          error.response?.data?.message || "Failed to delete users",
+        error: error.response?.data
+      };
+    }
   }
+
+
 };
 
 // ==================== SALON MANAGEMENT ====================

@@ -6,6 +6,10 @@ import StatusBadge from "../components/StatusBadge.jsx";
 import Pagination from "../components/Pagination.jsx";
 import { FaTrash } from "react-icons/fa";
 import { userAPI } from "../services/communication.jsx";
+import ToggelModal from "../components/ToggelModal.jsx";
+import DeleteConfirmModal from "../components/DeleteConfirmModal.jsx";
+
+
 
 const ITEMS_PER_PAGE = 20;
 
@@ -15,6 +19,15 @@ const Users = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedUsers, setSelectedUsers] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [deleteModal, setDeleteModal] = useState({
+    show: false,
+    userIds: [],
+    loading: false
+  });
+
+
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -34,7 +47,7 @@ const Users = () => {
   useEffect(() => {
     fetchUsers();
   }, []);
-  
+
 
   const filtered = useMemo(() => {
     return users.filter(
@@ -73,16 +86,66 @@ const Users = () => {
     }
   };
 
-  const deleteSelectedUsers = () => {
-    setUsers(users.filter(user => !selectedUsers.includes(user.userId)));
-    setSelectedUsers([]);
-    setCurrentPage(1);
+
+  const confirmStatusChange = async () => {
+    try {
+      setLoading(true);
+
+      const res = await userAPI.changeUserStatus(selectedUser.userId);
+
+      if (res.success) {
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.userId === selectedUser.userId
+              ? { ...u, isActive: !u.isActive }
+              : u
+          )
+        );
+      }
+
+      setShowModal(false);
+      setSelectedUser(null);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleToggleClick = (user) => {
+    setSelectedUser(user);
+    setShowModal(true);
   };
 
-  const deleteUser = (id) => {
-    setUsers(users.filter((u) => u.userId !== id));
-    setSelectedUsers(prev => prev.filter(selectedId => selectedId !== id));
+
+
+
+
+  const handleConfirmDelete = async () => {
+    setDeleteModal(prev => ({ ...prev, loading: true }));
+
+    const res = await userAPI.deleteUsers(deleteModal.userIds);
+
+    if (res.success) {
+      await fetchUsers();
+
+      setSelectedUsers([]);
+
+      setDeleteModal({
+        show: false,
+        userIds: [],
+        loading: false
+      });
+    } else {
+      alert(res.message || "Delete failed");
+      setDeleteModal(prev => ({ ...prev, loading: false }));
+    }
   };
+
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
 
   return (
     <Layout>
@@ -133,13 +196,25 @@ const Users = () => {
                     <div className="col-12 col-md d-flex align-items-center justify-content-md-end gap-2 flex-wrap mt-2">
                       <div className="d-flex gap-1 flex-wrap align-items-center">
                         <button
-                          className={`btn btn-sm btn-danger d-flex align-items-center gap-1 ${selectedUsers.length > 0 ? '' : 'opacity-50 cursor-not-allowed'}`}
-                          onClick={selectedUsers.length > 0 ? deleteSelectedUsers : undefined}
+                          className={`btn btn-sm btn-danger d-flex align-items-center gap-1 ${selectedUsers.length > 0 ? "" : "opacity-50 cursor-not-allowed"
+                            }`}
+                          onClick={() =>
+                            selectedUsers.length > 0 &&
+                            setDeleteModal({
+                              show: true,
+                              userIds: selectedUsers,
+                              loading: false
+                            })
+                          }
                           disabled={selectedUsers.length === 0}
                         >
                           <FaTrash size={14} />
-                          <span className="d-none d-sm-inline">({selectedUsers.length})</span>
+                          <span className="d-none d-sm-inline">
+                            ({selectedUsers.length})
+                          </span>
                         </button>
+
+
 
                         <button
                           className={`btn btn-sm btn-outline-secondary ${selectedUsers.length > 0 ? '' : 'opacity-50 cursor-not-allowed'}`}
@@ -194,7 +269,7 @@ const Users = () => {
                         <tr><td colSpan={7} className="text-center py-5">Loading users...</td></tr>
                       ) : paginated.map((user, index) => (
                         <tr key={user.userId} className="align-middle">
-                           <td className="ps-4 pe-2">
+                          <td className="ps-4 pe-2">
                             <div className="form-check m-0">
                               <input
                                 className="form-check-input shadow-none"
@@ -207,17 +282,17 @@ const Users = () => {
                           <td className="ps-3 pe-2 fw-medium text-muted">
                             {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
                           </td>
-                          
+
                           <td className="fw-semibold pe-3">
                             <div className="text-truncate" style={{ maxWidth: '180px' }}>
-                              {user.fullName} 
+                              {user.fullName}
                             </div>
                           </td>
                           <td className="pe-3">
                             <div className="small fw-medium text-truncate" style={{ maxWidth: '220px' }}>
                               {user.email}
                             </div>
-                            <div className="text-muted small text-truncate">{user.phoneNumber}</div> 
+                            <div className="text-muted small text-truncate">{user.phoneNumber}</div>
                           </td>
                           <td className="pe-1">
                             <StatusBadge status={user.isActive ? "active" : "inactive"} />
@@ -226,13 +301,39 @@ const Users = () => {
                             {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                           </td>
                           <td className="text-end pe-4">
-                            <button
-                              className="btn btn-sm fontcolor px-3 py-1 d-inline-flex align-items-center gap-1"
-                              onClick={() => deleteUser(user.userId)}
-                            >
-                              <FaTrash size={14} />
-                            </button>
+                            <div className="d-inline-flex align-items-center gap-2">
+
+                              {/* Toggle Switch */}
+                              <div className="form-check form-switch m-0">
+                                <input
+                                  className="form-check-input"
+                                  type="checkbox"
+                                  checked={!!user.isActive}
+                                  onChange={() => handleToggleClick(user)}
+                                />
+                              </div>
+
+
+
+                              {/* Delete Button */}
+                              <button
+                                className="btn btn-sm fontcolor px-3 py-1 d-inline-flex align-items-center gap-1"
+                                onClick={() =>
+                                  setDeleteModal({
+                                    show: true,
+                                    userIds: [user.userId],
+                                    loading: false
+                                  })
+                                }
+                              >
+                                <FaTrash size={14} />
+                              </button>
+
+
+
+                            </div>
                           </td>
+
                         </tr>
                       ))}
                       {!loading && paginated.length === 0 && (
@@ -290,6 +391,25 @@ const Users = () => {
           </div>
         </div>
       </div>
+      <ToggelModal
+        show={showModal}
+        onHide={() => setShowModal(false)}
+        onConfirm={confirmStatusChange}
+        currentStatus={selectedUser?.isActive}
+        loading={loading}
+      />
+
+      <DeleteConfirmModal
+        show={deleteModal.show}
+        loading={deleteModal.loading}
+        count={deleteModal.userIds.length}
+        onHide={() =>
+          setDeleteModal({ show: false, userIds: [], loading: false })
+        }
+        onConfirm={handleConfirmDelete}
+      />
+
+
     </Layout>
   );
 };
