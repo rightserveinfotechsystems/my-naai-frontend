@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react"; // useEffect add kiya
+import { useState, useEffect } from "react"; // useEffect add kiya
 import Layout from "../components/Layout.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import SearchInput from "../components/SearchInput.jsx";
@@ -17,7 +17,10 @@ const Users = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -30,39 +33,54 @@ const Users = () => {
 
 
   const fetchUsers = async () => {
+  try {
     setLoading(true);
 
-    const result = await userAPI.getUsers();
+    const res = await userAPI.getUsers({
+      page: currentPage,
+      limit: ITEMS_PER_PAGE,
+      searchString: search
+    });
 
-    if (result.success && result.data?.users) {
-      setUsers(result.data.users);
+  
+   
+    if (res.success) {
+      setUsers(res.data.users);
+      setTotalUsers(res.data.pagination.totalUsers);
+      setTotalPages(res.data.pagination.totalPages);
     } else {
-      console.error("API Error:", result.message);
       setUsers([]);
     }
-
+  } catch (error) {
+    console.error("Fetch users error:", error);
+    setUsers([]);
+  } finally {
     setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  }
+};
 
 
-  const filtered = useMemo(() => {
-    return users.filter(
-      (user) =>
-        (user.fullName || "").toLowerCase().includes(search.toLowerCase()) ||
-        (user.email || "").toLowerCase().includes(search.toLowerCase()) ||
-        (user.phoneNumber || "").includes(search)
-    );
-  }, [users, search]);
 
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
-  const paginated = filtered.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  // useEffect(() => {
+  //   fetchUsers();
+  // }, [currentPage, search]);
+
+
+
+  // const filtered = useMemo(() => {
+  //   return users.filter(
+  //     (user) =>
+  //       (user.fullName || "").toLowerCase().includes(search.toLowerCase()) ||
+  //       (user.email || "").toLowerCase().includes(search.toLowerCase()) ||
+  //       (user.phoneNumber || "").includes(search)
+  //   );
+  // }, [users, search]);
+
+  // const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
+  // const paginated = filtered.slice(
+  //   (currentPage - 1) * ITEMS_PER_PAGE,
+  //   currentPage * ITEMS_PER_PAGE
+  // );
 
   const handleUserSelect = (userId) => {
     setSelectedUsers(prev =>
@@ -72,19 +90,21 @@ const Users = () => {
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      setSelectedUsers(paginated.map(user => user.userId)); // Backend me userId use ho raha hai
+      setSelectedUsers(users.map(user => user.userId));
     } else {
       setSelectedUsers([]);
     }
   };
 
+
   const handleSelectAllMobile = (e) => {
     if (e.target.checked) {
-      setSelectedUsers(filtered.map(user => user.userId));
+      setSelectedUsers(users.map(u => u.userId));
     } else {
       setSelectedUsers([]);
     }
   };
+
 
 
   const confirmStatusChange = async () => {
@@ -143,8 +163,11 @@ const Users = () => {
 
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+  const timer = setTimeout(() => {
+    fetchUsers();   
+  }, 500); 
+  return () => clearTimeout(timer);
+}, [search, currentPage]);
 
 
   return (
@@ -162,11 +185,11 @@ const Users = () => {
                       className="form-check-input shadow-none me-2"
                       type="checkbox"
                       id="selectAllMobile"
-                      checked={selectedUsers.length === filtered.length && filtered.length > 0}
+                      checked={selectedUsers.length === users.length && users.length > 0}
                       onChange={handleSelectAllMobile}
                     />
                     <label className="form-check-label small fw-medium mb-0">
-                      Select all ({filtered.length})
+                      Select all ({users.length})
                     </label>
                   </div>
                 </div>
@@ -190,6 +213,7 @@ const Users = () => {
                         }}
                         placeholder="Search by name, email or phone..."
                       />
+
                     </div>
 
                     {/* RIGHT END: Actions + Pagination */}
@@ -216,13 +240,13 @@ const Users = () => {
 
 
 
-                        <button
+                        {/* <button
                           className={`btn btn-sm btn-outline-secondary ${selectedUsers.length > 0 ? '' : 'opacity-50 cursor-not-allowed'}`}
                           onClick={selectedUsers.length > 0 ? () => setSelectedUsers([]) : undefined}
                           disabled={selectedUsers.length === 0}
                         >
                           Clear
-                        </button>
+                        </button> */}
                       </div>
 
                       <div className="d-none d-md-block border-start mx-1" style={{ height: '24px' }}></div>
@@ -234,6 +258,7 @@ const Users = () => {
                           onPageChange={setCurrentPage}
                           size="sm"
                         />
+
                       </div>
                     </div>
                   </div>
@@ -245,18 +270,18 @@ const Users = () => {
                   <table className="table table-hover mb-0 align-middle">
                     <thead className="table-light position-sticky top-0 bg-white border-bottom z-10">
                       <tr>
-                        <th scope="col" className="py-2 ps-4 pe-2 w-auto">
+                        <th scope="col" className="py-2 ps-3 pe-2 w-auto">
                           <div className="form-check m-0">
                             <input
                               className="form-check-input shadow-none"
                               type="checkbox"
                               id="selectAll"
-                              checked={selectedUsers.length === paginated.length && paginated.length > 0}
+                              checked={selectedUsers.length === users.length && users.length > 0}
                               onChange={handleSelectAll}
                             />
                           </div>
                         </th>
-                        <th scope="col" className="py-2 ps-3 pe-2 w-auto ">No.</th>
+                        <th scope="col" className="py-2 ps-3 pe-2">No.</th>
                         <th scope="col" className="py-2 pe-3 text-nowrap">Name</th>
                         <th scope="col" className="py-2 pe-3 text-nowrap">Email / Phone</th>
                         <th scope="col" className="py-2 pe-2 text-nowrap">Status</th>
@@ -267,7 +292,7 @@ const Users = () => {
                     <tbody>
                       {loading ? (
                         <tr><td colSpan={7} className="text-center py-5">Loading users...</td></tr>
-                      ) : paginated.map((user, index) => (
+                      ) : users.map((user, index) => (
                         <tr key={user.userId} className="align-middle">
                           <td className="ps-4 pe-2">
                             <div className="form-check m-0">
@@ -336,7 +361,7 @@ const Users = () => {
 
                         </tr>
                       ))}
-                      {!loading && paginated.length === 0 && (
+                     {!loading && users.length === 0 && (
                         <tr>
                           <td colSpan={7} className="text-center text-muted py-5">No users found</td>
                         </tr>
@@ -348,7 +373,7 @@ const Users = () => {
                 {/* MOBILE CARDS */}
                 <div className="d-md-none px-3 pb-4" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
                   <div className="row g-3">
-                    {paginated.map((user) => (
+                    {users.map((user) => (
                       <div key={user.userId} className="col-12">
                         <div className="card border-0 shadow-sm">
                           <div className="card-body py-3 px-3">
@@ -372,9 +397,23 @@ const Users = () => {
                             </div>
                             <div className="d-flex justify-content-between align-items-center pt-2 border-top">
                               <small className="text-muted">{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</small>
+                              <div className="form-check form-switch m-0">
+                                <input
+                                  className="form-check-input"
+                                  type="checkbox"
+                                  checked={!!user.isActive}
+                                  onChange={() => handleToggleClick(user)}
+                                />
+                              </div>
                               <button
                                 className="btn btn-sm fontcolor px-3 py-1 d-inline-flex align-items-center gap-1"
-                                onClick={() => deleteUser(user.userId)}
+                                onClick={() =>
+                                  setDeleteModal({
+                                    show: true,
+                                    userIds: [user.userId],
+                                    loading: false
+                                  })
+                                }
                               >
                                 <FaTrash size={14} />
                               </button>

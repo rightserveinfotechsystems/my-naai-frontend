@@ -4,7 +4,8 @@ import PageHeader from "../components/PageHeader.jsx";
 import Pagination from "../components/Pagination.jsx";
 import SearchInput from "../components/SearchInput.jsx";
 import { bookings as bookingData, salons } from "../data/mockData.js";
-
+import { salonRequestAPI } from "../services/communication.jsx";
+import DeleteConfirmModal from "../components/DeleteConfirmModal.jsx"
 const ITEMS_PER_PAGE = 20;
 
 const salonrequest = () => {
@@ -12,10 +13,18 @@ const salonrequest = () => {
   const [dateFilter, setDateFilter] = useState("");
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [bookings, setBookings] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [selectedBookings, setSelectedBookings] = useState(new Set());
   const [selectAll, setSelectAll] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [deleteModal, setDeleteModal] = useState({
+    show: false,
+    requestIds: [],
+    loading: false
+  });
+
 
   // Simulate loading on mount and filter changes
   useEffect(() => {
@@ -38,7 +47,7 @@ const salonrequest = () => {
     return result;
   }, [salonFilter, dateFilter, search]);
 
-  const totalPages = Math.max(Math.ceil(filtered.length / ITEMS_PER_PAGE), 1);
+
   const paginated = filtered.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
@@ -49,7 +58,7 @@ const salonrequest = () => {
     const checked = e.target.checked;
     setSelectAll(checked);
     if (checked) {
-      const selectedIds = new Set(paginated.map(b => b.id));
+      const selectedIds = new Set(bookings.map(b => b.requestId));
       setSelectedBookings(selectedIds);
     } else {
       setSelectedBookings(new Set());
@@ -89,27 +98,16 @@ const salonrequest = () => {
     }
   }, [selectedBookings.size]);
 
-  // Single Delete
-  const handleDelete = useCallback((bookingId) => {
-    if (window.confirm('Are you sure you want to delete this salon request?')) {
-      setIsLoading(true);
-      console.log('Delete booking:', bookingId);
-      setTimeout(() => {
-        setSelectedBookings(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(bookingId);
-          return newSet;
-        });
-        setIsLoading(false);
-      }, 800);
-    }
-  }, []);
+
+
 
   const handleFilterChange = useCallback((setter) => (e) => {
     setter(e.target.value);
     setCurrentPage(1);
     setSelectedBookings(new Set());
     setSelectAll(false);
+    setCurrentPage(1);
+
   }, []);
 
   const handleDateChange = useCallback((e) => {
@@ -117,6 +115,8 @@ const salonrequest = () => {
     setCurrentPage(1);
     setSelectedBookings(new Set());
     setSelectAll(false);
+    setCurrentPage(1);
+
   }, []);
 
   const handleClearFilters = useCallback(() => {
@@ -129,6 +129,57 @@ const salonrequest = () => {
   }, []);
 
   const selectedCount = selectedBookings.size;
+
+  const fetchSalonRequests = useCallback(async () => {
+    setIsLoading(true);
+
+    const response = await salonRequestAPI.getSalonRequests({
+      page: currentPage,
+      salonNameFilter: salonFilter !== "all" ? salonFilter : "",
+      requestDate: dateFilter,
+      searchString: search
+    });
+
+    if (response.success) {
+      setBookings(response.data || []);
+      setTotalPages(response.pagination?.totalPages || 1);
+    } else {
+      setBookings([]);
+      setTotalPages(1);
+    }
+
+    setIsLoading(false);
+  }, [currentPage, salonFilter, dateFilter, search]);
+
+  useEffect(() => {
+    fetchSalonRequests();
+  }, [fetchSalonRequests]);
+
+
+  const handleConfirmDelete = async () => {
+    setDeleteModal(prev => ({ ...prev, loading: true }));
+
+    const res = await salonRequestAPI.deleteSalonRequests(
+      deleteModal.requestIds // 🔴 array (1 or many)
+    );
+
+    if (res.success) {
+      await fetchSalonRequests(); // refresh list
+
+      setSelectedBookings(new Set());
+      setSelectAll(false);
+
+      setDeleteModal({
+        show: false,
+        requestIds: [],
+        loading: false
+      });
+    } else {
+      alert(res.message || "Delete failed");
+      setDeleteModal(prev => ({ ...prev, loading: false }));
+    }
+  };
+
 
   return (
     <Layout>
@@ -182,38 +233,37 @@ const salonrequest = () => {
 
                 <div className="col-12 col-lg-6 d-flex flex-column flex-sm-row gap-2 justify-content-end align-items-end">
                   {/* Bulk Actions */}
-                  {selectedCount > 0 && !isLoading && (
-                    <div className="d-flex align-items-center gap-2">
-                      <span className="text-muted small">
-                        {selectedCount}
-                      </span>
-                      <button
-                        className="btn btn-danger btn-sm"
-                        onClick={handleBulkDelete}
-                        disabled={isLoading}
-                      >
-                        <i className="fa-solid fa-trash me-1"></i>
-                      </button>
-                    </div>
+                  {selectedBookings.size > 0 && (
+                    <button
+                      className="btn btn-danger btn-sm d-flex align-items-center gap-1"
+                      onClick={() =>
+                        setDeleteModal({
+                          show: true,
+                          requestIds: Array.from(selectedBookings), // 🔴 multiple IDs
+                          loading: false
+                        })
+                      }
+                    >
+                      <i className="fa-solid fa-trash"></i>
+                      <span>({selectedBookings.size})</span>
+                    </button>
                   )}
+
 
                   <div className="d-flex justify-content-end align-items-center flex-wrap gap-2 gap-md-3 w-100 w-sm-auto">
                     <div className="flex-grow-1 flex-shrink-0 min-w-0" style={{ minWidth: '200px' }}>
+
+
                       <Pagination
                         currentPage={currentPage}
                         totalPages={totalPages}
                         onPageChange={setCurrentPage}
                         size="sm"
                       />
+
                     </div>
 
-                    <button
-                      className="btn btn-outline-secondary btn-sm px-md-3 flex-shrink-0"
-                      onClick={handleClearFilters}
-                      disabled={isLoading}
-                    >
-                      Clear
-                    </button>
+
                   </div>
                 </div>
               </div>
@@ -253,18 +303,22 @@ const salonrequest = () => {
                 </div>
 
                 {/* Mobile Bulk Actions */}
-                {selectedCount > 0 && !isLoading && (
-                  <div className="alert alert-warning d-flex justify-content-between align-items-center">
-                    <span className="small">{selectedCount}</span>
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={handleBulkDelete}
-                      disabled={isLoading}
-                    >
-                      <i className="fa-solid fa-trash"></i>
-                    </button>
-                  </div>
+                {selectedBookings.size > 0 && (
+                  <button
+                    className="btn btn-danger btn-sm d-flex align-items-center gap-1"
+                    onClick={() =>
+                      setDeleteModal({
+                        show: true,
+                        requestIds: Array.from(selectedBookings), // 🔴 multiple IDs
+                        loading: false
+                      })
+                    }
+                  >
+                    <i className="fa-solid fa-trash"></i>
+                    <span>({selectedBookings.size})</span>
+                  </button>
                 )}
+
 
                 {showMobileFilters && (
                   <div className="card border bg-light mt-2">
@@ -364,13 +418,15 @@ const salonrequest = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginated.map((booking, index) => (
-                    <tr key={booking.id}>
+                  {bookings.map((booking, index) => (
+                    <tr key={booking.requestId}>
                       <td className="px-2 py-2 text-center">
                         <input
                           type="checkbox"
-                          checked={selectedBookings.has(booking.id)}
-                          onChange={(e) => handleSelectBooking(booking.id, e.target.checked)}
+                          checked={selectedBookings.has(booking.requestId)}
+                          onChange={(e) =>
+                            handleSelectBooking(booking.requestId, e.target.checked)
+                          }
                           disabled={isLoading}
                         />
                       </td>
@@ -378,36 +434,40 @@ const salonrequest = () => {
                         {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
                       </td>
                       <td className="fw-semibold px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '160px' }}>
-                        {booking.salonOwnerName || 'N/A'}
+                        {booking.fullName || 'N/A'}
                       </td>
                       <td className="px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '150px' }}>
                         {booking.salonName}
                       </td>
                       <td className="px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '220px' }}>
-                        {booking.salonAddress || 'N/A'}
+                        {booking.address || 'N/A'}
                       </td>
                       <td className="fw-semibold px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '140px' }}>
-                        {booking.salonMobile || 'N/A'}
+                        {booking.phoneNumber || 'N/A'}
                       </td>
                       <td className="px-2 px-md-3 py-2">
                         <div className="small">
-                          <div>{booking.date}</div>
+                          <div>{booking.createdAt}</div>
                           <div className="text-muted">{booking.time}</div>
                         </div>
                       </td>
                       <td className="text-center px-2 px-md-3 py-2">
                         <button
                           className="btn fontcolor btn-sm"
-                          onClick={() => handleDelete(booking.id)}
-                          title="Delete"
-                          disabled={isLoading}
+                          onClick={() =>
+                            setDeleteModal({
+                              show: true,
+                              requestIds: [booking.requestId]
+                            })
+                          }
                         >
                           <i className="fa-solid fa-trash"></i>
                         </button>
+
                       </td>
                     </tr>
                   ))}
-                  {paginated.length === 0 && !isLoading && (
+                  {bookings.length === 0 && !isLoading && (
                     <tr>
                       <td colSpan={9} className="text-center text-muted py-5 bg-white">
                         No bookings found
@@ -452,23 +512,27 @@ const salonrequest = () => {
                         </div>
                         <div className="flex-grow-1 pe-2 min-w-0">
                           <div className="fw-semibold text-truncate">{booking.salonName}</div>
-                          <div className="text-muted small text-truncate">Owner: {booking.salonOwnerName || 'N/A'}</div>
+                          <div className="text-muted small text-truncate">Owner: {booking.fullName|| 'N/A'}</div>
                         </div>
                         <button
-                          className="btn btn-danger btn-sm ms-2"
-                          onClick={() => handleDelete(booking.id)}
-                          title="Delete"
-                          disabled={isLoading}
+                          className="btn fontcolor btn-sm"
+                          onClick={() =>
+                            setDeleteModal({
+                              show: true,
+                              requestIds: [booking.requestId]
+                            })
+                          }
                         >
                           <i className="fa-solid fa-trash"></i>
                         </button>
+
                       </div>
-                      <div className="text-muted small mb-2 text-truncate">{booking.salonAddress || 'N/A'}</div>
+                      <div className="text-muted small mb-2 text-truncate">{booking.address || 'N/A'}</div>
                       <div className="d-flex justify-content-between align-items-center mb-2">
-                        <div className="small text-truncate">{booking.salonMobile || 'N/A'}</div>
+                        <div className="small text-truncate">{booking.phoneNumber  || 'N/A'}</div>
                       </div>
                       <div className="small">
-                        <div>{booking.date}</div>
+                        <div>{booking.createdAt}</div>
                         <div className="text-muted">{booking.time}</div>
                       </div>
                     </div>
@@ -484,6 +548,16 @@ const salonrequest = () => {
           )}
         </div>
       </div>
+      <DeleteConfirmModal
+        show={deleteModal.show}
+        loading={deleteModal.loading}
+        count={deleteModal.requestIds.length}
+        onHide={() =>
+          setDeleteModal({ show: false, requestIds: [], loading: false })
+        }
+        onConfirm={handleConfirmDelete}
+      />
+
     </Layout>
   );
 };
