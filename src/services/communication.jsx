@@ -608,13 +608,89 @@ export const salonAPI = {
 };
 
 // ==================== BOOKING MANAGEMENT ====================
+
 export const bookingAPI = {
-  getBookings: async () => {
-    return {
-      success: true,
-      data: [],
-      message: "Bookings endpoint not implemented yet"
-    };
+  getBookings: async (params = {}) => {
+    try {
+      // Build query parameters
+      const queryParams = new URLSearchParams();
+
+      if (params.page && params.page !== 1) queryParams.append('page', params.page.toString());
+      if (params.limit) queryParams.append('limit', params.limit.toString());
+      if (params.search && params.search.trim()) queryParams.append('search', params.search.trim());
+      if (params.salonId && params.salonId !== 'all') queryParams.append('salonId', params.salonId);
+      if (params.status && params.status !== 'all') queryParams.append('status', params.status);
+      if (params.dateFrom) queryParams.append('dateFrom', params.dateFrom);
+      if (params.dateTo) queryParams.append('dateTo', params.dateTo);
+
+      console.log("📡 Calling booking list API with POST");
+      const requestBody = {
+        page: params.page || 1,
+        searchString: params.search || '',
+        statusFilter: (params.status && params.status !== 'all') ? params.status : '',
+        createdDate: params.dateFrom ? params.dateFrom.split('T')[0] : '' // Extract date part only
+      };
+
+      console.log("📨 Request body:", requestBody);
+      console.log("🔍 Search string:", requestBody.searchString || 'empty');
+      console.log("📊 Status filter:", requestBody.statusFilter || 'all');
+      console.log("📅 Created date:", requestBody.createdDate || 'none');
+
+      const response = await api.post('/api/booking/list', requestBody);
+      console.log("✅ Booking list response:", response.data);
+      console.log("📊 Raw bookings data:", response.data?.data);
+
+      if (response.data?.status === "SUCCESS") {
+        const bookingsData = response.data.data || [];
+        const transformedData = Array.isArray(bookingsData) ? bookingsData.map(booking => {
+          const transformed = {
+            id: booking.bookingId,
+            userName: booking.userName || 'N/A',
+            salonName: booking.salonName || 'N/A',
+            serviceName: booking.serviceName || 'N/A',
+            date: booking.bookingDate || 'N/A',
+            time: booking.bookingTime || null,
+            status: booking.bookingStatus || 'pending',
+            totalAmount: booking.amount || parseFloat(booking.servicePrice) || 0
+          };
+          console.log("🔄 Transformed booking:", transformed);
+          return transformed;
+        }) : [];
+
+        return {
+          success: true,
+          data: transformedData,
+          pagination: response.data.pagination || {
+            total: bookingsData.length,
+            page: params.page || 1,
+            limit: params.limit || 20,
+            totalPages: Math.ceil(bookingsData.length / (params.limit || 20))
+          },
+          message: response.data.message || "Bookings fetched successfully"
+        };
+      } else {
+        return {
+          success: false,
+          data: [],
+          message: response.data?.message || "Failed to fetch bookings"
+        };
+      }
+    } catch (error) {
+      console.error("❌ API Error:", {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: error.config?.url
+      });
+
+      return {
+        success: false,
+        data: [],
+        message: error.response?.data?.message || "Failed to fetch bookings",
+        error: error.response?.data
+      };
+    }
   },
 
   getBookingById: async (bookingId) => {

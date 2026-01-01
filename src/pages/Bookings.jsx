@@ -1,43 +1,145 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import Layout from "../components/Layout.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import Pagination from "../components/Pagination.jsx";
 import SearchInput from "../components/SearchInput.jsx";
-import { bookings as bookingData, salons } from "../data/mockData.js";
+import { bookingAPI, salonAPI } from "../services/communication.jsx";
 
 const ITEMS_PER_PAGE = 20;
 
 const Bookings = () => {
+  console.log("🏗️ Bookings component rendered");
+
+  const [bookings, setBookings] = useState([]);
+  const [salons, setSalons] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [salonFilter, setSalonFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState(""); // Initialize with empty string
   const [currentPage, setCurrentPage] = useState(1);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
 
-  const filtered = useMemo(() => {
-    const result = bookingData.filter((booking) => {
-      const matchesSalon = salonFilter === "all" || booking.salonId === salonFilter;
-      const matchesStatus = statusFilter === "all" || booking.status === statusFilter;
-      const matchesDate = !dateFilter || booking.date === dateFilter;
-      const matchesSearch = !search || 
-        booking.userName.toLowerCase().includes(search.toLowerCase()) ||
-        booking.salonName.toLowerCase().includes(search.toLowerCase()) ||
-        booking.serviceName.toLowerCase().includes(search.toLowerCase());
-      return matchesSalon && matchesStatus && matchesDate && matchesSearch;
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      console.log("🔍 Search debounced:", search);
+      setDebouncedSearch(search);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Reset page when debounced search changes
+  useEffect(() => {
+    console.log("📄 Search changed, resetting page. debouncedSearch:", debouncedSearch);
+    setCurrentPage(1);
+  }, [debouncedSearch]);
+
+  // Initial load
+  useEffect(() => {
+    console.log("🏁 Initial component mount - calling fetchBookings");
+    fetchBookings();
+  }, []); // Empty dependency array for initial load
+
+  // Fetch bookings from API (now uses mock data)
+  const fetchBookings = useCallback(async () => {
+    console.log("🚀 fetchBookings STARTED with:", {
+      search: search,
+      debouncedSearch: debouncedSearch,
+      salonFilter: salonFilter,
+      statusFilter: statusFilter,
+      currentPage: currentPage,
+      dateFilter: dateFilter
     });
-    // console.log(" FILTERED:", result.length, "bookings");
-    return result;
-  }, [salonFilter, statusFilter, dateFilter, search]);
 
-  const totalPages = Math.max(Math.ceil(filtered.length / ITEMS_PER_PAGE), 1);
-  const paginated = filtered.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+    setLoading(true);
+    try {
+      const apiParams = {
+        page: currentPage,
+        search: debouncedSearch,
+        status: statusFilter,
+        dateFrom: dateFilter ? `${dateFilter}T00:00:00.000Z` : undefined
+      };
 
-  // console.log(" PAGINATION:", { filtered: filtered.length, totalPages, currentPage, ITEMS_PER_PAGE });
+      console.log("🎯 API Parameters:", apiParams);
+      console.log("📋 Final request will be:", {
+        page: apiParams.page,
+        searchString: apiParams.search,
+        statusFilter: apiParams.status,
+        createdDate: apiParams.dateFrom ? apiParams.dateFrom.split('T')[0] : ''
+      });
+
+      console.log("Fetching bookings with params:", apiParams);
+      const result = await bookingAPI.getBookings(apiParams);
+
+      if (result.success) {
+        console.log("📋 API result data:", result.data);
+        console.log("📋 First booking sample:", result.data?.[0]);
+        setBookings(result.data || []);
+        setTotalItems(result.pagination?.total || 0);
+        setTotalPages(result.pagination?.totalPages || 1);
+        console.log("✅ Bookings loaded:", result.data?.length || 0, "Total:", result.pagination?.total || 0);
+      } else {
+        console.error("❌ Failed to fetch bookings:", result.message);
+        setBookings([]);
+        setTotalItems(0);
+        setTotalPages(1);
+      }
+    } catch (error) {
+      console.error("Error fetching bookings:", error);
+      setBookings([]);
+      setTotalItems(0);
+      setTotalPages(1);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, debouncedSearch, salonFilter, statusFilter, dateFilter]);
+
+  // Fetch salons for dropdown
+  const fetchSalons = useCallback(async () => {
+    try {
+      const result = await salonAPI.getSalons({ page: 1, limit: 100 }); // Get first 100 salons
+      if (result.success) {
+        setSalons(result.data?.barberShops || []);
+      } else {
+        console.warn("API failed for salons:", result.message);
+        setSalons([]);
+      }
+    } catch (error) {
+      console.error("Error fetching salons:", error);
+      setSalons([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSalons();
+  }, [fetchSalons]);
+
+  // Handle parameter changes (skip initial render)
+  const isInitialMount = useRef(true);
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    console.log("🔄 Parameters changed, fetching bookings:", {
+      currentPage,
+      debouncedSearch,
+      salonFilter,
+      statusFilter,
+      dateFilter
+    });
+    fetchBookings();
+  }, [fetchBookings, currentPage, debouncedSearch, salonFilter, statusFilter, dateFilter]);
+
+  // Since filtering and pagination is now handled in fetchBookings, we use bookings directly
+  const filtered = bookings;
 
   const handleFilterChange = useCallback((setter) => (e) => {
     setter(e.target.value);
@@ -56,6 +158,16 @@ const Bookings = () => {
     setSearch("");
     setCurrentPage(1);
   }, []);
+
+  // Debug logging
+  console.log("🔍 Bookings component render:", {
+    loading,
+    bookingsCount: bookings.length,
+    filteredCount: filtered.length,
+    currentPage,
+    totalPages,
+    totalItems
+  });
 
   return (
     <Layout>
@@ -76,10 +188,7 @@ const Bookings = () => {
                     <div className="col-12 col-md-6">
                       <SearchInput
                         value={search}
-                        onChange={(val) => {
-                          setSearch(val);
-                          setCurrentPage(1);
-                        }}
+                        onChange={setSearch}
                         placeholder="Search by user, salon or service..."
                       />
                     </div>
@@ -104,11 +213,11 @@ const Bookings = () => {
                         value={statusFilter}
                         onChange={handleFilterChange(setStatusFilter)}
                       >
-                        <option value="all">All Status</option>
-                        <option value="pending">Pending</option>
-                        <option value="confirmed">Confirmed</option>
-                        <option value="completed">Completed</option>
-                        <option value="cancelled">Cancelled</option>
+                        <option key="all" value="all">All Status</option>
+                        <option key="pending" value="pending">Pending</option>
+                        <option key="confirmed" value="confirmed">Confirmed</option>
+                        <option key="completed" value="completed">Completed</option>
+                        <option key="cancelled" value="cancelled">Cancelled</option>
                       </select>
                     </div>
                     <div className="col-12 col-md-2">
@@ -126,7 +235,7 @@ const Bookings = () => {
                 <div className="col-12 col-lg-5 d-flex flex-column flex-sm-row gap-2 justify-content-end align-items-end">
                   <div className="d-flex justify-content-end align-items-center flex-wrap gap-2 gap-md-3 w-100 w-sm-auto">
                     <div className="text-muted small flex-shrink-0 d-none d-md-block">
-                      {/* Showing {paginated.length} of {filtered.length}  */}
+                      Showing {filtered.length} of {totalItems}
                     </div>
                     
                     {/* PAGINATION */}
@@ -172,10 +281,7 @@ const Bookings = () => {
                   <div className="col">
                     <SearchInput
                       value={search}
-                      onChange={(val) => {
-                        setSearch(val);
-                        setCurrentPage(1);
-                      }}
+                      onChange={setSearch}
                       placeholder="Search..."
                     />
                   </div>
@@ -211,11 +317,11 @@ const Bookings = () => {
                             value={statusFilter}
                             onChange={handleFilterChange(setStatusFilter)}
                           >
-                            <option value="all">All Status</option>
-                            <option value="pending">Pending</option>
-                            <option value="confirmed">Confirmed</option>
-                            <option value="completed">Completed</option>
-                            <option value="cancelled">Cancelled</option>
+                            <option key="all-mobile" value="all">All Status</option>
+                            <option key="pending-mobile" value="pending">Pending</option>
+                            <option key="confirmed-mobile" value="confirmed">Confirmed</option>
+                            <option key="completed-mobile" value="completed">Completed</option>
+                            <option key="cancelled-mobile" value="cancelled">Cancelled</option>
                           </select>
                         </div>
 
@@ -274,7 +380,7 @@ const Bookings = () => {
                 </tr>
               </thead>
               <tbody>
-                {paginated.map((booking, index) => (
+                {filtered.map((booking, index) => (
                   <tr key={booking.id}>
                     <td className="fw-medium text-center px-2 px-md-3 py-2 text-muted">
                       {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
@@ -292,7 +398,7 @@ const Bookings = () => {
                     <td className="px-2 px-md-3 py-2"><StatusBadge status={booking.status} /></td>
                   </tr>
                 ))}
-                {paginated.length === 0 && (
+                {filtered.length === 0 && (
                   <tr>
                     <td colSpan={7} className="text-center text-muted py-5 bg-white">
                       No bookings found
@@ -306,7 +412,7 @@ const Bookings = () => {
 
         {/* MOBILE CARDS */}
         <div className="d-md-none bg-white bookings-mobile-cards">
-          {paginated.map((booking) => (
+          {filtered.map((booking) => (
             <div key={booking.id} className="card shadow-sm border-0 bg-white">
               <div className="card-body p-2 p-md-3">
                 <div className="d-flex justify-content-between align-items-start mb-2">
@@ -327,7 +433,7 @@ const Bookings = () => {
               </div>
             </div>
           ))}
-          {paginated.length === 0 && (
+          {filtered.length === 0 && (
             <div className="alert alert-light border mb-0 text-center py-4 bg-white">
               No bookings found
             </div>
