@@ -151,7 +151,7 @@ const SalonDetail = () => {
                 </div>
               </div>
             </div>
-            <div className="d-flex flex-column align-items-end gap-1">
+            <div className="d-flex flex-row align-items-center gap-1 flex-wrap">
               <StatusBadge status={salon.isActive ? "active" : "inactive"} />
               <small className={`badge ${salon.isOpen ? 'bg-success' : 'bg-warning text-dark'}`}>
                 {salon.isOpen ? 'Open' : 'Closed'}

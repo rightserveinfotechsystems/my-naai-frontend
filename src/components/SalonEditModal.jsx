@@ -425,7 +425,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title fw-bold">
-              <i className={`bi ${modalMode === "add" ? "bi-plus-circle text-primary" : "bi-pencil-square text-warning"} me-2`}></i>
+              <i className={`bi ${modalMode === "add" ? "bi-plus-circle text-warning" : "bi-pencil-square text-warning"} me-2`}></i>
               {modalMode === "add" ? "Add New Salon" : "Edit Salon"}
             </h5>
             <button
