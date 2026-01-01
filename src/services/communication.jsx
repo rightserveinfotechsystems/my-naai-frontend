@@ -95,9 +95,7 @@ export const adminAPI = {
   // Get admin profile - actual API integration
   getProfile: async () => {
     try {
-      console.log("Fetching admin profile...");
       const response = await api.get('/api/admin/profile');
-      console.log("Profile API response:", response.data);
 
       return {
         success: response.data?.status === "SUCCESS",
@@ -139,9 +137,7 @@ export const adminAPI = {
   // Update admin profile - actual API integration
   updateProfile: async (profileData) => {
     try {
-      console.log("Updating admin profile:", profileData);
-      const response = await api.put('/api/admin/profile', profileData);
-      console.log("Update profile API response:", response.data);
+      const response = await api.get('/api/admin/profile', profileData);
 
       return {
         success: response.data?.status === "SUCCESS",
@@ -314,7 +310,7 @@ export const salonAPI = {
       try {
         response = await api.get(url);
       } catch (getError) {
-        response = await api.post('/api/salons/get-salon-list', { ...params });
+        response = await api.get('/api/salons/get-salon-list', { ...params });
       }
 
       if (response.data?.status === "SUCCESS") {
@@ -347,7 +343,6 @@ export const salonAPI = {
         throw error;
       }
 
-      // For network errors or when backend is down, return mock data for development
       if (error.code === 'ERR_NETWORK' || !error.response) {
         console.warn("Backend server not responding, using mock data for development");
 
@@ -445,70 +440,91 @@ export const salonAPI = {
         response = await api.get(`/api/salons/get-salon/${salonId}`);
       }
 
+     
+
+      const isSuccess = response.data?.status === "SUCCESS";
+
+      let salonData;
+      if (response.data?.data && typeof response.data.data === 'object' && !Array.isArray(response.data.data)) {
+        salonData = response.data.data;
+      } else if (response.data && typeof response.data === 'object' && !Array.isArray(response.data) && response.data.salonId) {
+        salonData = response.data;
+      } else {
+        salonData = response.data?.data || response.data || {};
+      }
+
+      
+      if (salonData.services && Array.isArray(salonData.services)) {
+     
+      } else {
+        const allServices = [
+          ...(salonData?.existingServices || []),
+          ...(salonData?.newServices || [])
+        ];
+        salonData.services = allServices;
+      }
+
       return {
-        success: response.data?.status === "SUCCESS",
-        data: response.data?.data,
-        message: response.data?.message || "Salon details fetched successfully"
+        success: isSuccess,
+        data: salonData,
+        message: response.data?.message || "Salon details fetched successfully",
+        fullResponse: response.data
       };
     } catch (error) {
       console.error("Get salon details API error:", error);
       console.error("Error response:", error.response?.data);
       console.error("Error status:", error.response?.status);
 
-      // For network errors, return mock detailed salon data
       if (error.code === 'ERR_NETWORK' || !error.response) {
         console.warn("Backend server not responding, using mock salon details");
 
         return {
           success: true,
           data: {
-            salonId: salonId,
-            salonName: "Demo Salon Details",
-            ownerName: "John Doe",
-            phoneNumber: "9876543210",
-            email: "john@demo.com",
-            addressLine1: "123 Main Street",
-            addressLine2: "Near Central Mall",
-            city: "Mumbai",
-            state: "Maharashtra",
-            pincode: "400001",
-            latitude: 19.0760,
-            longitude: 72.8777,
-            genderType: "UNISEX",
+            salonId: "657bc5e7-09a9-46ed-b588-20ac290f3700",
+            salonName: "curl wings1",
+            ownerName: "",
+            phoneNumber: "1172304812",
+            email: "curl@gmail.com",
+            addressLine1: "Shop 43",
+            addressLine2: "Near Watertank",
+            city: "Warud",
+            state: "Punjab",
+            pincode: "400023",
+            genderType: "FEMALE",
+            imageUrl: "https://example.com/salon.jpg",
             isActive: true,
             isOpen: true,
             ratingAverage: "4.5",
             totalReviews: 25,
-            imageUrl: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400",
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            queueLength: 5,
-            totalWaitTime: { minutes: 75, display: "1h 15m" },
+            queueLength: 3,
+            totalWaitTime: { minutes: 45, display: "45m" },
+            businessHours: [{
+              scheduleId: "4acf3a40-2b7a-4e35-8ee7-a20094288383",
+              openingTime: "06:09:00",
+              closingTime: "07:03:00",
+              breakStartTime: "13:00:00",
+              breakEndTime: "14:00:00",
+              holidayDays: ["Sun"]
+            }],
             services: [
               {
-                serviceId: "s1",
-                serviceName: "Hair Cut",
-                durationMinutes: 30,
-                price: 200,
-                description: "Professional hair cutting service"
+                serviceId: "158ef1c3-d1e0-4fd8-863a-d3c0a14f31c8",
+                serviceName: "Rajat2",
+                durationMinutes: 20,
+                price: "10.00",
+                description: "no"
               },
               {
-                serviceId: "s2",
-                serviceName: "Hair Wash",
-                durationMinutes: 20,
-                price: 150,
-                description: "Complete hair washing and conditioning"
+                serviceId: "fea7b4fc-d5c1-4fb0-8cb6-c0b3af4ee1aa",
+                serviceName: "Rajat3",
+                durationMinutes: 60,
+                price: "40.00",
+                description: "nothing"
               }
-            ],
-            businessHours: [{
-              openingTime: "09:00",
-              closingTime: "21:00",
-              breakStartTime: "13:00",
-              breakEndTime: "14:00",
-              holidayDays: [0] 
-            }]
+            ]
           },
-          message: "Mock salon details loaded (Backend server not responding)"
+          message: "Mock salon details loaded (Backend not responding)"
         };
       }
 
@@ -523,9 +539,10 @@ export const salonAPI = {
     }
   },
 
-  // Create new salon - actual API integration
   createSalon: async (salonData) => {
     try {
+      
+
       const response = await api.post('/api/salons/create', salonData);
 
       return {
@@ -543,18 +560,36 @@ export const salonAPI = {
     }
   },
 
-  // Update salon - actual API integration
   updateSalon: async (salonId, salonData) => {
     try {
-      const response = await api.put(`/api/salons/update-salon-admin/${salonId}`, salonData);
+      
+
+      const requestBody = {
+        salonId: salonId,
+        ...salonData
+      };
+
+      
+
+      const response = await api.post('/api/salons/admin-update-salon', requestBody);
+
+    
+
+      const isSuccess = response.data?.status === "SUCCESS";
+
 
       return {
-        success: response.data?.status === "SUCCESS",
-        data: response.data?.data,
-        message: response.data?.message || "Salon updated successfully"
+        success: isSuccess,
+        data: response.data?.data, 
+        message: response.data?.message || "Salon updated successfully",
+        fullResponse: response.data
       };
     } catch (error) {
       console.error("Update salon API error:", error);
+      console.error("Error Response:", error.response);
+      console.error("Error Status:", error.response?.status);
+      console.error("Error Data:", error.response?.data);
+
       return {
         success: false,
         message: error.response?.data?.message || "Failed to update salon",
@@ -676,6 +711,89 @@ export const salonRequestAPI = {
   //     data: null
   //   };
   // }
+};
+
+// ==================== SERVICE MANAGEMENT ====================
+export const serviceAPI = {
+  // Get services for a salon
+  getServices: async (salonId) => {
+    try {
+      const response = await api.get(`/api/services/salon/${salonId}`);
+
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data || [],
+        message: response.data?.message || "Services fetched successfully"
+      };
+    } catch (error) {
+      console.error("Get services API error:", error);
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to fetch services",
+        error: error.response?.data
+      };
+    }
+  },
+
+  // Create a new service for a salon
+  createService: async (salonId, serviceData) => {
+    try {
+      const response = await api.post(`/api/services/salon/${salonId}`, serviceData);
+
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data,
+        message: response.data?.message || "Service created successfully"
+      };
+    } catch (error) {
+      console.error("Create service API error:", error);
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to create service",
+        error: error.response?.data
+      };
+    }
+  },
+
+  // Update a service
+  updateService: async (serviceId, serviceData) => {
+    try {
+      const response = await api.put(`/api/services/${serviceId}`, serviceData);
+
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data,
+        message: response.data?.message || "Service updated successfully"
+      };
+    } catch (error) {
+      console.error("Update service API error:", error);
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to update service",
+        error: error.response?.data
+      };
+    }
+  },
+
+  // Delete a service
+  deleteService: async (serviceId) => {
+    try {
+      const response = await api.delete(`/api/services/${serviceId}`);
+
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data,
+        message: response.data?.message || "Service deleted successfully"
+      };
+    } catch (error) {
+      console.error("Delete service API error:", error);
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to delete service",
+        error: error.response?.data
+      };
+    }
+  }
 };
 
 // ==================== DASHBOARD/STATS ====================

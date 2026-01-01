@@ -13,30 +13,26 @@ const ITEMS_PER_PAGE = 20;
 const Salons = () => {
   const navigate = useNavigate();
 
-  // States
   const [salons, setSalons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [cityFilter, setCityFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPagesFromAPI, setTotalPagesFromAPI] = useState(1);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
 
-  // Modal states
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState("add");
   const [editingSalonId, setEditingSalonId] = useState(null);
 
-  /**
-   * API Se Data Fetch Karne Ka Function
-   */
+
   const fetchSalons = useCallback(async () => {
-    // Save current scroll position before loading new data
     setScrollPosition(window.pageYOffset || document.documentElement.scrollTop);
     setLoading(true);
 
-    // Check if token exists before making API call
     const token = localStorage.getItem("token");
     if (!token) {
       console.warn("No token found, redirecting to login");
@@ -45,7 +41,6 @@ const Salons = () => {
       return;
     }
 
-    // Prepare API parameters
     const apiParams = {
       page: currentPage,
       searchString: search,
@@ -68,16 +63,22 @@ const Salons = () => {
     }
 
     if (result.success) {
-      // API se aane wala data state mein save kar rahe hain
       console.log("Setting salons data:", result.data.barberShops);
+      console.log("Pagination data:", result.data.pagination);
       setSalons(result.data.barberShops || []);
+      if (result.data.pagination) {
+        setTotalItems(result.data.pagination.total || 0);
+        setTotalPagesFromAPI(result.data.pagination.totalPages || 1);
+      } else {
+        setTotalItems(result.data.barberShops?.length || 0);
+        setTotalPagesFromAPI(Math.ceil((result.data.barberShops?.length || 0) / ITEMS_PER_PAGE));
+      }
     } else {
-      // Check if it's an authentication error
       const isAuthError = result.message === "Invalid token payload" ||
-                         result.message?.includes("token") ||
-                         result.message?.includes("unauthorized") ||
-                         result.message?.includes("authenticate") ||
-                         result.error?.status === 401;
+        result.message?.includes("token") ||
+        result.message?.includes("unauthorized") ||
+        result.message?.includes("authenticate") ||
+        result.error?.status === 401;
 
       if (isAuthError) {
         console.error("Authentication error, redirecting to login");
@@ -86,63 +87,44 @@ const Salons = () => {
         navigate("/login");
       } else {
         console.error("API Error:", result.message, result.error);
-        // Set empty array for non-auth errors
         setSalons([]);
-        // Show user-friendly message
         console.warn("Could not load salons. Using empty list.");
       }
     }
 
     setLoading(false);
-  }, [navigate, currentPage, search, cityFilter]);
+  }, [navigate, currentPage, search, cityFilter, statusFilter]);
 
-  // Page load hote hi API call karega
   useEffect(() => {
     fetchSalons();
   }, [fetchSalons]);
 
-  // Restore scroll position after loading completes
   useEffect(() => {
     if (!loading && scrollPosition > 0) {
-      // Small delay to ensure DOM is updated and prevent unwanted scrolling
       const timeoutId = setTimeout(() => {
         window.scrollTo({
           top: scrollPosition,
-          behavior: 'instant' // Use instant to prevent smooth scrolling conflicts
+          behavior: 'instant'
         });
-        setScrollPosition(0); // Reset after restoring
+        setScrollPosition(0);
       }, 150);
 
       return () => clearTimeout(timeoutId);
     }
   }, [loading, scrollPosition]);
 
-  /**
-   * Filter Logic (Search aur Dropdowns ke liye)
-   */
+
   const filtered = useMemo(() => {
     return salons.filter((salon) => {
-      const name = salon.shopName || salon.salonName || salon.name || "";
-      const address = salon.address || "";
       const status = salon.isActive ? "active" : "inactive";
-
-      const matchesSearch =
-        name.toLowerCase().includes(search.toLowerCase()) ||
-        address.toLowerCase().includes(search.toLowerCase());
-      
-      const matchesCity = cityFilter === "all" || salon.city === cityFilter;
       const matchesStatus = statusFilter === "all" || status === statusFilter;
-
-      return matchesSearch && matchesCity && matchesStatus;
+      return matchesStatus;
     });
-  }, [salons, search, cityFilter, statusFilter]);
+  }, [salons, statusFilter]);
 
-  // Pagination Logic
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
-  const paginated = filtered.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  // Use server-side pagination data
+  const totalPages = totalPagesFromAPI;
+  const paginated = filtered; 
 
   // Modal Handlers
   const handleAddSalon = () => {
@@ -163,7 +145,7 @@ const Salons = () => {
         {/* TOP FILTERS & SEARCH */}
         <div className="card shadow-sm border-0 mb-3 mb-md-4 sticky-top" style={{ top: '10px', zIndex: '1020' }}>
           <div className="card-body p-2 p-md-3">
-            
+
             {/* Desktop Layout (md and up) */}
             <div className="d-none d-md-block">
               <div className="row g-2 align-items-center">
@@ -175,7 +157,7 @@ const Salons = () => {
                   />
                 </div>
                 <div className="col-md-2">
-                  <select className="form-select form-select-sm" value={cityFilter} onChange={(e) => setCityFilter(e.target.value)}>
+                  <select className="form-select form-select-sm" value={cityFilter} onChange={(e) => { setCityFilter(e.target.value); setCurrentPage(1); }}>
                     <option value="all">All Cities</option>
                     {["Delhi", "Mumbai", "Bangalore", "Chennai", "Kolkata", "Pune"].map(city => (
                       <option key={city} value={city}>{city}</option>
@@ -210,21 +192,21 @@ const Salons = () => {
               </div>
               {showMobileFilters && (
                 <div className="p-2 bg-light rounded shadow-sm">
-                   <div className="mb-2">
-                     <label className="small fw-bold">City</label>
-                     <select className="form-select form-select-sm" value={cityFilter} onChange={(e) => setCityFilter(e.target.value)}>
-                        <option value="all">All Cities</option>
-                        {["Delhi", "Mumbai", "Bangalore", "Chennai", "Kolkata", "Pune"].map(c => <option key={c} value={c}>{c}</option>)}
-                     </select>
-                   </div>
-                   <div>
-                     <label className="small fw-bold">Status</label>
-                     <select className="form-select form-select-sm" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-                        <option value="all">All Status</option>
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                     </select>
-                   </div>
+                  <div className="mb-2">
+                    <label className="small fw-bold">City</label>
+                    <select className="form-select form-select-sm" value={cityFilter} onChange={(e) => setCityFilter(e.target.value)}>
+                      <option value="all">All Cities</option>
+                      {["Nagpur"].map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="small fw-bold">Status</label>
+                    <select className="form-select form-select-sm" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                      <option value="all">All Status</option>
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
                 </div>
               )}
               <div className="d-flex justify-content-between align-items-center mt-1">
@@ -248,7 +230,6 @@ const Salons = () => {
             <p className="mb-0 text-muted">No salons found matching your criteria.</p>
           </div>
         ) : (
-          /* SALON GRID - with smooth scrolling */
           <div
             className="row row-cols-1 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-3 mb-4"
             style={{
@@ -258,7 +239,7 @@ const Salons = () => {
           >
             {paginated.map((salon, index) => (
               <div className="col" key={salon.barberId || salon.id || salon.salonId || index}>
-                <div 
+                <div
                   className="card h-100 shadow-sm border-0 hover-lift-sm transition-all"
                   style={{ cursor: 'pointer', borderRadius: '12px', overflow: 'hidden' }}
                   onClick={() => navigate(`/salons/${salon.salonId || salon.barberId || salon.id}`)}
@@ -277,11 +258,11 @@ const Salons = () => {
 
                   <div className="card-body p-3">
                     <div className="d-flex justify-content-between align-items-start mb-2">
-                      <h6 className="card-title mb-0 fw-bold text-truncate" style={{maxWidth: '75%'}}>
+                      <h6 className="card-title mb-0 fw-bold text-truncate" style={{ maxWidth: '75%' }}>
                         {salon.shopName || salon.salonName || salon.name}
                       </h6>
                       <span className="badge bg-warning-subtle text-dark border-0">
-                        ★ {salon.rating || "0.0"}
+                        ★ {salon.rating || "5.0"}
                       </span>
                     </div>
 

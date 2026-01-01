@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import { toast } from 'react-toastify';
 import { cities } from "../data/mockData.js";
-import { salonAPI } from "../services/communication.jsx";
+import { salonAPI, serviceAPI } from "../services/communication.jsx";
 
 const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,7 +21,9 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
 
     // Additional info
     imageUrl: "",
+    gender: "unisex",
     genderType: "UNISEX",
+    status: "active",
     latitude: "",
     longitude: "",
 
@@ -28,11 +31,14 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
     services: [],
 
     // Business hours
+    scheduleId: "", // Add scheduleId for updates
     openingTime: "09:00",
     closingTime: "21:00",
     breakStartTime: "13:00",
     breakEndTime: "14:00",
-    holidayDays: []
+    day: "",
+    holidayDays: [],
+    originalServices: []
 
   });
 
@@ -64,30 +70,42 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                 state: salon.state || "",
                 pincode: salon.pincode || "",
                 imageUrl: salon.imageUrl || salon.shopLogo || "",
+                gender: (salon.genderType || "UNISEX").toLowerCase(),
                 genderType: salon.genderType || "UNISEX",
+                status: salon.isActive ? "active" : "inactive",
                 latitude: salon.latitude || "",
                 longitude: salon.longitude || "",
                 services: salon.services ? salon.services.map(service => ({
+                  id: service.serviceId || service.id,
                   name: service.serviceName || service.name || "",
                   price: service.price || "",
                   duration: service.durationMinutes || service.duration || "",
-                  description: service.description || ""
+                  description: service.description || "No description"
                 })) : [],
+                scheduleId: salon.businessHours?.[0]?.scheduleId || "",
                 openingTime: salon.businessHours?.[0]?.openingTime || "09:00",
                 closingTime: salon.businessHours?.[0]?.closingTime || "21:00",
                 breakStartTime: salon.businessHours?.[0]?.breakStartTime || "13:00",
                 breakEndTime: salon.businessHours?.[0]?.breakEndTime || "14:00",
-                holidayDays: salon.businessHours?.[0]?.holidayDays || []
+                day: salon.businessHours?.[0]?.holidayDays?.[0] !== undefined ? getDayName(salon.businessHours[0].holidayDays[0]) : "",
+                holidayDays: salon.businessHours?.[0]?.holidayDays || [],
+                originalServices: salon.services ? salon.services.map(service => ({
+                  id: service.serviceId || service.id,
+                  name: service.serviceName || service.name || "",
+                  price: service.price || "",
+                  duration: service.durationMinutes || service.duration || "",
+                  description: service.description || "No description"
+                })) : []
               });
 
               console.log("Salon data loaded for editing");
             } else {
               console.error("Failed to load salon data:", result.message);
-              alert(`Failed to load salon data: ${result.message}`);
+              toast.error(`Failed to load salon data: ${result.message}`);
             }
           } catch (error) {
             console.error("Error loading salon data:", error);
-            alert("Failed to load salon data for editing");
+            toast.error("Failed to load salon data for editing");
           }
         } else if (modalMode === "add") {
           // Reset form for adding new salon
@@ -105,21 +123,26 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
             state: "",
             pincode: "",
 
-          // Additional info
-          imageUrl: "",
-          genderType: "UNISEX",
-          latitude: "",
-          longitude: "",
+            // Additional info
+            imageUrl: "",
+            gender: "unisex",
+            genderType: "UNISEX",
+            status: "active",
+            latitude: "",
+            longitude: "",
 
-          // Services
-          services: [],
+            // Services
+            services: [],
 
           // Business hours
+          scheduleId: "",
           openingTime: "09:00",
           closingTime: "21:00",
           breakStartTime: "13:00",
           breakEndTime: "14:00",
-          holidayDays: []
+          day: "",
+          holidayDays: [],
+          originalServices: []
           });
         }
         setImages([]);
@@ -160,13 +183,29 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
     setIsSubmitting(false);
     setFormData({
       name: "",
+      ownerName: "",
+      phoneNumber: "",
+      email: "",
+      addressLine1: "",
+      addressLine2: "",
       city: "",
-      address: "",
-      rating: 4.5,
+      state: "",
+      pincode: "",
+      imageUrl: "",
+      gender: "unisex",
+      genderType: "UNISEX",
       status: "active",
+      latitude: "",
+      longitude: "",
       services: [],
-      openingTime: "9:00 AM - 9:00 PM",
-      images: []
+      scheduleId: "",
+      openingTime: "09:00",
+      closingTime: "21:00",
+      breakStartTime: "13:00",
+      breakEndTime: "14:00",
+      day: "",
+      holidayDays: [],
+      originalServices: []
     });
     setImages([]);
   };
@@ -188,39 +227,129 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
         state: formData.state || "",
         pincode: formData.pincode || "",
         imageUrl: formData.imageUrl || "",
-        genderType: formData.genderType || "UNISEX",
+        genderType: (formData.gender || "unisex").toUpperCase(),
+        isActive: formData.status === "active",
         latitude: formData.latitude ? parseFloat(formData.latitude) : null,
         longitude: formData.longitude ? parseFloat(formData.longitude) : null,
-        services: formData.services.map(service => ({
-          serviceName: service.name,
-          durationMinutes: parseInt(service.duration) || 30,
-          price: parseFloat(service.price) || 0,
-          description: service.description || ""
-        })),
+
+        // Services are handled separately below based on mode
+
         businessHours: [{
+          ...(formData.scheduleId && { scheduleId: formData.scheduleId }), // Include scheduleId if it exists (for updates)
           openingTime: formData.openingTime || "09:00",
           closingTime: formData.closingTime || "21:00",
           breakStartTime: formData.breakStartTime || "13:00",
           breakEndTime: formData.breakEndTime || "14:00",
-          holidayDays: formData.holidayDays || []
+          holidayDays: formData.day ? [getDayNumber(formData.day.toLowerCase())] : []
         }]
       };
 
       console.log("Submitting salon data:", apiData);
+      console.log("Services in data:", apiData.services);
+      console.log("Holiday day selected:", formData.day);
+      console.log("Holiday day converted:", formData.day ? getDayNumber(formData.day.toLowerCase()) : 'none');
+      console.log("Business hours:", apiData.businessHours);
+      console.log("Modal Mode:", modalMode);
+      console.log("Editing Salon ID:", editingSalonId);
 
       // Call appropriate API based on mode
       let result;
       if (modalMode === "edit" && editingSalonId) {
-        // Update existing salon
-        result = await salonAPI.updateSalon(editingSalonId, apiData);
+        console.log("Calling updateSalon with ID:", editingSalonId);
+        // For updates, remove services as they're managed separately
+        const { services, ...updateData } = apiData;
+        console.log("Update data (without services):", updateData);
+
+        // Separate existing and new services
+        const originalServices = formData.originalServices || [];
+        const currentServices = formData.services || [];
+
+        console.log("📊 Service comparison:");
+        console.log("Original services:", originalServices);
+        console.log("Current services:", currentServices);
+
+        // Separate services into existing and new
+        const existingServices = [];
+        const newServices = [];
+
+        currentServices.forEach(service => {
+          // Check if this service exists in original services (by matching properties)
+          const existingService = originalServices.find(orig =>
+            orig.name === service.name &&
+            orig.price === service.price &&
+            orig.duration === service.duration
+          );
+
+          if (existingService) {
+            // This is an existing service
+            existingServices.push({
+              serviceId: existingService.id,
+              serviceName: service.name,
+              durationMinutes: parseInt(service.duration) || 30,
+              price: parseFloat(service.price) || 0,
+              description: service.description || "No description"
+            });
+          } else {
+            // This is a new service
+            newServices.push({
+              serviceName: service.name,
+              durationMinutes: parseInt(service.duration) || 30,
+              price: parseFloat(service.price) || 0,
+              description: service.description || "No description"
+            });
+          }
+        });
+
+        // Validate services before sending
+        const validateService = (service, type) => {
+          if (!service.serviceName || service.serviceName.trim() === "") {
+            throw new Error(`${type} service name is required`);
+          }
+          if (!service.description || service.description.trim() === "") {
+            throw new Error(`${type} service description is required`);
+          }
+          if (service.price === null || service.price === undefined || service.price < 0) {
+            throw new Error(`${type} service price must be a valid number`);
+          }
+          if (!service.durationMinutes || service.durationMinutes <= 0) {
+            throw new Error(`${type} service duration must be greater than 0`);
+          }
+        };
+
+        // Validate all services
+        existingServices.forEach(service => validateService(service, "Existing"));
+        newServices.forEach(service => validateService(service, "New"));
+
+        console.log("✅ Existing services:", existingServices);
+        console.log("🆕 New services:", newServices);
+
+        // Add services to updateData
+        updateData.existingServices = existingServices;
+        updateData.newServices = newServices;
+
+        console.log("📤 Final updateData:", updateData);
+
+        result = await salonAPI.updateSalon(editingSalonId, updateData);
+        console.log("Update result:", result);
       } else {
-        // Create new salon
+        // Create new salon - include services
+        apiData.services = formData.services.map(service => ({
+          serviceName: service.name,
+          durationMinutes: parseInt(service.duration) || 30,
+          price: parseFloat(service.price) || 0,
+          description: service.description || ""
+        }));
+
+        console.log("Create data (with services):", apiData);
+        console.log("Services being sent:", apiData.services);
+        console.log("Services count:", apiData.services?.length);
         result = await salonAPI.createSalon(apiData);
+        console.log("Create result:", result);
       }
 
       if (result.success) {
         console.log(`${modalMode === "edit" ? "Salon updated" : "Salon created"} successfully:`, result.data);
-        alert(`Salon ${modalMode === "edit" ? "updated" : "created"} successfully!`);
+        toast.success(`Salon ${modalMode === "edit" ? "updated" : "created"} successfully!`);
         handleCloseModal();
 
         // Call success callback
@@ -229,11 +358,11 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
         }
       } else {
         console.error(`Failed to ${modalMode === "edit" ? "update" : "create"} salon:`, result.message);
-        alert(`Failed to ${modalMode === "edit" ? "update" : "create"} salon: ${result.message}`);
+        toast.error(`Failed to ${modalMode === "edit" ? "update" : "create"} salon: ${result.message}`);
       }
     } catch (error) {
       console.error("Error creating salon:", error);
-      alert("An error occurred while creating the salon. Please try again.");
+      toast.error("An error occurred while creating the salon. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -248,7 +377,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
     const files = Array.from(e.target.files);
     const newImages = files.map(file => {
       if (file.size > 5 * 1024 * 1024) {
-        alert(`Image ${file.name} is too large. Max 5MB allowed.`);
+        toast.error(`Image ${file.name} is too large. Max 5MB allowed.`);
         return null;
       }
       return {
@@ -266,6 +395,26 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
     if (image.preview) URL.revokeObjectURL(image.preview);
 
     setImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Convert day name to number (0=Sunday, 1=Monday, etc.)
+  const getDayNumber = (dayName) => {
+    const dayMap = {
+      'sunday': 0,
+      'monday': 1,
+      'tuesday': 2,
+      'wednesday': 3,
+      'thursday': 4,
+      'friday': 5,
+      'saturday': 6
+    };
+    return dayMap[dayName.toLowerCase()] ?? 0;
+  };
+
+  // Convert day number back to name
+  const getDayName = (dayNumber) => {
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    return dayNames[dayNumber] ?? 'sunday';
   };
 
   if (!showModal) return null;
@@ -475,26 +624,8 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                   />
                 </div>
 
-                {/* 10. Gender Type */}
-                <div className="col-12 col-md-6">
-                  <label className="form-label fw-semibold">Gender Type <span className="text-danger">*</span></label>
-                  <select
-                    className="form-select"
-                    name="genderType"
-                    value={formData.genderType || "UNISEX"}
-                    onChange={handleInputChange}
-                    required
-                    disabled={isSubmitting}
-                  >
-                    <option value="MALE">Male</option>
-                    <option value="FEMALE">Female</option>
-                    <option value="UNISEX">Unisex</option>
-                  </select>
-                </div>
-
-
                 {/* Salon Type */}
-                <div className="col-12 col-md-6">
+                <div className="col-12">
                   <label className="form-label fw-semibold mb-2">Salon Type : <span className="text-danger">*</span></label>
                   <div className="d-flex flex-column gap-2">
                     <div className="form-check">

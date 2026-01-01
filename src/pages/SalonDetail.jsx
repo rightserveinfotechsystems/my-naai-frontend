@@ -15,36 +15,75 @@ const SalonDetail = () => {
   // 1. Helper function to convert 24h to 12h format (AM/PM)
   const format12hr = (time) => {
     if (!time) return '';
-    const [hour, minute] = time.split(':');
+    console.log('Input time:', time);
+
+    // Handle both HH:MM and HH:MM:SS formats
+    const timeParts = time.split(':');
+    const hour = timeParts[0];
+    const minute = timeParts[1] || '00';
     let h = parseInt(hour);
+
+    console.log('Parsed - hour:', hour, 'minute:', minute, 'h:', h);
+
+    // Handle special case where hour is 24 (should be 00)
+    if (h === 24) h = 0;
+
     const ampm = h >= 12 ? 'PM' : 'AM';
+    console.log('Before 12hr conversion - h:', h, 'ampm:', ampm);
+
     h = h % 12 || 12;
-    return `${h}:${minute || '00'} ${ampm}`;
+    console.log('After 12hr conversion - h:', h);
+
+    const result = `${h}:${minute} ${ampm}`;
+    console.log('Final result:', result);
+    return result;
   };
 
-  // 2. Days array mapping (0=Sunday, 1=Monday... as per your backend)
+  // Test the function (commented out for now)
+  // console.log('Time conversion tests:');
+  // console.log('06:09:00 ->', format12hr('06:09:00'));
+  // console.log('07:03:00 ->', format12hr('07:03:00'));
+
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  const dayNameToNumber = (dayName) => {
+    const dayMap = {
+      'Sun': 0, 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6,
+      'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6
+    };
+    return dayMap[dayName] !== undefined ? dayMap[dayName] : -1;
+  };
 
   useEffect(() => {
     const fetchSalonDetails = async () => {
+      console.log("🏪 SalonDetail useEffect triggered with id:", id);
       try {
         setLoading(true);
         setError(null);
+        console.log("📞 Calling salonAPI.getSalonDetails with id:", id);
         const result = await salonAPI.getSalonDetails(id);
+        console.log("📨 API result received:", result);
+
         if (result.success && result.data) {
           setSalon(result.data);
-          console.log("Salon details loaded:", result.data);
         } else {
+          console.log("❌ API returned success=false or no data");
           setError(result.message || "Failed to load salon details");
         }
       } catch (err) {
+        console.log("💥 Exception in fetchSalonDetails:", err);
         setError("Failed to load salon details");
       } finally {
         setLoading(false);
       }
     };
 
-    if (id) fetchSalonDetails();
+    if (id) {
+      console.log("✅ ID exists, calling fetchSalonDetails");
+      fetchSalonDetails();
+    } else {
+      console.log("❌ No ID provided to SalonDetail");
+    }
   }, [id]);
 
   if (loading) {
@@ -70,10 +109,11 @@ const SalonDetail = () => {
     );
   }
 
-  // Backend days array (Example: [0, 1, 2, 3, 4, 5, 6] where 0=Sunday)
-  const openDays = salon.businessHours?.[0]?.holidayDays || [];
-  // Note: holidayDays contains days when CLOSED, so we need to invert the logic
-  const closedDays = openDays; // Rename for clarity
+  // Backend sends holidayDays as strings ["Fri"], convert to numbers [5]
+  const rawHolidayDays = salon.businessHours?.[0]?.holidayDays || [];
+  const holidayDays = rawHolidayDays.map(day => dayNameToNumber(day)).filter(day => day !== -1);
+  console.log("🎯 Raw holiday days from backend:", rawHolidayDays);
+  console.log("🎯 Converted holiday days (numbers):", holidayDays);
 
   const galleryImages = [
     "/images/image2.jpeg", "/images/image1.jpeg", "/images/image3.jpeg",
@@ -96,7 +136,7 @@ const SalonDetail = () => {
               <div>
                 <h4 className="mb-0 fw-bold">{salon.salonName}</h4>
                 <small className="text-muted">
-                  {salon.city}, {salon.state} • ★ {salon.ratingAverage || '0.0'}
+                  {salon.city}, {salon.state} • ★ {salon.ratingAverage || '5.0'}
                   {salon.totalReviews > 0 && ` (${salon.totalReviews} reviews)`}
                 </small>
                 <div className="d-flex gap-2 mt-1">
@@ -157,24 +197,29 @@ const SalonDetail = () => {
                   </h6>
 
                   <h2 className="fw-bold mb-1">
-                    {format12hr(salon.businessHours?.[0]?.openingTime || '09:00')} -
-                    {format12hr(salon.businessHours?.[0]?.closingTime || '21:00')}
+                    {console.log('Business hours data:', salon.businessHours?.[0])}
+                    {console.log('Opening time:', salon.businessHours?.[0]?.openingTime)}
+                    {console.log('Closing time:', salon.businessHours?.[0]?.closingTime)}
+                    {format12hr(salon.businessHours?.[0]?.openingTime || '09:00:00')} -
+                    {format12hr(salon.businessHours?.[0]?.closingTime || '21:00:00')}
                   </h2>
 
-                  <div className="d-flex flex-wrap justify-content-center gap-1 mt-2">
+                  <div className="d-flex  flex-wrap justify-content-center gap-1 mt-2">
                     {weekDays.map((day, index) => {
-                      const isOpen = openDays.includes(index);
+                      const isHoliday = holidayDays.includes(index);
+
+                      console.log(`📅 Day ${index} (${day}): isHoliday=${isHoliday}, in holidayDays=${holidayDays}`);
 
                       return (
                        <span
             key={index}
             className={`badge ${
-              isOpen 
-                ? 'bg-primary'  // Working Day -> Blue
-                : 'bg-danger'   // Holiday -> RED
+              isHoliday
+                ? 'bg-danger text-white'       // Holiday from backend -> RED background
+                : 'bg-light text-dark border'  // Working Day -> White background
             }`}
-            style={{ 
-              fontSize: '10px', 
+            style={{
+              fontSize: '10px',
               minWidth: '42px'
             }}
           >
@@ -194,19 +239,23 @@ const SalonDetail = () => {
                 <div className="card-body p-0 d-flex flex-column h-100">
                   <div className="p-3 border-bottom bg-light"><h6 className="fw-bold mb-0 small">Services</h6></div>
                   <div className="list-group list-group-flush overflow-auto" style={{ maxHeight: '400px' }}>
-                    {salon.services?.length > 0 ? salon.services.map((s, index) => (
+                    {console.log("Services to render:", salon.services)}
+                    {salon.services?.length > 0 ? salon.services.map((s, index) => {
+                      console.log("Rendering service:", index, s);
+                      return (
                       <div key={s.serviceId || s.id || index} className="list-group-item p-3">
                         <div className="d-flex justify-content-between">
                           <div>
                             <div className="fw-bold small">{s.serviceName || s.name}</div>
                             <small className="text-muted">
-                              {s.durationMinutes || s.duration}m • {s.description}
+                              {s.durationMinutes || s.duration}m{s.description ? ` • ${s.description}` : ''}
                             </small>
                           </div>
                           <div className="fw-bold text-dark">₹{s.price}</div>
                         </div>
                       </div>
-                    )) : <div className="p-3 text-center text-muted small">No services available</div>}
+                    );
+                    }) : <div className="p-3 text-center text-muted small">No services available</div>}
                   </div>
                 </div>
               </div>
