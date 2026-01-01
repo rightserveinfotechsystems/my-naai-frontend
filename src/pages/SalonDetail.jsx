@@ -197,18 +197,22 @@ const SalonDetail = () => {
                   </h6>
 
                   <h2 className="fw-bold mb-1">
-                    {console.log('Business hours data:', salon.businessHours?.[0])}
-                    {console.log('Opening time:', salon.businessHours?.[0]?.openingTime)}
-                    {console.log('Closing time:', salon.businessHours?.[0]?.closingTime)}
                     {format12hr(salon.businessHours?.[0]?.openingTime || '09:00:00')} -
                     {format12hr(salon.businessHours?.[0]?.closingTime || '21:00:00')}
                   </h2>
 
+                  {/* Break Time */}
+                  {(salon.businessHours?.[0]?.breakStartTime || salon.businessHours?.[0]?.breakEndTime) && (
+                    <p className="small mb-2 opacity-75">
+                      <i className="bi bi-pause-circle me-1"></i>
+                      Break: {format12hr(salon.businessHours?.[0]?.breakStartTime)} -
+                      {format12hr(salon.businessHours?.[0]?.breakEndTime)}
+                    </p>
+                  )}
+
                   <div className="d-flex  flex-wrap justify-content-center gap-1 mt-2">
                     {weekDays.map((day, index) => {
                       const isHoliday = holidayDays.includes(index);
-
-                      console.log(`📅 Day ${index} (${day}): isHoliday=${isHoliday}, in holidayDays=${holidayDays}`);
 
                       return (
                        <span
@@ -216,11 +220,15 @@ const SalonDetail = () => {
             className={`badge ${
               isHoliday
                 ? 'bg-danger text-white'       // Holiday from backend -> RED background
-                : 'bg-light text-dark border'  // Working Day -> White background
+                : 'bg-white text-dark border'  // Working Day -> White background for dark theme
             }`}
             style={{
               fontSize: '10px',
-              minWidth: '42px'
+              minWidth: '42px',
+              minHeight: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
             {day}
