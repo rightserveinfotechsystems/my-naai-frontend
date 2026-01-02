@@ -26,6 +26,15 @@ const App = () => {
       <BrowserRouter>
         <Routes>
         <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
+
+        <Route
           path="/"
           element={
             <ProtectedRoute>
@@ -68,16 +77,14 @@ const App = () => {
           }
         />
 
-        <Route
-          path="/login"
+        <Route 
+          path="*" 
           element={
-            <PublicRoute>
-              <Login />
-            </PublicRoute>
-          }
+            <ProtectedRoute>
+              <NotFound />
+            </ProtectedRoute>
+          } 
         />
-
-        <Route path="*" element={<NotFound />} />
         </Routes>
         <ToastContainer
           position="top-right"

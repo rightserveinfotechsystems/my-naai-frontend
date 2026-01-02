@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"; // useEffect add kiya
+import { useState, useEffect } from "react";
 import Layout from "../components/Layout.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import SearchInput from "../components/SearchInput.jsx";
@@ -8,11 +8,9 @@ import { FaTrash } from "react-icons/fa";
 import { userAPI } from "../services/communication.jsx";
 import ToggelModal from "../components/ToggelModal.jsx";
 import DeleteConfirmModal from "../components/DeleteConfirmModal.jsx";
-
-
+import Loader from "../components/Loader.jsx";
 
 const ITEMS_PER_PAGE = 20;
-
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,31 +31,31 @@ const Users = () => {
 
 
   const fetchUsers = async () => {
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const res = await userAPI.getUsers({
-      page: currentPage,
-      limit: ITEMS_PER_PAGE,
-      searchString: search
-    });
+      const res = await userAPI.getUsers({
+        page: currentPage,
+        limit: ITEMS_PER_PAGE,
+        searchString: search
+      });
 
-  
-   
-    if (res.success) {
-      setUsers(res.data.users);
-      setTotalUsers(res.data.pagination.totalUsers);
-      setTotalPages(res.data.pagination.totalPages);
-    } else {
+
+
+      if (res.success) {
+        setUsers(res.data.users);
+        setTotalUsers(res.data.pagination.totalUsers);
+        setTotalPages(res.data.pagination.totalPages);
+      } else {
+        setUsers([]);
+      }
+    } catch (error) {
+      console.error("Fetch users error:", error);
       setUsers([]);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Fetch users error:", error);
-    setUsers([]);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
 
@@ -163,11 +161,11 @@ const Users = () => {
 
 
   useEffect(() => {
-  const timer = setTimeout(() => {
-    fetchUsers();   
-  }, 500); 
-  return () => clearTimeout(timer);
-}, [search, currentPage]);
+    const timer = setTimeout(() => {
+      fetchUsers();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search, currentPage]);
 
 
   return (
@@ -291,7 +289,7 @@ const Users = () => {
                     </thead>
                     <tbody>
                       {loading ? (
-                        <tr><td colSpan={7} className="text-center py-5">Loading users...</td></tr>
+                        <tr><td colSpan={7} className="text-center py-5"><Loader fullScreen={false} size="sm" text="Loading users..." /></td></tr>
                       ) : users.map((user, index) => (
                         <tr key={user.userId} className="align-middle">
                           <td className="ps-4 pe-2">
@@ -353,15 +351,12 @@ const Users = () => {
                               >
                                 <FaTrash size={14} />
                               </button>
-
-
-
                             </div>
                           </td>
 
                         </tr>
                       ))}
-                     {!loading && users.length === 0 && (
+                      {!loading && users.length === 0 && (
                         <tr>
                           <td colSpan={7} className="text-center text-muted py-5">No users found</td>
                         </tr>
