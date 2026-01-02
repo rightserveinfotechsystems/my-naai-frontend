@@ -1,14 +1,24 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import Pagination from "../components/Pagination.jsx";
 import SearchInput from "../components/SearchInput.jsx";
-import { bookings as bookingData, salons } from "../data/mockData.js";
 import { salonRequestAPI } from "../services/communication.jsx";
-import DeleteConfirmModal from "../components/DeleteConfirmModal.jsx"
+import DeleteConfirmModal from "../components/DeleteConfirmModal.jsx";
+import Loader from "../components/Loader.jsx";
+
+// Sample salons for dropdown - will be replaced with API call later
+const sampleSalons = [
+  { id: "all", name: "All Salons" },
+  { id: "1", name: "Glamour Studio" },
+  { id: "2", name: "Serenity Spa & Salon" }
+];
+
 const ITEMS_PER_PAGE = 20;
 
-const salonrequest = () => {
+const SalonRequest = () => {
+  const navigate = useNavigate();
   const [salonFilter, setSalonFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("");
   const [search, setSearch] = useState("");
@@ -18,7 +28,7 @@ const salonrequest = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [selectedBookings, setSelectedBookings] = useState(new Set());
   const [selectAll, setSelectAll] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [deleteModal, setDeleteModal] = useState({
     show: false,
     requestIds: [],
@@ -35,23 +45,7 @@ const salonrequest = () => {
     return () => clearTimeout(timer);
   }, [salonFilter, dateFilter, search, currentPage]);
 
-  const filtered = useMemo(() => {
-    const result = bookingData.filter((booking) => {
-      const matchesSalon = salonFilter === "all" || booking.salonId === salonFilter;
-      const matchesDate = !dateFilter || booking.date === dateFilter;
-      const matchesSearch = !search ||
-        booking.salonName.toLowerCase().includes(search.toLowerCase()) ||
-        booking.salonOwnerName?.toLowerCase().includes(search.toLowerCase());
-      return matchesSalon && matchesDate && matchesSearch;
-    });
-    return result;
-  }, [salonFilter, dateFilter, search]);
-
-
-  const paginated = filtered.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  // Note: Filtering is now handled by the API in fetchSalonRequests
 
   // Select All functionality
   const handleSelectAll = useCallback((e) => {
@@ -63,7 +57,7 @@ const salonrequest = () => {
     } else {
       setSelectedBookings(new Set());
     }
-  }, [paginated]);
+  }, [bookings]);
 
   // Individual checkbox
   const handleSelectBooking = useCallback((bookingId, checked) => {
@@ -74,10 +68,10 @@ const salonrequest = () => {
       } else {
         newSet.delete(bookingId);
       }
-      setSelectAll(newSet.size === paginated.length && paginated.length > 0);
+      setSelectAll(newSet.size === bookings.length && bookings.length > 0);
       return newSet;
     });
-  }, [paginated.length]);
+  }, [bookings.length]);
 
   // Bulk Delete
   const handleBulkDelete = useCallback(() => {
@@ -133,23 +127,63 @@ const salonrequest = () => {
   const fetchSalonRequests = useCallback(async () => {
     setIsLoading(true);
 
-    const response = await salonRequestAPI.getSalonRequests({
-      page: currentPage,
-      salonNameFilter: salonFilter !== "all" ? salonFilter : "",
-      requestDate: dateFilter,
-      searchString: search
-    });
-
-    if (response.success) {
-      setBookings(response.data || []);
-      setTotalPages(response.pagination?.totalPages || 1);
-    } else {
-      setBookings([]);
-      setTotalPages(1);
+    // Check for JWT token
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.warn("No token found, redirecting to login");
+      navigate("/login");
+      setIsLoading(false);
+      return;
     }
 
-    setIsLoading(false);
-  }, [currentPage, salonFilter, dateFilter, search]);
+    try {
+      const response = await salonRequestAPI.getSalonRequests({
+        page: currentPage,
+        salonNameFilter: salonFilter !== "all" ? salonFilter : "",
+        requestDate: dateFilter,
+        searchString: search
+      });
+
+      if (response.success) {
+        setBookings(response.data || []);
+        setTotalPages(response.pagination?.totalPages || 1);
+      } else {
+        // Check for authentication errors
+        const isAuthError = response.message === "Invalid token payload" ||
+          response.message?.includes("token") ||
+          response.message?.includes("unauthorized") ||
+          response.message?.includes("authenticate");
+
+        if (isAuthError) {
+          console.error("Authentication error, redirecting to login");
+          localStorage.removeItem("token");
+          alert("Session expired. Please login again.");
+          navigate("/login");
+          return;
+        }
+
+        console.warn("API returned success=false for salon requests:", response.message);
+        setBookings([]);
+        setTotalPages(1);
+      }
+    } catch (error) {
+      console.error("Error fetching salon requests:", error);
+      
+      // Check for 401 unauthorized errors
+      if (error.response?.status === 401) {
+        console.error("Authentication error, redirecting to login");
+        localStorage.removeItem("token");
+        alert("Session expired. Please login again.");
+        navigate("/login");
+        return;
+      }
+
+      setBookings([]);
+      setTotalPages(1);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentPage, salonFilter, dateFilter, search, navigate]);
 
   useEffect(() => {
     fetchSalonRequests();
@@ -159,23 +193,63 @@ const salonrequest = () => {
   const handleConfirmDelete = async () => {
     setDeleteModal(prev => ({ ...prev, loading: true }));
 
-    const res = await salonRequestAPI.deleteSalonRequests(
-      deleteModal.requestIds // 🔴 array (1 or many)
-    );
+    // Check for JWT token
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.warn("No token found, redirecting to login");
+      localStorage.removeItem("token");
+      navigate("/login");
+      setDeleteModal(prev => ({ ...prev, loading: false }));
+      return;
+    }
 
-    if (res.success) {
-      await fetchSalonRequests(); // refresh list
+    try {
+      const res = await salonRequestAPI.deleteSalonRequests(
+        deleteModal.requestIds // 🔴 array (1 or many)
+      );
 
-      setSelectedBookings(new Set());
-      setSelectAll(false);
+      if (res.success) {
+        await fetchSalonRequests(); // refresh list
 
-      setDeleteModal({
-        show: false,
-        requestIds: [],
-        loading: false
-      });
-    } else {
-      alert(res.message || "Delete failed");
+        setSelectedBookings(new Set());
+        setSelectAll(false);
+
+        setDeleteModal({
+          show: false,
+          requestIds: [],
+          loading: false
+        });
+      } else {
+        // Check for authentication errors
+        const isAuthError = res.message === "Invalid token payload" ||
+          res.message?.includes("token") ||
+          res.message?.includes("unauthorized") ||
+          res.message?.includes("authenticate");
+
+        if (isAuthError) {
+          console.error("Authentication error, redirecting to login");
+          localStorage.removeItem("token");
+          alert("Session expired. Please login again.");
+          navigate("/login");
+          return;
+        }
+
+        alert(res.message || "Delete failed");
+        setDeleteModal(prev => ({ ...prev, loading: false }));
+      }
+    } catch (error) {
+      console.error("Error deleting salon requests:", error);
+      
+      // Check for 401 unauthorized errors
+      if (error.response?.status === 401) {
+        console.error("Authentication error, redirecting to login");
+        localStorage.removeItem("token");
+        alert("Session expired. Please login again.");
+        navigate("/login");
+        return;
+      }
+
+      alert(error.response?.data?.message || "Delete failed");
       setDeleteModal(prev => ({ ...prev, loading: false }));
     }
   };
@@ -206,28 +280,27 @@ const salonrequest = () => {
                       />
                     </div>
 
-                    <div className="col-12 col-md-3">
+                    {/* <div className="col-12 col-md-3">
                       <select
                         className="form-select form-select-sm"
                         value={salonFilter}
                         onChange={handleFilterChange(setSalonFilter)}
                       >
-                        <option value="all">All Salons</option>
-                        {salons.map((s) => (
+                        {sampleSalons.map((s) => (
                           <option key={s.id} value={s.id}>
                             {s.name}
                           </option>
                         ))}
                       </select>
-                    </div>
-                    <div className="col-12 col-md-3">
+                    </div> */}
+                    {/* <div className="col-12 col-md-3">
                       <input
                         type="date"
                         className="form-control form-control-sm"
                         value={dateFilter}
                         onChange={handleDateChange}
                       />
-                    </div>
+                    </div> */}
                   </div>
                 </div>
 
@@ -332,8 +405,7 @@ const salonrequest = () => {
                             onChange={handleFilterChange(setSalonFilter)}
                             disabled={isLoading}
                           >
-                            <option value="all">All Salons</option>
-                            {salons.map((s) => (
+                            {sampleSalons.map((s) => (
                               <option key={s.id} value={s.id}>
                                 {s.name}
                               </option>
@@ -370,56 +442,42 @@ const salonrequest = () => {
           </div>
         </div>
 
-        {/* LOADING OVERLAY */}
-        {isLoading && (
-          <div className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark bg-opacity-50 z-50" style={{ minHeight: '100vh' }}>
-            <div className="text-center text-white">
-              {/* <div className="spinner-border spinner-border-lg mb-3" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </div> */}
-            </div>
-          </div>
-        )}
-
         {/* DESKTOP TABLE */}
         <div
-          className={`table-responsive d-none d-md-block mb-2 mb-md-3 bg-white bookings-table-scroll ${isLoading ? 'opacity-50' : ''}`}
+          className="table-responsive d-none d-md-block mb-2 mb-md-3 bg-white bookings-table-scroll"
           style={{
             maxHeight: 'calc(100dvh - 160px)',
             maxHeight: 'calc(100vh - 160px)',
             overflow: 'auto'
           }}
         >
-          <div style={{ minHeight: '320px', backgroundColor: 'white' }}>
-            {isLoading ? (
-              <div className="d-flex justify-content-center align-items-center py-5">
-                <div className="spinner-border spinner-border-sm me-2" role="status"></div>
-                <span className="text-muted">Loading...</span>
-              </div>
-            ) : (
-              <table className="table table-hover mb-0">
-                <thead className="table-light position-sticky top-0 bg-white border-bottom z-10">
-                  <tr>
-                    <th style={{ width: '50px' }} className="px-2 py-2 border-bottom text-center">
-                      <input
-                        type="checkbox"
-                        checked={selectAll}
-                        onChange={handleSelectAll}
-                        disabled={isLoading}
-                      />
-                    </th>
-                    <th style={{ width: '60px' }} className="px-2 py-2 border-bottom text-center fw-medium">No.</th>
-                    <th style={{ width: '160px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Salon Owner</th>
-                    <th style={{ width: '150px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Salon Name</th>
-                    <th style={{ width: '220px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Address</th>
-                    <th style={{ width: '140px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Mobile</th>
-                    <th style={{ width: '160px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Date & Time</th>
-                    <th style={{ width: '80px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom text-center">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
+          <table className="table table-hover mb-0">
+            <thead className="table-light position-sticky top-0 bg-white border-bottom z-10">
+              <tr>
+                <th style={{ width: '50px' }} className="px-2 py-2 border-bottom text-center">
+                  <input
+                    type="checkbox"
+                    checked={selectAll}
+                    onChange={handleSelectAll}
+                    disabled={isLoading}
+                  />
+                </th>
+                <th style={{ width: '60px' }} className="px-2 py-2 border-bottom text-center fw-medium">No.</th>
+                <th style={{ width: '160px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Salon Owner</th>
+                <th style={{ width: '150px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Salon Name</th>
+                <th style={{ width: '220px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Address</th>
+                <th style={{ width: '140px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Mobile</th>
+                <th style={{ width: '160px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Date & Time</th>
+                <th style={{ width: '80px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr><td colSpan={8} className="text-center py-5"><Loader fullScreen={false} size="sm" text="Loading..." /></td></tr>
+              ) : (
+                <>
                   {bookings.map((booking, index) => (
-                    <tr key={booking.requestId}>
+                    <tr key={booking.requestId || index}>
                       <td className="px-2 py-2 text-center">
                         <input
                           type="checkbox"
@@ -469,28 +527,27 @@ const salonrequest = () => {
                   ))}
                   {bookings.length === 0 && !isLoading && (
                     <tr>
-                      <td colSpan={9} className="text-center text-muted py-5 bg-white">
+                      <td colSpan={8} className="text-center text-muted py-5 bg-white">
                         No bookings found
                       </td>
                     </tr>
                   )}
-                </tbody>
-              </table>
-            )}
-          </div>
+                </>
+              )}
+            </tbody>
+          </table>
         </div>
 
         {/* MOBILE CARDS */}
-        <div className={`d-md-none bg-white bookings-mobile-cards ${isLoading ? 'opacity-50' : ''}`}>
+        <div className="d-md-none bg-white bookings-mobile-cards">
           {isLoading ? (
             <div className="d-flex justify-content-center align-items-center py-5">
-              <div className="spinner-border spinner-border-sm me-2" role="status"></div>
-              <span className="text-muted">Loading...</span>
+              <Loader fullScreen={false} size="sm" text="Loading..." />
             </div>
           ) : (
             <>
-              {paginated.map((booking, index) => (
-                <div key={booking.id} className="mb-3">
+              {bookings.map((booking, index) => (
+                <div key={booking.requestId || index} className="mb-3">
                   {/* Number Badge */}
                   <div className="d-flex align-items-center mb-2">
                     <span className="badge bg-light text-dark fw-medium small me-2">
@@ -539,7 +596,7 @@ const salonrequest = () => {
                   </div>
                 </div>
               ))}
-              {paginated.length === 0 && (
+              {bookings.length === 0 && (
                 <div className="alert alert-light border mb-0 text-center py-4 bg-white">
                   No bookings found
                 </div>
@@ -562,4 +619,4 @@ const salonrequest = () => {
   );
 };
 
-export default salonrequest;
+export default SalonRequest;

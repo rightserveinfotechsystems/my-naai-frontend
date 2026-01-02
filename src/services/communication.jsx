@@ -612,28 +612,27 @@ export const salonAPI = {
 export const bookingAPI = {
   getBookings: async (params = {}) => {
     try {
-      // Build query parameters
-      const queryParams = new URLSearchParams();
-
-      if (params.page && params.page !== 1) queryParams.append('page', params.page.toString());
-      if (params.limit) queryParams.append('limit', params.limit.toString());
-      if (params.search && params.search.trim()) queryParams.append('search', params.search.trim());
-      if (params.salonId && params.salonId !== 'all') queryParams.append('salonId', params.salonId);
-      if (params.status && params.status !== 'all') queryParams.append('status', params.status);
-      if (params.dateFrom) queryParams.append('dateFrom', params.dateFrom);
-      if (params.dateTo) queryParams.append('dateTo', params.dateTo);
-
       console.log("📡 Calling booking list API with POST");
+      
+      // Build request body with all parameters
       const requestBody = {
         page: params.page || 1,
-        searchString: params.search || '',
+        searchString: params.search || params.searchString || '',
         statusFilter: (params.status && params.status !== 'all') ? params.status : '',
-        createdDate: params.dateFrom ? params.dateFrom.split('T')[0] : '' // Extract date part only
+        salonId: (params.salonId && params.salonId !== 'all') ? params.salonId : '',
+        createdDate: params.dateFrom ? (params.dateFrom.includes('T') ? params.dateFrom.split('T')[0] : params.dateFrom) : ''
       };
+
+      // Remove empty strings to avoid sending unnecessary parameters
+      if (!requestBody.searchString) delete requestBody.searchString;
+      if (!requestBody.statusFilter) delete requestBody.statusFilter;
+      if (!requestBody.salonId) delete requestBody.salonId;
+      if (!requestBody.createdDate) delete requestBody.createdDate;
 
       console.log("📨 Request body:", requestBody);
       console.log("🔍 Search string:", requestBody.searchString || 'empty');
       console.log("📊 Status filter:", requestBody.statusFilter || 'all');
+      console.log("🏪 Salon ID:", requestBody.salonId || 'all');
       console.log("📅 Created date:", requestBody.createdDate || 'none');
 
       const response = await api.post('/api/booking/list', requestBody);
@@ -644,14 +643,14 @@ export const bookingAPI = {
         const bookingsData = response.data.data || [];
         const transformedData = Array.isArray(bookingsData) ? bookingsData.map(booking => {
           const transformed = {
-            id: booking.bookingId,
-            userName: booking.userName || 'N/A',
-            salonName: booking.salonName || 'N/A',
-            serviceName: booking.serviceName || 'N/A',
-            date: booking.bookingDate || 'N/A',
-            time: booking.bookingTime || null,
-            status: booking.bookingStatus || 'pending',
-            totalAmount: booking.amount || parseFloat(booking.servicePrice) || 0
+            id: booking.bookingId || booking.id,
+            userName: booking.userName || booking.user_name || 'N/A',
+            salonName: booking.salonName || booking.salon_name || 'N/A',
+            serviceName: booking.serviceName || booking.service_name || 'N/A',
+            date: booking.bookingDate || booking.booking_date || booking.date || 'N/A',
+            time: booking.bookingTime || booking.booking_time || booking.time || null,
+            status: booking.bookingStatus || booking.booking_status || booking.status || 'pending',
+            totalAmount: booking.amount || booking.totalAmount || parseFloat(booking.servicePrice || booking.service_price || 0) || 0
           };
           console.log("🔄 Transformed booking:", transformed);
           return transformed;
@@ -660,7 +659,7 @@ export const bookingAPI = {
         return {
           success: true,
           data: transformedData,
-          pagination: response.data.pagination || {
+          pagination: response.data.pagination || response.data.paginationData || {
             total: bookingsData.length,
             page: params.page || 1,
             limit: params.limit || 20,
@@ -684,10 +683,44 @@ export const bookingAPI = {
         url: error.config?.url
       });
 
+      // Check for authentication errors
+      if (error.response?.status === 401) {
+        console.error("Authentication error, redirecting to login");
+        localStorage.removeItem("token");
+        window.location.href = '/login';
+      }
+
       return {
         success: false,
         data: [],
         message: error.response?.data?.message || "Failed to fetch bookings",
+        error: error.response?.data
+      };
+    }
+  },
+
+  getFilterList: async () => {
+    try {
+      const response = await api.get('/api/booking/filter-list');
+      
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data || {},
+        message: response.data?.message || "Filter list fetched successfully"
+      };
+    } catch (error) {
+      console.error("❌ Filter list API Error:", {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: error.config?.url
+      });
+
+      return {
+        success: false,
+        data: {},
+        message: error.response?.data?.message || "Failed to fetch filter list",
         error: error.response?.data
       };
     }

@@ -4,7 +4,8 @@ import PageHeader from "../components/PageHeader.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import Pagination from "../components/Pagination.jsx";
 import SearchInput from "../components/SearchInput.jsx";
-import { bookingAPI, salonAPI } from "../services/communication.jsx";
+import { bookingAPI } from "../services/communication.jsx";
+import Loader from "../components/Loader.jsx";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -13,6 +14,7 @@ const Bookings = () => {
 
   const [bookings, setBookings] = useState([]);
   const [salons, setSalons] = useState([]);
+  const [filterOptions, setFilterOptions] = useState({ salons: [], statuses: [] });
   const [loading, setLoading] = useState(true);
   const [salonFilter, setSalonFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -46,7 +48,7 @@ const Bookings = () => {
     fetchBookings();
   }, []); // Empty dependency array for initial load
 
-  // Fetch bookings from API (now uses mock data)
+  // Fetch bookings from API
   const fetchBookings = useCallback(async () => {
     console.log("🚀 fetchBookings STARTED with:", {
       search: search,
@@ -58,23 +60,33 @@ const Bookings = () => {
     });
 
     setLoading(true);
+    
+    // Check for JWT token
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.warn("No token found, redirecting to login");
+      setLoading(false);
+      return;
+    }
+
     try {
       const apiParams = {
         page: currentPage,
         search: debouncedSearch,
-        status: statusFilter,
-        dateFrom: dateFilter ? `${dateFilter}T00:00:00.000Z` : undefined
+        status: statusFilter !== "all" ? statusFilter : undefined,
+        salonId: salonFilter !== "all" ? salonFilter : undefined,
+        dateFrom: dateFilter || undefined
       };
 
       console.log("🎯 API Parameters:", apiParams);
       console.log("📋 Final request will be:", {
         page: apiParams.page,
-        searchString: apiParams.search,
-        statusFilter: apiParams.status,
-        createdDate: apiParams.dateFrom ? apiParams.dateFrom.split('T')[0] : ''
+        searchString: apiParams.search || '',
+        statusFilter: apiParams.status || '',
+        salonId: apiParams.salonId || '',
+        createdDate: apiParams.dateFrom || ''
       });
 
-      console.log("Fetching bookings with params:", apiParams);
       const result = await bookingAPI.getBookings(apiParams);
 
       if (result.success) {
@@ -85,6 +97,20 @@ const Bookings = () => {
         setTotalPages(result.pagination?.totalPages || 1);
         console.log("✅ Bookings loaded:", result.data?.length || 0, "Total:", result.pagination?.total || 0);
       } else {
+        // Check for authentication errors
+        const isAuthError = result.message === "Invalid token payload" ||
+          result.message?.includes("token") ||
+          result.message?.includes("unauthorized") ||
+          result.message?.includes("authenticate");
+
+        if (isAuthError) {
+          console.error("Authentication error, redirecting to login");
+          localStorage.removeItem("token");
+          alert("Session expired. Please login again.");
+          window.location.href = "/login";
+          return;
+        }
+
         console.error("❌ Failed to fetch bookings:", result.message);
         setBookings([]);
         setTotalItems(0);
@@ -92,6 +118,16 @@ const Bookings = () => {
       }
     } catch (error) {
       console.error("Error fetching bookings:", error);
+      
+      // Check for 401 unauthorized errors
+      if (error.response?.status === 401) {
+        console.error("Authentication error, redirecting to login");
+        localStorage.removeItem("token");
+        alert("Session expired. Please login again.");
+        window.location.href = "/login";
+        return;
+      }
+
       setBookings([]);
       setTotalItems(0);
       setTotalPages(1);
@@ -100,25 +136,45 @@ const Bookings = () => {
     }
   }, [currentPage, debouncedSearch, salonFilter, statusFilter, dateFilter]);
 
-  // Fetch salons for dropdown
-  const fetchSalons = useCallback(async () => {
+  // Fetch filter options from filter-list API
+  const fetchFilterList = useCallback(async () => {
     try {
-      const result = await salonAPI.getSalons({ page: 1, limit: 100 }); // Get first 100 salons
+      const result = await bookingAPI.getFilterList();
       if (result.success) {
-        setSalons(result.data?.barberShops || []);
+        console.log("✅ Filter list fetched:", result.data);
+        
+        // Normalize salon data - handle different field names
+        let salonData = [];
+        if (result.data?.salons && Array.isArray(result.data.salons)) {
+          salonData = result.data.salons;
+        } else if (result.data?.salonList && Array.isArray(result.data.salonList)) {
+          salonData = result.data.salonList;
+        }
+        
+        // Transform salon data to have consistent structure (id and name)
+        const normalizedSalons = salonData.map(salon => ({
+          id: salon.id || salon.salonId || salon._id,
+          name: salon.name || salon.salonName || salon.salon_name || 'Unknown Salon'
+        }));
+        
+        setSalons(normalizedSalons);
+        // Store all filter options
+        setFilterOptions(result.data || { salons: [], statuses: [] });
       } else {
-        console.warn("API failed for salons:", result.message);
+        console.warn("API failed for filter list:", result.message);
         setSalons([]);
+        setFilterOptions({ salons: [], statuses: [] });
       }
     } catch (error) {
-      console.error("Error fetching salons:", error);
+      console.error("Error fetching filter list:", error);
       setSalons([]);
+      setFilterOptions({ salons: [], statuses: [] });
     }
   }, []);
 
   useEffect(() => {
-    fetchSalons();
-  }, [fetchSalons]);
+    fetchFilterList();
+  }, [fetchFilterList]);
 
   // Handle parameter changes (skip initial render)
   const isInitialMount = useRef(true);
@@ -234,9 +290,7 @@ const Bookings = () => {
                 {/* RIGHT SIDE - Pagination + Clear */}
                 <div className="col-12 col-lg-5 d-flex flex-column flex-sm-row gap-2 justify-content-end align-items-end">
                   <div className="d-flex justify-content-end align-items-center flex-wrap gap-2 gap-md-3 w-100 w-sm-auto">
-                    <div className="text-muted small flex-shrink-0 d-none d-md-block">
-                      Showing {filtered.length} of {totalItems}
-                    </div>
+                   
                     
                     {/* PAGINATION */}
                     <div className="flex-grow-1 flex-shrink-0 min-w-0" style={{ minWidth: '200px' }}>
@@ -380,30 +434,36 @@ const Bookings = () => {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((booking, index) => (
-                  <tr key={booking.id}>
-                    <td className="fw-medium text-center px-2 px-md-3 py-2 text-muted">
-                      {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
-                    </td>
-                    <td className="fw-semibold px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '140px' }}>{booking.userName}</td>
-                    <td className="px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '150px' }}>{booking.salonName}</td>
-                    <td className="px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '130px' }}>{booking.serviceName}</td>
-                    <td className="px-2 px-md-3 py-2">
-                      <div className="small">
-                        <div>{booking.date}</div>
-                        <div className="text-muted">{booking.time}</div>
-                      </div>
-                    </td>
-                    <td className="fw-semibold text-black px-2 px-md-3 py-2 ">₹{booking.totalAmount}</td>
-                    <td className="px-2 px-md-3 py-2"><StatusBadge status={booking.status} /></td>
-                  </tr>
-                ))}
-                {filtered.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="text-center text-muted py-5 bg-white">
-                      No bookings found
-                    </td>
-                  </tr>
+                {loading ? (
+                  <tr><td colSpan={7} className="text-center py-5"><Loader fullScreen={false} size="sm" text="Loading..." /></td></tr>
+                ) : (
+                  <>
+                    {filtered.map((booking, index) => (
+                      <tr key={booking.id}>
+                        <td className="fw-medium text-center px-2 px-md-3 py-2 text-muted">
+                          {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
+                        </td>
+                        <td className="fw-semibold px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '140px' }}>{booking.userName}</td>
+                        <td className="px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '150px' }}>{booking.salonName}</td>
+                        <td className="px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '130px' }}>{booking.serviceName}</td>
+                        <td className="px-2 px-md-3 py-2">
+                          <div className="small">
+                            <div>{booking.date}</div>
+                            <div className="text-muted">{booking.time}</div>
+                          </div>
+                        </td>
+                        <td className="fw-semibold text-black px-2 px-md-3 py-2 ">₹{booking.totalAmount}</td>
+                        <td className="px-2 px-md-3 py-2"><StatusBadge status={booking.status} /></td>
+                      </tr>
+                    ))}
+                    {filtered.length === 0 && (
+                      <tr>
+                        <td colSpan={7} className="text-center text-muted py-5 bg-white">
+                          No bookings found
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 )}
               </tbody>
             </table>
@@ -412,31 +472,39 @@ const Bookings = () => {
 
         {/* MOBILE CARDS */}
         <div className="d-md-none bg-white bookings-mobile-cards">
-          {filtered.map((booking) => (
-            <div key={booking.id} className="card shadow-sm border-0 bg-white">
-              <div className="card-body p-2 p-md-3">
-                <div className="d-flex justify-content-between align-items-start mb-2">
-                  <div className="flex-grow-1 pe-2 min-w-0">
-                    <div className="fw-semibold text-truncate">{booking.userName}</div>
-                    <div className="text-muted small text-truncate">{booking.salonName}</div>
-                  </div>
-                  <StatusBadge status={booking.status} />
-                </div>
-                <div className="text-muted small mb-2 text-truncate">{booking.serviceName}</div>
-                <div className="d-flex justify-content-between align-items-center">
-                  <div className="small">
-                    <div>{booking.date}</div>
-                    <div className="text-muted">{booking.time}</div>
-                  </div>
-                  <div className="fw-semibold text-primary fs-6 flex-shrink-0 ms-2">₹{booking.totalAmount}</div>
-                </div>
-              </div>
+          {loading ? (
+            <div className="d-flex justify-content-center align-items-center py-5">
+              <Loader fullScreen={false} size="sm" text="Loading..." />
             </div>
-          ))}
-          {filtered.length === 0 && (
-            <div className="alert alert-light border mb-0 text-center py-4 bg-white">
-              No bookings found
-            </div>
+          ) : (
+            <>
+              {filtered.map((booking) => (
+                <div key={booking.id} className="card shadow-sm border-0 bg-white">
+                  <div className="card-body p-2 p-md-3">
+                    <div className="d-flex justify-content-between align-items-start mb-2">
+                      <div className="flex-grow-1 pe-2 min-w-0">
+                        <div className="fw-semibold text-truncate">{booking.userName}</div>
+                        <div className="text-muted small text-truncate">{booking.salonName}</div>
+                      </div>
+                      <StatusBadge status={booking.status} />
+                    </div>
+                    <div className="text-muted small mb-2 text-truncate">{booking.serviceName}</div>
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div className="small">
+                        <div>{booking.date}</div>
+                        <div className="text-muted">{booking.time}</div>
+                      </div>
+                      <div className="fw-semibold text-primary fs-6 flex-shrink-0 ms-2">₹{booking.totalAmount}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {filtered.length === 0 && (
+                <div className="alert alert-light border mb-0 text-center py-4 bg-white">
+                  No bookings found
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

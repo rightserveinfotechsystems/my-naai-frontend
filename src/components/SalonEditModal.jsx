@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
 import { toast } from 'react-toastify';
-import { cities } from "../data/mockData.js";
 import { salonAPI, serviceAPI } from "../services/communication.jsx";
+
+// Cities list for dropdown
+const cities = [
+ "Nagpur",
+ "Wardha"
+];
 
 const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,7 +36,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
     services: [],
 
     // Business hours
-    scheduleId: "", // Add scheduleId for updates
+    scheduleId: "", 
     openingTime: "09:00",
     closingTime: "21:00",
     breakStartTime: "13:00",
@@ -44,21 +49,16 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
 
   const [images, setImages] = useState([]);
 
-  // Load salon data for editing or reset form for adding
   useEffect(() => {
     const loadSalonData = async () => {
       if (showModal) {
         if (modalMode === "edit" && editingSalonId) {
           try {
-            // Load existing salon data for editing
-            console.log("Loading salon data for editing:", editingSalonId);
 
             const result = await salonAPI.getSalonById(editingSalonId);
             if (result.success && result.data) {
               const salon = result.data;
-              console.log("Loaded salon data:", salon);
 
-              // Map API data to form structure
               setFormData({
                 name: salon.salonName || salon.shopName || salon.name || "",
                 ownerName: salon.ownerName || "",
@@ -98,7 +98,6 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                 })) : []
               });
 
-              console.log("Salon data loaded for editing");
             } else {
               console.error("Failed to load salon data:", result.message);
               toast.error(`Failed to load salon data: ${result.message}`);
@@ -108,7 +107,6 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
             toast.error("Failed to load salon data for editing");
           }
         } else if (modalMode === "add") {
-          // Reset form for adding new salon
           setFormData({
             // Basic salon info
             name: "",
@@ -244,53 +242,28 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
         }]
       };
 
-      console.log("Submitting salon data:", apiData);
-      console.log("Services in data:", apiData.services);
-      console.log("Holiday day selected:", formData.day);
-      console.log("Holiday day converted:", formData.day ? getDayNumber(formData.day.toLowerCase()) : 'none');
-      console.log("Business hours:", apiData.businessHours);
-      console.log("Modal Mode:", modalMode);
-      console.log("Editing Salon ID:", editingSalonId);
+   
 
-      // Call appropriate API based on mode
       let result;
       if (modalMode === "edit" && editingSalonId) {
-        console.log("Calling updateSalon with ID:", editingSalonId);
-        // For updates, remove services as they're managed separately
         const { services, ...updateData } = apiData;
-        console.log("Update data (without services):", updateData);
 
-        // Separate existing and new services
         const originalServices = formData.originalServices || [];
         const currentServices = formData.services || [];
 
-        console.log("📊 Service comparison:");
-        console.log("Original services:", originalServices);
-        console.log("Current services:", currentServices);
-
-        // Separate services into existing and new
         const existingServices = [];
         const newServices = [];
 
         currentServices.forEach(service => {
-          // Check if this service exists in original services (by matching properties)
-          const existingService = originalServices.find(orig =>
-            orig.name === service.name &&
-            orig.price === service.price &&
-            orig.duration === service.duration
-          );
-
-          if (existingService) {
-            // This is an existing service
+          if (service.id) {
             existingServices.push({
-              serviceId: existingService.id,
+              serviceId: service.id,
               serviceName: service.name,
               durationMinutes: parseInt(service.duration) || 30,
               price: parseFloat(service.price) || 0,
               description: service.description || "No description"
             });
           } else {
-            // This is a new service
             newServices.push({
               serviceName: service.name,
               durationMinutes: parseInt(service.duration) || 30,
@@ -300,7 +273,6 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
           }
         });
 
-        // Validate services before sending
         const validateService = (service, type) => {
           if (!service.serviceName || service.serviceName.trim() === "") {
             throw new Error(`${type} service name is required`);
@@ -319,20 +291,13 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
         // Validate all services
         existingServices.forEach(service => validateService(service, "Existing"));
         newServices.forEach(service => validateService(service, "New"));
-
-        console.log("✅ Existing services:", existingServices);
-        console.log("🆕 New services:", newServices);
-
-        // Add services to updateData
         updateData.existingServices = existingServices;
         updateData.newServices = newServices;
 
-        console.log("📤 Final updateData:", updateData);
+       
 
         result = await salonAPI.updateSalon(editingSalonId, updateData);
-        console.log("Update result:", result);
       } else {
-        // Create new salon - include services
         apiData.services = formData.services.map(service => ({
           serviceName: service.name,
           durationMinutes: parseInt(service.duration) || 30,
@@ -340,15 +305,10 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
           description: service.description || ""
         }));
 
-        console.log("Create data (with services):", apiData);
-        console.log("Services being sent:", apiData.services);
-        console.log("Services count:", apiData.services?.length);
         result = await salonAPI.createSalon(apiData);
-        console.log("Create result:", result);
       }
 
       if (result.success) {
-        console.log(`${modalMode === "edit" ? "Salon updated" : "Salon created"} successfully:`, result.data);
         toast.success(`Salon ${modalMode === "edit" ? "updated" : "created"} successfully!`);
         handleCloseModal();
 
@@ -556,11 +516,8 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                     disabled={isSubmitting}
                   >
                     <option value="">Select State</option>
-                    <option value="Haryana">Haryana</option>
-                    <option value="Delhi">Delhi</option>
-                    <option value="Punjab">Punjab</option>
-                    <option value="Uttar Pradesh">Uttar Pradesh</option>
-                    <option value="Rajasthan">Rajasthan</option>
+                    <option value="Maharashtra">Maharashtra</option>
+                   
                   </select>
                 </div>
 
