@@ -12,6 +12,38 @@ const backendURL = import.meta.env.VITE_BACKEND_URL
 
 const ITEMS_PER_PAGE = 20;
 
+// Helper function to get the first image for salon card display
+const getSalonFirstImage = (salon) => {
+  // First check for dedicated main image fields (these are NOT part of imagesArray)
+  const mainImageFields = ['imageUrl', 'shopLogo', 'mainImage', 'primaryImage'];
+
+  for (const field of mainImageFields) {
+    if (salon[field]) {
+      const imageUrl = salon[field];
+      if (typeof imageUrl === 'string') {
+        return imageUrl.startsWith('http') ? imageUrl : `${backendURL}/getFiles${imageUrl}`;
+      }
+    }
+  }
+
+  // Fallback: if no dedicated main image, use first image from imagesArray
+  const imageFields = ['images', 'imagesArray', 'salonImages', 'imageUrls', 'photos', 'pictures'];
+
+  for (const field of imageFields) {
+    if (salon[field] && Array.isArray(salon[field]) && salon[field].length > 0) {
+      const firstImage = salon[field][0];
+      if (typeof firstImage === 'string') {
+        return firstImage.startsWith('http') ? firstImage : `${backendURL}/getFiles${firstImage}`;
+      } else if (firstImage && typeof firstImage === 'object') {
+        const imageUrl = firstImage.url || firstImage.imageUrl || firstImage.photoUrl || firstImage.src || firstImage.path;
+        return imageUrl ? (imageUrl.startsWith('http') ? imageUrl : `${backendURL}/getFiles${imageUrl}`) : null;
+      }
+    }
+  }
+
+  return null; // No image found
+};
+
 const Salons = () => {
   const navigate = useNavigate();
 
@@ -275,7 +307,7 @@ const Salons = () => {
             </div>
           </div>
         </div>
-        {/* SCROLLABLE CARDS CONTAINER - DESKTOP (Table-like structure) */}
+        {/* DESKTOP CARDS - SCROLLABLE */}
         <div
           className="d-none d-md-block bg-white bookings-table-scroll"
           style={{
@@ -306,12 +338,12 @@ const Salons = () => {
                     >
                       <div className="ratio ratio-16x9 bg-light">
                         <img
-                          src={`${backendURL}/getFiles${salon.imageUrl}`}
+                          src={getSalonFirstImage(salon) || ""}
                           className="card-img-top"
                           alt={salon.shopName || salon.salonName || salon.name}
                           style={{ objectFit: "cover" }}
                           onError={(e) => {
-                            e.target.src = "https://via.placeholder.com/400x225?text=No+Image";
+                            e.target.src = "";
                           }}
                         />
                       </div>
@@ -370,56 +402,83 @@ const Salons = () => {
             padding: '1rem'
           }}
         >
-          {paginated.map((salon, index) => (
-            <div key={salon.barberId || salon.id || salon.salonId || index} className="mb-3">
-              <div className="card shadow-sm border-0 bg-white" style={{ cursor: 'pointer' }} onClick={() => navigate(`/salons/${salon.salonId || salon.barberId || salon.id}`)}>
-                <div className="ratio ratio-16x9 bg-light">
-                  <img
-                    src={`${backendURL}/getFiles${salon.imageUrl}`}
-                    className="card-img-top"
-                    alt={salon.salonName}
-                    style={{ objectFit: "cover" }}
-                  />
-                </div>
-                <div className="card-body p-3">
-                  <div className="d-flex justify-content-between align-items-start mb-2">
-                    <div className="flex-grow-1 pe-2 min-w-0">
-                      <div className="fw-semibold text-truncate">{salon.salonName}</div>
-                      <div className="text-muted small text-truncate">
-                        <i className="bi bi-geo-alt-fill me-1 text-primary"></i> {salon.city}
+          <div style={{ minHeight: '320px' }}>
+            {loading ? (
+              <div className="d-flex justify-content-center align-items-center py-5">
+                <Loader fullScreen={false} size="sm" text="Loading..." />
+              </div>
+            ) : paginated.length === 0 ? (
+              <div className="alert alert-light text-center py-5 shadow-sm border-0">
+                <i className="bi bi-search mb-2 fs-1 text-muted"></i>
+                <p className="mb-0 text-muted">No salons found matching your criteria.</p>
+              </div>
+            ) : (
+              <div className="row row-cols-1 row-cols-sm-2 g-3"> {/* Mobile: 1-2 cols */}
+                {paginated.map((salon, index) => (
+                  <div className="col" key={salon.barberId || salon.id || salon.salonId || index}>
+                    {/* EXACT SAME CARD AS DESKTOP */}
+                    <div
+                      className="card h-100 shadow-sm border-0 hover-lift-sm transition-all"
+                      style={{ cursor: 'pointer', borderRadius: '12px', overflow: 'hidden' }}
+                      onClick={() => navigate(`/salons/${salon.salonId || salon.barberId || salon.id}`)}
+                    >
+                      <div className="ratio ratio-16x9 bg-light">
+                        <img
+                          src={getSalonFirstImage(salon) || ""}
+                          className="card-img-top"
+                          alt={salon.shopName || salon.salonName || salon.name}
+                          style={{ objectFit: "cover" }}
+                          onError={(e) => {
+                            e.target.src = ""; // Ya placeholder add karo
+                          }}
+                        />
+                      </div>
+
+                      <div className="card-body p-3">
+                        <div className="d-flex justify-content-between align-items-start mb-2">
+                          <h6 className="card-title mb-0 fw-bold text-truncate" style={{ maxWidth: '75%' }}>
+                            {salon.shopName || salon.salonName || salon.name}
+                          </h6>
+                          <span className="badge bg-warning-subtle text-dark border-0">
+                            ★ {salon.ratingAverage || "5.0"}
+                          </span>
+                        </div>
+
+                        <p className="text-muted small mb-2 text-truncate">
+                          <i className="bi bi-geo-alt-fill me-1 text-primary"></i> {salon.city}
+                        </p>
+
+                        <div className="d-flex justify-content-between align-items-center">
+                          <div className="d-flex align-items-center gap-1">
+                            <i className={`bi ${salon.isActive ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger'}`}></i>
+                            <StatusBadge status={salon.isActive ? "active" : "inactive"} size="sm" />
+                          </div>
+                          <span className="small text-muted">
+                            {salon.gender ?? "Unisex"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="card-footer bg-transparent border-0 p-3 pt-0">
+                        <button
+                          className="btn w-100 btn-sm d-flex align-items-center justify-content-center gap-1"
+                          style={{ backgroundColor: '#e1b378', color: '#000', fontWeight: '500' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditSalon(salon);
+                          }}
+                        >
+                          <i className="bi bi-pencil-square"></i> Edit Salon
+                        </button>
                       </div>
                     </div>
-                    <button
-                      className="btn fontcolor btn-sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditSalon(salon);
-                      }}
-                    >
-                      <i className="bi bi-pencil-square"></i>
-                    </button>
                   </div>
-                  <div className="d-flex justify-content-between align-items-center mb-2">
-                    <span className="badge bg-warning-subtle text-dark border-0">
-                      ★ {salon.ratingAverage || "5.0"}
-                    </span>
-                    <span className="small text-muted">{salon.gender || "Unisex"}</span>
-                  </div>
-                  <div className="d-flex justify-content-center align-items-center gap-2">
-                    <i className={`bi ${salon.isActive ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger'} fs-5`}></i>
-                    <StatusBadge status={salon.isActive ? "active" : "inactive"} size="sm" />
-                  </div>
-                </div>
+                ))}
               </div>
-            </div>
-          ))}
-          {paginated.length === 0 && !loading && (
-            <div className="alert alert-light border mb-0 text-center py-4 bg-white">
-              <i className="bi bi-search mb-2 fs-1 text-muted"></i>
-              No salons found matching your criteria.
-            </div>
-          )}
+            )}
+          </div>
         </div>
+
       </div>
       {/* MODAL COMPONENT */}
       {showModal && <SalonEditModal

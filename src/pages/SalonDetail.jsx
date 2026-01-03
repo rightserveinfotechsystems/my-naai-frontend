@@ -94,16 +94,34 @@ const SalonDetail = () => {
   const holidayDays = rawHolidayDays.map(day => dayNameToNumber(day)).filter(day => day !== -1);
 
 
-  const galleryImages = [
-    "/images/image2.jpeg", "/images/image1.jpeg", "/images/image3.jpeg",
-    "/images/image4.jpeg", "/images/image5.jpeg", "/images/image6.jpeg", "/images/image7.jpeg",
-     "/images/image2.jpeg", "/images/image1.jpeg", "/images/image3.jpeg",
-    "/images/image4.jpeg", "/images/image5.jpeg", "/images/image6.jpeg", "/images/image7.jpeg",
-    "/images/image2.jpeg", "/images/image1.jpeg", "/images/image3.jpeg",
-    "/images/image4.jpeg", "/images/image5.jpeg", "/images/image6.jpeg", "/images/image7.jpeg",
-     "/images/image2.jpeg", "/images/image1.jpeg", "/images/image3.jpeg",
-    "/images/image4.jpeg", "/images/image5.jpeg", "/images/image6.jpeg", "/images/image7.jpeg",
-  ];
+  const getSalonImages = () => {
+    const backendURL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
+
+    const imageFields = ['imagesArray', 'images', 'salonImages', 'imageUrls', 'photos', 'pictures'];
+    let salonImages = [];
+
+    for (const field of imageFields) {
+      if (salon[field] && Array.isArray(salon[field]) && salon[field].length > 0) {
+        salonImages = salon[field].map(img => {
+          if (typeof img === 'string') {
+            return img.startsWith('http') ? img : `${backendURL}/getFiles${img}`;
+          } else if (img && typeof img === 'object') {
+            const imageUrl = img.url || img.imageUrl || img.photoUrl || img.src || img.path;
+            return imageUrl ? (imageUrl.startsWith('http') ? imageUrl : `${backendURL}/getFiles${imageUrl}`) : null;
+          }
+          return null;
+        }).filter(img => img !== null);
+        break;
+      }
+    }
+
+    // Note: We do NOT include the main image (imageUrl/shopLogo) in the gallery
+    // The gallery should only show additional images from imagesArray
+
+    return salonImages;
+  };
+
+  const galleryImages = getSalonImages();
 
   const PAGE_MAX_WIDTH = '1400px';
 
@@ -160,7 +178,7 @@ const SalonDetail = () => {
               <div className="card shadow-sm border-0 mb-3 flex-grow-1" style={{ borderRadius: '15px' }}>
                 <div className="card-body">
                   <h6 className="fw-bold mb-2 small"><i className="bi bi-images me-2 text-warning"></i>Gallery</h6>
-                  <div className="row g-2 overflow-auto" style={{ maxHeight: '360px' }}>
+                  <div className="row g-2 overflow-auto" style={{ maxHeight: '320px' }}>
                     {galleryImages.map((img, idx) => (
                       <div key={idx} className={idx % 3 === 0 ? "col-12" : "col-6"}>
                         <img src={img} className="img-fluid rounded-3 w-100" style={{ height: '180px', objectFit: 'cover', cursor: 'pointer' }}
@@ -184,13 +202,11 @@ const SalonDetail = () => {
                   </h4>
 
                   {/* Break Time */}
-                  {(salon.businessHours?.[0]?.breakStartTime || salon.businessHours?.[0]?.breakEndTime) && (
-                    <p className="small mb-2 opacity-75">
-                      <i className="bi bi-pause-circle me-1"></i>
-                      Break: {format12hr(salon.businessHours?.[0]?.breakStartTime)} -
-                      {format12hr(salon.businessHours?.[0]?.breakEndTime)}
-                    </p>
-                  )}
+                  <p className="small mb-2 opacity-75">
+                    <i className="bi bi-pause-circle me-1"></i>
+                    Break: {salon.businessHours?.[0]?.breakStartTime ? format12hr(salon.businessHours[0].breakStartTime) : 'N/A'} -
+                    {salon.businessHours?.[0]?.breakEndTime ? format12hr(salon.businessHours[0].breakEndTime) : 'N/A'}
+                  </p>
 
                   <div className="d-flex  flex-wrap justify-content-center gap-1 mt-2">
                     {weekDays.map((day, index) => {
@@ -205,7 +221,7 @@ const SalonDetail = () => {
                             }`}
                           style={{
                             fontSize: '9px',
-                            minWidth: '35px',
+                            minWidth: '50px',
                             minHeight: '20px',
                             display: 'flex',
                             alignItems: 'center',

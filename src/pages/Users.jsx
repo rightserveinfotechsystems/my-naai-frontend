@@ -268,31 +268,31 @@ const Users = () => {
                   <table className="table table-hover mb-0 align-middle">
                     <thead className="table-light position-sticky top-0 bg-white border-bottom z-10">
                       <tr>
-                        <th scope="col" className="py-2 ps-3 pe-2 w-auto">
-                          <div className="form-check m-0">
-                            <input
-                              className="form-check-input shadow-none"
-                              type="checkbox"
-                              id="selectAll"
-                              checked={selectedUsers.length === users.length && users.length > 0}
-                              onChange={handleSelectAll}
-                            />
-                          </div>
+                        <th style={{ width: "5%" }} className="px-3 py-2">
+                          <input
+                            className="form-check-input shadow-none"
+                            type="checkbox"
+                            id="selectAll"
+                            checked={selectedUsers.length === users.length && users.length > 0}
+                            onChange={handleSelectAll}
+                          />
                         </th>
-                        <th scope="col" className="py-2 ps-3 pe-2">No.</th>
-                        <th scope="col" className="py-2 pe-3 text-nowrap">Name</th>
-                        <th scope="col" className="py-2 pe-3 text-nowrap">Email / Phone</th>
-                        <th scope="col" className="py-2 pe-2 text-nowrap">Status</th>
-                        <th scope="col" className="py-2 pe-5 text-end ">Created</th>
-                        <th scope="col" className="py-2 pe-4 text-end text-nowrap">Action</th>
+
+                        <th style={{ width: "6%" }} className="px-3 py-2  text-center">No.</th>
+                        <th style={{ width: "18%" }} className="px-3 py-2  ">Name</th>
+                        <th style={{ width: "22%" }} className="px-3 py-2 ">Email / Phone</th>
+                        <th style={{ width: "10%" }} className="px-3 py-2  text-center">Status</th>
+                        <th style={{ width: "14%" }} className="px-3 py-2 text-center">Created</th>
+                        <th style={{ width: "15%" }} className="px-3 py-2 text-center">Action</th>
                       </tr>
                     </thead>
+
                     <tbody>
                       {loading ? (
                         <tr><td colSpan={7} className="text-center py-5"><Loader fullScreen={false} size="sm" text="Loading users..." /></td></tr>
                       ) : users.map((user, index) => (
                         <tr key={user.userId} className="align-middle">
-                          <td className="ps-4 pe-2">
+                          <td className="ps-3 pe-2 text-center">
                             <div className="form-check m-0">
                               <input
                                 className="form-check-input shadow-none"
@@ -302,28 +302,28 @@ const Users = () => {
                               />
                             </div>
                           </td>
-                          <td className="ps-3 pe-2 fw-medium text-muted">
+                          <td className="px-3 py-2 text-center fw-medium text-muted">
                             {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
                           </td>
 
-                          <td className="fw-semibold pe-3">
+                          <td className="fw-semibold px-3 py-2 ">
                             <div className="text-truncate" style={{ maxWidth: '180px' }}>
                               {user.fullName}
                             </div>
                           </td>
-                          <td className="pe-3">
-                            <div className="small fw-medium text-truncate" style={{ maxWidth: '220px' }}>
+                          <td className="px-3 py-2 ">
+                            <div className="small fw-medium text-truncate " style={{ maxWidth: '220px' }}>
                               {user.email}
                             </div>
                             <div className="text-muted small text-truncate">{user.phoneNumber}</div>
                           </td>
-                          <td className="pe-1">
+                          <td className="px-3 py-2 text-center">
                             <StatusBadge status={user.isActive ? "active" : "inactive"} />
                           </td>
-                          <td className="text-muted text-end small pe-5 ">
+                          <td className="text-muted text-center small px-3 py-2">
                             {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                           </td>
-                          <td className="text-end pe-4">
+                          <td className="px-3 py-2 text-center">
                             <div className="d-inline-flex align-items-center gap-2">
 
                               {/* Toggle Switch */}
