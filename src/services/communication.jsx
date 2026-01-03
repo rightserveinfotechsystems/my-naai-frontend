@@ -301,6 +301,7 @@ export const salonAPI = {
       if (params.page && params.page !== 1) queryParams.append('page', params.page.toString());
       if (params.searchString && params.searchString.trim()) queryParams.append('searchString', params.searchString.trim());
       if (params.cityFilter && params.cityFilter !== 'all') queryParams.append('cityFilter', params.cityFilter);
+      if (params.statusFilter && params.statusFilter !== 'all') queryParams.append('statusFilter', params.statusFilter);
 
       const queryString = queryParams.toString();
       const url = queryString ? `/api/salons/get-salon-list?${queryString}` : '/api/salons/get-salon-list';
@@ -604,6 +605,56 @@ export const salonAPI = {
       message: "Salon deletion endpoint not implemented yet",
       data: null
     };
+  },
+
+  // Delete a service from a salon
+  deleteService: async (serviceId) => {
+    try {
+      const response = await api.post(`/api/salons/delete-service`, {
+        serviceId: serviceId
+      });
+
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data,
+        message: response.data?.message || "Service deleted successfully"
+      };
+    } catch (error) {
+      console.error("Delete service API error:", error);
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to delete service",
+        error: error.response?.data
+      };
+    }
+  },
+
+  // Get filter list for salons
+  getFilterList: async () => {
+    try {
+      const response = await api.get('/api/salons/get-filter-list');
+
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data || {},
+        message: response.data?.message || "Filter list fetched successfully"
+      };
+    } catch (error) {
+      console.error("❌ Salon filter list API Error:", {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: error.config?.url
+      });
+
+      return {
+        success: false,
+        data: {},
+        message: error.response?.data?.message || "Failed to fetch salon filter list",
+        error: error.response?.data
+      };
+    }
   }
 };
 
@@ -619,20 +670,20 @@ export const bookingAPI = {
         page: params.page || 1,
         searchString: params.search || params.searchString || '',
         statusFilter: (params.status && params.status !== 'all') ? params.status : '',
-        salonId: (params.salonId && params.salonId !== 'all') ? params.salonId : '',
+        salon: (params.salonId && params.salonId !== 'all') ? params.salonId : '', // Try 'salon' instead of 'salonId'
         createdDate: params.dateFrom ? (params.dateFrom.includes('T') ? params.dateFrom.split('T')[0] : params.dateFrom) : ''
       };
 
       // Remove empty strings to avoid sending unnecessary parameters
       if (!requestBody.searchString) delete requestBody.searchString;
       if (!requestBody.statusFilter) delete requestBody.statusFilter;
-      if (!requestBody.salonId) delete requestBody.salonId;
+      if (!requestBody.salon) delete requestBody.salon;
       if (!requestBody.createdDate) delete requestBody.createdDate;
 
       console.log("📨 Request body:", requestBody);
       console.log("🔍 Search string:", requestBody.searchString || 'empty');
       console.log("📊 Status filter:", requestBody.statusFilter || 'all');
-      console.log("🏪 Salon ID:", requestBody.salonId || 'all');
+      console.log("🏪 Salon ID:", requestBody.salon || 'all');
       console.log("📅 Created date:", requestBody.createdDate || 'none');
 
       const response = await api.post('/api/booking/list', requestBody);
@@ -797,6 +848,23 @@ export const salonRequestAPI = {
         success: res.data?.status === "SUCCESS",
         message: res.data?.message
       };
+    } catch (err) {
+      return {
+        success: false,
+        message: err.response?.data?.message || "Delete failed"
+      };
+    }
+  },
+
+   uploadImages: async (formData) => {
+    try {
+      const res = await api.post("/api/upload/upload-image", formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      return res
     } catch (err) {
       return {
         success: false,

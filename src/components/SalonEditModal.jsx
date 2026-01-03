@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { toast } from 'react-toastify';
-import { salonAPI, serviceAPI } from "../services/communication.jsx";
+import { salonAPI, serviceAPI, salonRequestAPI } from "../services/communication.jsx";
+import DeleteConfirmModal from "./DeleteConfirmModal.jsx";
 
 // Cities list for dropdown
 const cities = [
- "Nagpur",
- "Wardha"
+  "Katol",
+  "Warud"
 ];
+const backendURL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
 
 const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,6 +31,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
     gender: "unisex",
     genderType: "UNISEX",
     status: "active",
+    rating: "",
     latitude: "",
     longitude: "",
 
@@ -36,7 +39,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
     services: [],
 
     // Business hours
-    scheduleId: "", 
+    scheduleId: "",
     openingTime: "09:00",
     closingTime: "21:00",
     breakStartTime: "13:00",
@@ -48,6 +51,13 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
   });
 
   const [images, setImages] = useState([]);
+
+  // Delete confirmation modal state
+  const [deleteModal, setDeleteModal] = useState({
+    show: false,
+    serviceIndex: null,
+    loading: false
+  });
 
   useEffect(() => {
     const loadSalonData = async () => {
@@ -70,9 +80,10 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                 state: salon.state || "",
                 pincode: salon.pincode || "",
                 imageUrl: salon.imageUrl || salon.shopLogo || "",
-                gender: (salon.genderType || "UNISEX").toLowerCase(),
-                genderType: salon.genderType || "UNISEX",
+                gender: (salon.genderType || "").toLowerCase(),
+                genderType: salon.genderType || "",
                 status: salon.isActive ? "active" : "inactive",
+                rating: salon.ratingAverage || salon.rating || "",
                 latitude: salon.latitude || "",
                 longitude: salon.longitude || "",
                 services: salon.services ? salon.services.map(service => ({
@@ -126,21 +137,22 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
             gender: "unisex",
             genderType: "UNISEX",
             status: "active",
+            rating: "",
             latitude: "",
             longitude: "",
 
             // Services
             services: [],
 
-          // Business hours
-          scheduleId: "",
-          openingTime: "09:00",
-          closingTime: "21:00",
-          breakStartTime: "13:00",
-          breakEndTime: "14:00",
-          day: "",
-          holidayDays: [],
-          originalServices: []
+            // Business hours
+            scheduleId: "",
+            openingTime: "09:00",
+            closingTime: "21:00",
+            breakStartTime: "13:00",
+            breakEndTime: "14:00",
+            day: "",
+            holidayDays: [],
+            originalServices: []
           });
         }
         setImages([]);
@@ -167,8 +179,47 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
   };
 
   const removeService = (index) => {
-    const newServices = formData.services.filter((_, i) => i !== index);
-    setFormData({ ...formData, services: newServices });
+    // Show confirmation modal instead of directly deleting
+    setDeleteModal({
+      show: true,
+      serviceIndex: index,
+      loading: false
+    });
+  };
+
+  const handleConfirmDelete = async () => {
+    const { serviceIndex } = deleteModal;
+    const serviceToRemove = formData.services[serviceIndex];
+
+    setDeleteModal(prev => ({ ...prev, loading: true }));
+
+    try {
+      // If service has an ID, it exists in database - call delete API
+      if (serviceToRemove && serviceToRemove.id) {
+        const result = await salonAPI.deleteService(serviceToRemove.id);
+
+        if (result.success) {
+          toast.success("Service deleted successfully!");
+          // Remove from local state after successful API call
+          const newServices = formData.services.filter((_, i) => i !== serviceIndex);
+          setFormData({ ...formData, services: newServices });
+          setDeleteModal({ show: false, serviceIndex: null, loading: false });
+        } else {
+          console.error("Failed to delete service:", result.message);
+          toast.error(`Failed to delete service: ${result.message}`);
+          setDeleteModal({ show: false, serviceIndex: null, loading: false });
+        }
+      } else {
+        // New service (no ID) - just remove from local state
+        const newServices = formData.services.filter((_, i) => i !== serviceIndex);
+        setFormData({ ...formData, services: newServices });
+        setDeleteModal({ show: false, serviceIndex: null, loading: false });
+      }
+    } catch (error) {
+      console.error("Error deleting service:", error);
+      toast.error("An error occurred while deleting the service. Please try again.");
+      setDeleteModal({ show: false, serviceIndex: null, loading: false });
+    }
   };
 
   const handleCloseModal = () => {
@@ -193,6 +244,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
       gender: "unisex",
       genderType: "UNISEX",
       status: "active",
+      rating: "",
       latitude: "",
       longitude: "",
       services: [],
@@ -227,8 +279,10 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
         imageUrl: formData.imageUrl || "",
         genderType: (formData.gender || "unisex").toUpperCase(),
         isActive: formData.status === "active",
+        ratingAverage: formData.rating ? parseInt(formData.rating) : 5,
         latitude: formData.latitude ? parseFloat(formData.latitude) : null,
         longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+        imagesArray: images.length > 0 ? images : [],
 
         // Services are handled separately below based on mode
 
@@ -242,7 +296,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
         }]
       };
 
-   
+
 
       let result;
       if (modalMode === "edit" && editingSalonId) {
@@ -294,7 +348,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
         updateData.existingServices = existingServices;
         updateData.newServices = newServices;
 
-       
+
 
         result = await salonAPI.updateSalon(editingSalonId, updateData);
       } else {
@@ -304,8 +358,11 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
           price: parseFloat(service.price) || 0,
           description: service.description || ""
         }));
+        console.log("apiData", apiData);
 
         result = await salonAPI.createSalon(apiData);
+        console.log("response",result);
+
       }
 
       if (result.success) {
@@ -333,22 +390,28 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleImageUpload = (e) => {
-    const files = Array.from(e.target.files);
-    const newImages = files.map(file => {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error(`Image ${file.name} is too large. Max 5MB allowed.`);
-        return null;
-      }
-      return {
-        file,
-        preview: URL.createObjectURL(file)
-      };
-    }).filter(Boolean);
+  const handleImageUpload = async (e) => {
+    try {
+      const files = Array.from(e.target.files);
+      const formData = new FormData();
+      formData.append('image', files[0]);
+      const imagesResponse = await salonRequestAPI.uploadImages(formData);
 
-    setImages(prev => [...prev, ...newImages]);
-    e.target.value = '';
+      if (imagesResponse?.data?.success) {
+        setImages(prev => [...prev, imagesResponse?.data?.url]);
+        e.target.value = '';
+      } else {
+        toast.info(imagesResponse?.data?.message || "Image upload failed. Please try again.");
+      }
+    } catch (error) {
+      toast.info(error.message || "Image upload failed. Please try again.");
+    }
+
+
   };
+
+  console.log("Images", images);
+
 
   const removeImage = (index) => {
     const image = images[index];
@@ -488,7 +551,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
 
                 {/* 7. City */}
                 <div className="col-12 col-md-4">
-                  <label className="form-label fw-semibold">City <span className="text-danger">*</span></label>
+                  <label className="form-label fw-semibold">City* <span className="text-danger"></span></label>
                   <select
                     className="form-select"
                     name="city"
@@ -517,11 +580,11 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                   >
                     <option value="">Select State</option>
                     <option value="Maharashtra">Maharashtra</option>
-                   
+
                   </select>
                 </div>
 
-                {/* 8. Pincode */}
+                {/* 9. Pincode */}
                 <div className="col-12 col-md-4">
                   <label className="form-label fw-semibold">Pincode <span className="text-danger">*</span></label>
                   <input
@@ -537,7 +600,26 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                   />
                 </div>
 
-                {/* 9. Latitude */}
+                {/* 10. Rating */}
+                <div className="col-12 col-md-4">
+                  <label className="form-label fw-semibold">Rating</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    name="rating"
+                    value={formData.rating || ""}
+                    onChange={handleInputChange}
+                    disabled={isSubmitting}
+                    placeholder="5"
+                    step="1"
+                    min="1"
+                    max="5"
+                    title="Initial rating (1-5 stars)"
+                  />
+                  <small className="text-muted">Rating (1-5 stars)</small>
+                </div>
+
+                {/* 11. Latitude */}
                 <div className="col-12 col-md-6">
                   <label className="form-label fw-semibold">Latitude</label>
                   <input
@@ -552,7 +634,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                   />
                 </div>
 
-                {/* 10. Longitude */}
+                {/* 12. Longitude */}
                 <div className="col-12 col-md-6">
                   <label className="form-label fw-semibold">Longitude</label>
                   <input
@@ -568,7 +650,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                 </div>
 
                 {/* 11. Image URL */}
-                <div className="col-12 col-md-6">
+                {/* <div className="col-12 col-md-6">
                   <label className="form-label fw-semibold">Image URL</label>
                   <input
                     type="url"
@@ -579,101 +661,114 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                     disabled={isSubmitting}
                     placeholder="https://example.com/salon.jpg"
                   />
-                </div>
+                </div> */}
 
-                {/* Salon Type */}
-                <div className="col-12">
-                  <label className="form-label fw-semibold mb-2">Salon Type : <span className="text-danger">*</span></label>
-                  <div className="d-flex flex-column gap-2">
-                    <div className="form-check">
-                      <input
-                        className="form-check-input"
-                        type="radio"
-                        name="gender"
-                        id="male"
-                        value="male"
-                        checked={formData.gender === "male"}
-                        onChange={handleInputChange}
-                        required
-                        disabled={isSubmitting}
-                      />
-                      <label className="form-check-label fw-medium" htmlFor="male">
-                        <i className="bi bi-person-fill text-primary me-2"></i>Male
-                      </label>
+                <div className="row">
+                  {/* Salon Type */}
+                  <div className="col-12 col-md-6">
+                    <label className="form-label fw-semibold mb-2">
+                      Salon Type : <span className="text-danger">*</span>
+                    </label>
+
+                    <div className="d-flex flex-column gap-2">
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="radio"
+                          name="gender"
+                          id="male"
+                          value="male"
+                          checked={formData.gender === "male"}
+                          onChange={handleInputChange}
+                          disabled={isSubmitting}
+                          required
+                        />
+                        <label className="form-check-label fw-medium" htmlFor="male">
+                          <i className="bi bi-person-fill text-primary me-2"></i>Male
+                        </label>
+                      </div>
+
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="radio"
+                          name="gender"
+                          id="female"
+                          value="female"
+                          checked={formData.gender === "female"}
+                          onChange={handleInputChange}
+                          disabled={isSubmitting}
+                          required
+                        />
+                        <label className="form-check-label fw-medium" htmlFor="female">
+                          <i className="bi bi-person-heart text-danger me-2"></i>Female
+                        </label>
+                      </div>
+
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="radio"
+                          name="gender"
+                          id="unisex"
+                          value="unisex"
+                          checked={formData.gender === "unisex"}
+                          onChange={handleInputChange}
+                          disabled={isSubmitting}
+                          required
+                        />
+                        <label className="form-check-label fw-medium" htmlFor="unisex">
+                          <i className="bi bi-gender-trans text-success me-2"></i>Unisex
+                        </label>
+                      </div>
                     </div>
-                    <div className="form-check">
-                      <input
-                        className="form-check-input"
-                        type="radio"
-                        name="gender"
-                        id="female"
-                        value="female"
-                        checked={formData.gender === "female"}
-                        onChange={handleInputChange}
-                        required
-                        disabled={isSubmitting}
-                      />
-                      <label className="form-check-label fw-medium" htmlFor="female">
-                        <i className="bi bi-person-heart text-danger me-2"></i>Female
-                      </label>
-                    </div>
-                    <div className="form-check">
-                      <input
-                        className="form-check-input"
-                        type="radio"
-                        name="gender"
-                        id="unisex"
-                        value="unisex"
-                        checked={formData.gender === "unisex"}
-                        onChange={handleInputChange}
-                        required
-                        disabled={isSubmitting}
-                      />
-                      <label className="form-check-label fw-medium" htmlFor="unisex">
-                        <i className="bi bi-gender-trans text-success me-2"></i>Unisex
-                      </label>
+                  </div>
+
+                  {/* Salon Status */}
+                  <div className="col-12 col-md-6">
+                    <label className="form-label fw-semibold mb-2">
+                      Status <span className="text-danger">*</span>
+                    </label>
+
+                    <div className="d-flex flex-column gap-2">
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="radio"
+                          name="status"
+                          id="active"
+                          value="active"
+                          checked={formData.status === "active"}
+                          onChange={handleInputChange}
+                          disabled={isSubmitting}
+                          required
+                        />
+                        <label className="form-check-label fw-medium" htmlFor="active">
+                          <i className="bi bi-check-circle-fill text-success me-2"></i>Active
+                        </label>
+                      </div>
+
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="radio"
+                          name="status"
+                          id="inactive"
+                          value="inactive"
+                          checked={formData.status === "inactive"}
+                          onChange={handleInputChange}
+                          disabled={isSubmitting}
+                          required
+                        />
+                        <label className="form-check-label fw-medium" htmlFor="inactive">
+                          <i className="bi bi-x-circle-fill text-danger me-2"></i>Inactive
+                        </label>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Salon Status */}
-                <div className="col-12 col-md-6">
-                  <label className="form-label fw-semibold mb-2">Status <span className="text-danger">*</span></label>
-                  <div className="d-flex flex-column gap-2">
-                    <div className="form-check">
-                      <input
-                        className="form-check-input"
-                        type="radio"
-                        name="status"
-                        id="active"
-                        value="active"
-                        checked={formData.status === "active"}
-                        onChange={handleInputChange}
-                        required
-                        disabled={isSubmitting}
-                      />
-                      <label className="form-check-label fw-medium" htmlFor="active">
-                        <i className="bi bi-check-circle-fill text-success me-2"></i>Active
-                      </label>
-                    </div>
-                    <div className="form-check">
-                      <input
-                        className="form-check-input"
-                        type="radio"
-                        name="status"
-                        id="inactive"
-                        value="inactive"
-                        checked={formData.status === "inactive"}
-                        onChange={handleInputChange}
-                        required
-                        disabled={isSubmitting}
-                      />
-                      <label className="form-check-label fw-medium" htmlFor="inactive">
-                        <i className="bi bi-x-circle-fill text-danger me-2"></i>Inactive
-                      </label>
-                    </div>
-                  </div>
-                </div>
+
 
 
                 <div className="col-12">
@@ -840,7 +935,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                       id="file-upload-box"
                       className="d-none"
                       accept="image/*"
-                      multiple
+                      multiple={false}
                       onChange={handleImageUpload}
                       disabled={isSubmitting}
                     />
@@ -866,10 +961,10 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
 
                   {images.length > 0 && (
                     <div className="row g-2 mt-3">
-                      {images.map((image, index) => (
+                      {images?.map((image, index) => (
                         <div key={index} className="col-4 col-sm-3 col-md-2 position-relative">
                           <img
-                            src={image.preview}
+                            src={`${backendURL}/getFiles${image}`}
                             className="img-fluid rounded shadow-sm border w-100"
                             style={{ height: '80px', objectFit: 'fill', display: 'block' }}
                             alt={`Preview ${index + 1}`}
@@ -922,6 +1017,15 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
           </form>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        show={deleteModal.show}
+        onHide={() => setDeleteModal({ show: false, serviceIndex: null, loading: false })}
+        onConfirm={handleConfirmDelete}
+        loading={deleteModal.loading}
+        count={1}
+      />
     </div>
   );
 };
