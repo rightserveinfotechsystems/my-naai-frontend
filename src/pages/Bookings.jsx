@@ -87,11 +87,23 @@ const Bookings = () => {
         createdDate: apiParams.dateFrom || ''
       });
 
+      console.log("🏪 Salon filter debugging:", {
+        salonFilter,
+        salonFilterType: typeof salonFilter,
+        apiParamsSalonId: apiParams.salonId,
+        apiParamsSalonIdType: typeof apiParams.salonId
+      });
+
       const result = await bookingAPI.getBookings(apiParams);
 
       if (result.success) {
         console.log("📋 API result data:", result.data);
         console.log("📋 First booking sample:", result.data?.[0]);
+        console.log("📋 All salon IDs in bookings:", result.data?.map(b => {
+          // Try to find salon ID in booking data
+          const salonId = b.salonId || b.salon_id || b.salon?.id || b.salon?.salonId;
+          return { id: salonId, name: b.salonName, fullBooking: b };
+        }));
         setBookings(result.data || []);
         setTotalItems(result.pagination?.total || 0);
         setTotalPages(result.pagination?.totalPages || 1);
@@ -152,10 +164,13 @@ const Bookings = () => {
         }
         
         // Transform salon data to have consistent structure (id and name)
-        const normalizedSalons = salonData.map(salon => ({
+        const normalizedSalons = salonData.map(salon => {
+          console.log("🔍 Salon data from API:", salon);
+          return {
           id: salon.id || salon.salonId || salon._id,
           name: salon.name || salon.salonName || salon.salon_name || 'Unknown Salon'
-        }));
+          };
+        });
         
         setSalons(normalizedSalons);
         // Store all filter options
@@ -198,6 +213,7 @@ const Bookings = () => {
   const filtered = bookings;
 
   const handleFilterChange = useCallback((setter) => (e) => {
+    console.log("🔄 Filter changed:", setter.name || 'unknown', "Value:", e.target.value, "Type:", typeof e.target.value);
     setter(e.target.value);
     setCurrentPage(1);
   }, []);
@@ -271,7 +287,6 @@ const Bookings = () => {
                       >
                         <option key="all" value="all">All Status</option>
                         <option key="pending" value="pending">Pending</option>
-                        <option key="confirmed" value="confirmed">Confirmed</option>
                         <option key="completed" value="completed">Completed</option>
                         <option key="cancelled" value="cancelled">Cancelled</option>
                       </select>

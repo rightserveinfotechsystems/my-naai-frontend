@@ -8,6 +8,7 @@ import StatusBadge from "../components/StatusBadge.jsx";
 import SalonEditModal from "../components/SalonEditModal.jsx";
 import { salonAPI } from "../services/communication.jsx";
 import Loader from "../components/Loader.jsx";
+const backendURL = import.meta.env.VITE_BACKEND_URL
 
 const ITEMS_PER_PAGE = 20;
 
@@ -45,7 +46,8 @@ const Salons = () => {
     const apiParams = {
       page: currentPage,
       searchString: search,
-      cityFilter: cityFilter === 'all' ? undefined : cityFilter
+      cityFilter: cityFilter === 'all' ? undefined : cityFilter,
+      statusFilter: statusFilter === 'all' ? undefined : statusFilter
     };
 
     console.log("Making salon API call with params:", apiParams);
@@ -161,7 +163,7 @@ const Salons = () => {
                     <div className="col-12 col-md-3">
                       <select className="form-select form-select-sm" value={cityFilter} onChange={(e) => { setCityFilter(e.target.value); setCurrentPage(1); }}>
                         <option value="all">All Cities</option>
-                        {["Nagpur"].map(city => (
+                        {["Katol", "Warud"].map(city => (
                           <option key={city} value={city}>{city}</option>
                         ))}
                       </select>
@@ -235,7 +237,7 @@ const Salons = () => {
                             disabled={loading}
                           >
                             <option value="all">All Cities</option>
-                            {["Nagpur"].map(c => <option key={c} value={c}>{c}</option>)}
+                            {["Katol", "Warud"].map(c => <option key={c} value={c}>{c}</option>)}
                           </select>
                         </div>
                         <div>
@@ -304,7 +306,7 @@ const Salons = () => {
                     >
                       <div className="ratio ratio-16x9 bg-light">
                         <img
-                          src={salon.imageUrl || salon.shopLogo || "https://via.placeholder.com/400x225?text=No+Image"}
+                          src={`${backendURL}/getFiles${salon.imageUrl}`}
                           className="card-img-top"
                           alt={salon.shopName || salon.salonName || salon.name}
                           style={{ objectFit: "cover" }}
@@ -320,7 +322,7 @@ const Salons = () => {
                             {salon.shopName || salon.salonName || salon.name}
                           </h6>
                           <span className="badge bg-warning-subtle text-dark border-0">
-                            ★ {salon.rating || "5.0"}
+                            ★ {salon.ratingAverage || "5.0"}
                           </span>
                         </div>
 
@@ -369,51 +371,48 @@ const Salons = () => {
           }}
         >
           {paginated.map((salon, index) => (
-                <div key={salon.barberId || salon.id || salon.salonId || index} className="mb-3">
-                  <div className="card shadow-sm border-0 bg-white" style={{ cursor: 'pointer' }} onClick={() => navigate(`/salons/${salon.salonId || salon.barberId || salon.id}`)}>
-                    <div className="ratio ratio-16x9 bg-light">
-                      <img
-                        src={salon.imageUrl || salon.shopLogo || "https://via.placeholder.com/400x225?text=No+Image"}
-                        className="card-img-top"
-                        alt={salon.shopName || salon.salonName || salon.name}
-                        style={{ objectFit: "cover" }}
-                        onError={(e) => {
-                          e.target.src = "https://via.placeholder.com/400x225?text=No+Image";
-                        }}
-                      />
-                    </div>
-                    <div className="card-body p-3">
-                      <div className="d-flex justify-content-between align-items-start mb-2">
-                        <div className="flex-grow-1 pe-2 min-w-0">
-                          <div className="fw-semibold text-truncate">{salon.shopName || salon.salonName || salon.name}</div>
-                          <div className="text-muted small text-truncate">
-                            <i className="bi bi-geo-alt-fill me-1 text-primary"></i> {salon.city}
-                          </div>
-                        </div>
-                        <button
-                          className="btn fontcolor btn-sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditSalon(salon);
-                          }}
-                        >
-                          <i className="bi bi-pencil-square"></i>
-                        </button>
-                      </div>
-                      <div className="d-flex justify-content-between align-items-center mb-2">
-                        <span className="badge bg-warning-subtle text-dark border-0">
-                          ★ {salon.rating || "5.0"}
-                        </span>
-                        <span className="small text-muted">{salon.gender || "Unisex"}</span>
-                      </div>
-                      <div className="d-flex justify-content-center align-items-center gap-2">
-                        <i className={`bi ${salon.isActive ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger'} fs-5`}></i>
-                        <StatusBadge status={salon.isActive ? "active" : "inactive"} size="sm" />
+            <div key={salon.barberId || salon.id || salon.salonId || index} className="mb-3">
+              <div className="card shadow-sm border-0 bg-white" style={{ cursor: 'pointer' }} onClick={() => navigate(`/salons/${salon.salonId || salon.barberId || salon.id}`)}>
+                <div className="ratio ratio-16x9 bg-light">
+                  <img
+                    src={`${backendURL}/getFiles${salon.imageUrl}`}
+                    className="card-img-top"
+                    alt={salon.salonName}
+                    style={{ objectFit: "cover" }}
+                  />
+                </div>
+                <div className="card-body p-3">
+                  <div className="d-flex justify-content-between align-items-start mb-2">
+                    <div className="flex-grow-1 pe-2 min-w-0">
+                      <div className="fw-semibold text-truncate">{salon.salonName}</div>
+                      <div className="text-muted small text-truncate">
+                        <i className="bi bi-geo-alt-fill me-1 text-primary"></i> {salon.city}
                       </div>
                     </div>
+                    <button
+                      className="btn fontcolor btn-sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditSalon(salon);
+                      }}
+                    >
+                      <i className="bi bi-pencil-square"></i>
+                    </button>
+                  </div>
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <span className="badge bg-warning-subtle text-dark border-0">
+                      ★ {salon.ratingAverage || "5.0"}
+                    </span>
+                    <span className="small text-muted">{salon.gender || "Unisex"}</span>
+                  </div>
+                  <div className="d-flex justify-content-center align-items-center gap-2">
+                    <i className={`bi ${salon.isActive ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger'} fs-5`}></i>
+                    <StatusBadge status={salon.isActive ? "active" : "inactive"} size="sm" />
                   </div>
                 </div>
-              ))}
+              </div>
+            </div>
+          ))}
           {paginated.length === 0 && !loading && (
             <div className="alert alert-light border mb-0 text-center py-4 bg-white">
               <i className="bi bi-search mb-2 fs-1 text-muted"></i>
@@ -423,13 +422,14 @@ const Salons = () => {
         </div>
       </div>
       {/* MODAL COMPONENT */}
-      <SalonEditModal
+      {showModal && <SalonEditModal
         showModal={showModal}
         setShowModal={setShowModal}
         modalMode={modalMode}
         editingSalonId={editingSalonId}
         onSuccess={fetchSalons}
       />
+      }
     </Layout>
   );
 };

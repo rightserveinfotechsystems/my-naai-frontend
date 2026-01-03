@@ -34,7 +34,7 @@ const SalonDetail = () => {
 
 
 
-  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const weekDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   const dayNameToNumber = (dayName) => {
     const dayMap = {
