@@ -32,8 +32,12 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
     genderType: "UNISEX",
     status: "active",
     rating: "",
+    numberOfReviews: "",
     latitude: "",
     longitude: "",
+    // isPopular: false,
+    // isFeatured: false,
+    // isVerified: false,
 
     // Services
     services: [],
@@ -44,6 +48,8 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
     closingTime: "21:00",
     breakStartTime: "13:00",
     breakEndTime: "14:00",
+    breakStartPeriod: "PM",
+    breakEndPeriod: "PM",
     day: "",
     holidayDays: [],
     originalServices: []
@@ -51,6 +57,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
   });
 
   const [images, setImages] = useState([]);
+  const [draggedIndex, setDraggedIndex] = useState(null);
 
   // Delete confirmation modal state
   const [deleteModal, setDeleteModal] = useState({
@@ -84,8 +91,12 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                 genderType: salon.genderType || "",
                 status: salon.isActive ? "active" : "inactive",
                 rating: salon.ratingAverage || salon.rating || "",
+                numberOfReviews: salon.numberOfReviews || salon.reviewCount || salon.totalReviews || "",
                 latitude: salon.latitude || "",
                 longitude: salon.longitude || "",
+                // isPopular: salon.isPopular || false,
+                // isFeatured: salon.isFeatured || false,
+                // isVerified: salon.isVerified || false,
                 services: salon.services ? salon.services.map(service => ({
                   id: service.serviceId || service.id,
                   name: service.serviceName || service.name || "",
@@ -108,6 +119,34 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                   description: service.description || "No description"
                 })) : []
               });
+
+              // Load existing gallery images (from imagesArray, NOT the main image)
+              console.log("Salon data for debugging:", salon);
+              let loadedImages = [];
+
+              // Check different possible image array field names (these contain gallery images only)
+              const imageFields = ['imagesArray', 'images', 'salonImages', 'imageUrls', 'photos', 'pictures'];
+
+              for (const field of imageFields) {
+                if (salon[field] && Array.isArray(salon[field]) && salon[field].length > 0) {
+                  console.log(`Found gallery images in ${field}:`, salon[field]);
+                  loadedImages = salon[field].map(img => {
+                    if (typeof img === 'string') {
+                      return img;
+                    } else if (img && typeof img === 'object') {
+                      return img.url || img.imageUrl || img.photoUrl || img.src || img.path;
+                    }
+                    return null;
+                  }).filter(img => img !== null);
+                  break;
+                }
+              }
+
+              // Note: We do NOT load the main image (imageUrl/shopLogo) into the gallery images array
+              // The main image is handled separately in the form data
+
+              console.log("Gallery images loaded:", loadedImages);
+              setImages(loadedImages);
 
             } else {
               console.error("Failed to load salon data:", result.message);
@@ -138,8 +177,12 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
             genderType: "UNISEX",
             status: "active",
             rating: "",
+            numberOfReviews: "",
             latitude: "",
             longitude: "",
+            // isPopular: false,
+            // isFeatured: false,
+            // isVerified: false,
 
             // Services
             services: [],
@@ -150,6 +193,8 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
             closingTime: "21:00",
             breakStartTime: "13:00",
             breakEndTime: "14:00",
+            breakStartPeriod: "PM",
+            breakEndPeriod: "PM",
             day: "",
             holidayDays: [],
             originalServices: []
@@ -191,12 +236,17 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
     const { serviceIndex } = deleteModal;
     const serviceToRemove = formData.services[serviceIndex];
 
+    console.log("🔍 Service to delete:", serviceToRemove);
+    console.log("🆔 Service ID:", serviceToRemove?.id || serviceToRemove?.serviceId);
+
     setDeleteModal(prev => ({ ...prev, loading: true }));
 
     try {
       // If service has an ID, it exists in database - call delete API
-      if (serviceToRemove && serviceToRemove.id) {
-        const result = await salonAPI.deleteService(serviceToRemove.id);
+      if (serviceToRemove && (serviceToRemove.id || serviceToRemove.serviceId)) {
+        console.log("🗑️ Making API call to delete service from database");
+        toast.info("Deleting service from database...");
+        const result = await salonAPI.deleteService(serviceToRemove.id || serviceToRemove.serviceId);
 
         if (result.success) {
           toast.success("Service deleted successfully!");
@@ -210,10 +260,13 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
           setDeleteModal({ show: false, serviceIndex: null, loading: false });
         }
       } else {
+        console.log("📝 New service (no ID) - removing from local state only");
+        toast.info("Removing unsaved service...");
         // New service (no ID) - just remove from local state
         const newServices = formData.services.filter((_, i) => i !== serviceIndex);
         setFormData({ ...formData, services: newServices });
         setDeleteModal({ show: false, serviceIndex: null, loading: false });
+        toast.success("Service removed!");
       }
     } catch (error) {
       console.error("Error deleting service:", error);
@@ -245,14 +298,20 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
       genderType: "UNISEX",
       status: "active",
       rating: "",
+      numberOfReviews: "",
       latitude: "",
       longitude: "",
+      // isPopular: false,
+      // isFeatured: false,
+      // isVerified: false,
       services: [],
       scheduleId: "",
       openingTime: "09:00",
       closingTime: "21:00",
       breakStartTime: "13:00",
       breakEndTime: "14:00",
+      breakStartPeriod: "PM",
+      breakEndPeriod: "PM",
       day: "",
       holidayDays: [],
       originalServices: []
@@ -280,8 +339,12 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
         genderType: (formData.gender || "unisex").toUpperCase(),
         isActive: formData.status === "active",
         ratingAverage: formData.rating ? parseInt(formData.rating) : 5,
+        totalReviews: formData.numberOfReviews ? parseInt(formData.numberOfReviews) : 0,
         latitude: formData.latitude ? parseFloat(formData.latitude) : null,
         longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+        // isPopular: formData.isPopular || true,
+        // isFeatured: formData.isFeatured || false,
+        // isVerified: formData.isVerified || false,
         imagesArray: images.length > 0 ? images : [],
 
         // Services are handled separately below based on mode
@@ -361,7 +424,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
         console.log("apiData", apiData);
 
         result = await salonAPI.createSalon(apiData);
-        console.log("response",result);
+        console.log("response", result);
 
       }
 
@@ -420,6 +483,41 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
     setImages(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Drag and drop functionality for images
+  const handleDragStart = (e, dragIndex) => {
+    setDraggedIndex(dragIndex);
+    e.dataTransfer.setData('text/plain', dragIndex);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
+
+  const handleDrop = (e, dropIndex) => {
+    e.preventDefault();
+    const dragIndex = parseInt(e.dataTransfer.getData('text/plain'));
+    setDraggedIndex(null);
+
+    if (dragIndex === dropIndex) return;
+
+    const newImages = [...images];
+    const draggedImage = newImages[dragIndex];
+
+    // Remove dragged item
+    newImages.splice(dragIndex, 1);
+
+    // Insert at new position
+    newImages.splice(dropIndex, 0, draggedImage);
+
+    setImages(newImages);
+  };
+
   // Convert day name to number (0=Sunday, 1=Monday, etc.)
   const getDayNumber = (dayName) => {
     const dayMap = {
@@ -464,7 +562,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
 
                 {/* 1. Salon Name */}
                 <div className="col-12 col-md-6">
-                  <label className="form-label fw-semibold">Salon Name <span className="text-danger">*</span></label>
+                  <label className="form-label fw-semibold required-field">Salon Name</label>
                   <input
                     type="text"
                     className="form-control"
@@ -493,7 +591,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
 
                 {/* 3. Phone Number */}
                 <div className="col-12 col-md-6">
-                  <label className="form-label fw-semibold">Phone Number <span className="text-danger">*</span></label>
+                  <label className="form-label fw-semibold required-field">Phone Number</label>
                   <input
                     type="tel"
                     className="form-control"
@@ -522,7 +620,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
 
                 {/* 5. Address Line 1 */}
                 <div className="col-12 col-md-6">
-                  <label className="form-label fw-semibold">Address Line 1 <span className="text-danger">*</span></label>
+                  <label className="form-label fw-semibold required-field">Address Line 1</label>
                   <input
                     type="text"
                     className="form-control"
@@ -551,7 +649,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
 
                 {/* 7. City */}
                 <div className="col-12 col-md-4">
-                  <label className="form-label fw-semibold">City* <span className="text-danger"></span></label>
+                  <label className="form-label fw-semibold required-field">City</label>
                   <select
                     className="form-select"
                     name="city"
@@ -569,7 +667,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
 
                 {/* 8. State */}
                 <div className="col-12 col-md-4">
-                  <label className="form-label fw-semibold">State <span className="text-danger">*</span></label>
+                  <label className="form-label fw-semibold required-field">State</label>
                   <select
                     className="form-select"
                     name="state"
@@ -586,7 +684,8 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
 
                 {/* 9. Pincode */}
                 <div className="col-12 col-md-4">
-                  <label className="form-label fw-semibold">Pincode <span className="text-danger">*</span></label>
+                  <label className="form-label fw-semibold required-field">Pincode</label>
+
                   <input
                     type="number"
                     className="form-control"
@@ -600,26 +699,9 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                   />
                 </div>
 
-                {/* 10. Rating */}
-                <div className="col-12 col-md-4">
-                  <label className="form-label fw-semibold">Rating</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    name="rating"
-                    value={formData.rating || ""}
-                    onChange={handleInputChange}
-                    disabled={isSubmitting}
-                    placeholder="5"
-                    step="1"
-                    min="1"
-                    max="5"
-                    title="Initial rating (1-5 stars)"
-                  />
-                  <small className="text-muted">Rating (1-5 stars)</small>
-                </div>
 
-                {/* 11. Latitude */}
+
+                {/* 10. Latitude */}
                 <div className="col-12 col-md-6">
                   <label className="form-label fw-semibold">Latitude</label>
                   <input
@@ -634,7 +716,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                   />
                 </div>
 
-                {/* 12. Longitude */}
+                {/* 11. Longitude */}
                 <div className="col-12 col-md-6">
                   <label className="form-label fw-semibold">Longitude</label>
                   <input
@@ -646,6 +728,41 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                     onChange={handleInputChange}
                     disabled={isSubmitting}
                     placeholder="77.2090"
+                  />
+                </div>
+
+
+                {/* 12. Rating */}
+                <div className="col-12 col-md-6">
+                  <label className="form-label fw-semibold">Rating</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    name="rating"
+                    value={formData.rating || ""}
+                    onChange={handleInputChange}
+                    disabled={isSubmitting}
+                    placeholder="5"
+                    step="1"
+                    min="1"
+                    max="5"
+                    title="Initial rating (1-5 stars)"
+                  />
+                </div>
+
+                {/* 13. Number of Reviews */}
+                <div className="col-12 col-md-6">
+                  <label className="form-label fw-semibold">Number of Reviews</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    name="numberOfReviews"
+                    value={formData.numberOfReviews || ""}
+                    onChange={handleInputChange}
+                    disabled={isSubmitting}
+                    placeholder="0"
+                    min="0"
+                    title="Total number of reviews"
                   />
                 </div>
 
@@ -663,11 +780,11 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                   />
                 </div> */}
 
-                <div className="row">
+                <div className="row p-3">
                   {/* Salon Type */}
                   <div className="col-12 col-md-6">
                     <label className="form-label fw-semibold mb-2">
-                      Salon Type : <span className="text-danger">*</span>
+                      <span className="required-field">Salon Type</span>
                     </label>
 
                     <div className="d-flex flex-column gap-2">
@@ -726,42 +843,43 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
 
                   {/* Salon Status */}
                   <div className="col-12 col-md-6">
-                    <label className="form-label fw-semibold mb-2">
-                      Status <span className="text-danger">*</span>
+                    <label className="form-label fw-semibold d-flex align-items-center mb-3">
+                      {/* <i className="bi bi-toggle-on me-2" style={{ color: '#a45b06', fontSize: '1.2rem' }}></i> */}
+                      <span className="required-field">Salon Status</span>
                     </label>
 
-                    <div className="d-flex flex-column gap-2">
-                      <div className="form-check">
-                        <input
-                          className="form-check-input"
-                          type="radio"
-                          name="status"
-                          id="active"
-                          value="active"
-                          checked={formData.status === "active"}
-                          onChange={handleInputChange}
-                          disabled={isSubmitting}
-                          required
-                        />
-                        <label className="form-check-label fw-medium" htmlFor="active">
-                          <i className="bi bi-check-circle-fill text-success me-2"></i>Active
-                        </label>
-                      </div>
+                    <div className="d-flex align-items-center justify-content-between rounded-3"
+                      style={{
+                        //  background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
+                        //  borderColor: '#dee2e6'
+                      }}>
 
-                      <div className="form-check">
+                      {/* Custom Toggle Switch */}
+                      <div className="form-check form-switch">
                         <input
                           className="form-check-input"
-                          type="radio"
-                          name="status"
-                          id="inactive"
-                          value="inactive"
-                          checked={formData.status === "inactive"}
-                          onChange={handleInputChange}
+                          type="checkbox"
+                          id="status-toggle"
+                          checked={formData.status === "active"}
+                          onChange={(e) => handleInputChange({
+                            target: {
+                              name: 'status',
+                              value: e.target.checked ? 'active' : 'inactive'
+                            }
+                          })}
                           disabled={isSubmitting}
-                          required
+                          style={{
+                            width: '50px',
+                            height: '24px',
+                            borderRadius: '12px',
+                            backgroundColor: formData.status === "active" ? '#28a745' : '#6c757d',
+                            border: 'none',
+                            cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                            transition: 'all 0.3s ease'
+                          }}
                         />
-                        <label className="form-check-label fw-medium" htmlFor="inactive">
-                          <i className="bi bi-x-circle-fill text-danger me-2"></i>Inactive
+                        <label className="form-check-label visually-hidden" htmlFor="status-toggle">
+                          Toggle salon status
                         </label>
                       </div>
                     </div>
@@ -772,9 +890,47 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
 
 
                 <div className="col-12">
-                  <label className="form-label fw-semibold">Services <span className="text-danger">*</span></label>
+                  <label className="form-label fw-semibold required-field">Services</label>
                   {formData.services.map((service, index) => (
-                    <div key={index} className="card mb-3 p-3">
+                    <div key={index} className="card mb-3 position-relative" style={{ padding: '16px', paddingTop: '50px' }}>
+                      {/* Delete button positioned at top right */}
+                      <button
+                        type="button"
+                        className="btn position-absolute top-0 end-0 mt-2 me-2"
+                        onClick={() => removeService(index)}
+                        disabled={formData.services.length === 1}
+                        style={{
+                          zIndex: 100,
+                          borderRadius: '50%',
+                          width: '36px',
+                          height: '36px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: 'linear-gradient(135deg, #dc3545, #c82333)',
+                          border: 'none',
+                          color: 'white',
+                          boxShadow: '0 4px 12px rgba(220, 53, 69, 0.3)',
+                          fontSize: '16px',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!e.target.disabled) {
+                            e.target.style.transform = 'scale(1.1)';
+                            e.target.style.boxShadow = '0 6px 16px rgba(220, 53, 69, 0.4)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!e.target.disabled) {
+                            e.target.style.transform = 'scale(1)';
+                            e.target.style.boxShadow = '0 4px 12px rgba(220, 53, 69, 0.3)';
+                          }
+                        }}
+                        title="Remove Service"
+                      >
+                        <i className="bi bi-trash"></i>
+                      </button>
+
                       <div className="mb-2">
                         <div className="row g-2">
                           <div className="col-12 col-md-4">
@@ -823,16 +979,6 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                           />
                         </div>
                       </div>
-
-                      <button
-                        type="button"
-                        className="btn btn-outline-danger btn-sm px-1"
-                        onClick={() => removeService(index)}
-                        disabled={formData.services.length === 1}
-                      >
-                        <i className="bi bi-trash"></i>
-                      </button>
-
                     </div>
                   ))}
                   <button
@@ -847,7 +993,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                 {/* Opening Time */}
                 <div className="col-12 col-md-6">
                   <label className="form-label fw-semibold">
-                    Opening Time <span className="text-danger">*</span>
+                    <span className="required-field">Opening Time</span>
                   </label>
                   <div className="input-group">
                     <input
@@ -875,8 +1021,8 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
 
                 {/* Closing Time */}
                 <div className="col-12 col-md-6">
-                  <label className="form-label fw-semibold">
-                    Closing Time <span className="text-danger">*</span>
+                  <label className="form-label fw-semibold ">
+                    <span className="required-field"> Closing Time</span>
                   </label>
                   <div className="input-group">
                     <input
@@ -902,10 +1048,68 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                   </div>
                 </div>
 
+                {/* Break Start Time */}
+                <div className="col-12 col-md-6">
+                  <label className="form-label fw-semibold">
+                    Break Start Time
+                  </label>
+                  <div className="input-group">
+                    <input
+                      type="time"
+                      className="form-control rounded-start"
+                      name="breakStartTime"
+                      value={formData.breakStartTime || ""}
+                      onChange={handleInputChange}
+                      disabled={isSubmitting}
+                      placeholder="13:00"
+                    />
+                    <select
+                      className="form-select rounded-end"
+                      style={{ maxWidth: "100px" }}
+                      name="breakStartPeriod"
+                      value={formData.breakStartPeriod || "PM"}
+                      onChange={handleInputChange}
+                      disabled={isSubmitting}
+                    >
+                      <option value="AM">AM</option>
+                      <option value="PM">PM</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Break End Time */}
+                <div className="col-12 col-md-6">
+                  <label className="form-label fw-semibold">
+                    Break End Time
+                  </label>
+                  <div className="input-group">
+                    <input
+                      type="time"
+                      className="form-control rounded-start"
+                      name="breakEndTime"
+                      value={formData.breakEndTime || ""}
+                      onChange={handleInputChange}
+                      disabled={isSubmitting}
+                      placeholder="14:00"
+                    />
+                    <select
+                      className="form-select rounded-end"
+                      style={{ maxWidth: "100px" }}
+                      name="breakEndPeriod"
+                      value={formData.breakEndPeriod || "PM"}
+                      onChange={handleInputChange}
+                      disabled={isSubmitting}
+                    >
+                      <option value="AM">AM</option>
+                      <option value="PM">PM</option>
+                    </select>
+                  </div>
+                </div>
+
                 {/* Working Day */}
                 <div className="col-12 col-md-4">
                   <label className="form-label fw-semibold">
-                    Holiday <span className="text-danger">*</span>
+                    <span className="required-field"> Holiday</span>
                   </label>
                   <select
                     className="form-select"
@@ -928,63 +1132,153 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
 
                 {/* Images */}
                 <div className="col-12">
-                  <label className="form-label fw-semibold">Salon Images</label>
-                  <div className="position-relative">
-                    <input
-                      type="file"
-                      id="file-upload-box"
-                      className="d-none"
-                      accept="image/*"
-                      multiple={false}
-                      onChange={handleImageUpload}
-                      disabled={isSubmitting}
-                    />
-                    <label
-                      htmlFor="file-upload-box"
-                      className="d-flex bg2 flex-column align-items-center justify-content-center p-4 border rounded bg-light text-secondary cursor-pointer"
-                      style={{ borderStyle: 'dashed !important', borderWidth: '2px', cursor: 'pointer' }}
-                    >
-                      <div className="mb-2 p-3 mt-2 bg-black text-white rounded-circle shadow-sm d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
-                        {/* <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" viewBox="0 0 16 16">
-                          <path d="M4.502 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
-                          <path d="M14.002 13a2 2 0 0 1-2 2h-10a2 2 0 0 1-2-2V5A2 2 0 0 1 2.002 3h4a2 2 0 0 1 2 2v7a2 2 0 0 0 2 2z"/>
-                          <path d="M2.002 2a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 1 1-1h-3.5a.5.5 0 0 0 0 1h3a.5.5 0 0 0 .5-.5V2a.5.5 0 0 0-.5-.5h-12z"/>
-                          <path d="m2.002 3a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 0-1h-9a.5.5 0 0 0-.5.5zM9.002 6.5a.5.5 0 0 0-.5-.5h-2a.5.5 0 0 0 0 1h2a.5.5 0 0 0 .5-.5zM11.002 6.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0 0 1h1a.5.5 0 0 0 .5-.5z"/>
-                        </svg> */}
-                        <i className="bi bi-cloud-upload-fill fs-4"></i>
-                      </div>
-                      <div className="text-center">
+                  <label className="form-label fw-semibold">
+                    Salon Images
+                    <span className="text-muted small ms-2">(Drag to reorder)</span>
+                  </label>
 
+                  <div className="d-flex flex-wrap gap-3">
+                    {images.length > 0 && images.map((image, index) => (
+                      <div
+                        key={index}
+                        className={`position-relative ${draggedIndex === index ? 'opacity-50' : ''}`}
+                        draggable={!isSubmitting}
+                        onDragStart={(e) => handleDragStart(e, index)}
+                        onDragOver={(e) => handleDragOver(e)}
+                        onDragEnd={handleDragEnd}
+                        onDrop={(e) => handleDrop(e, index)}
+                        style={{
+                          cursor: isSubmitting ? 'not-allowed' : 'move',
+                          transform: draggedIndex === index ? 'scale(0.95)' : 'scale(1)',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        {/* Image Number Badge */}
+                        <div
+                          className="position-absolute top-0 start-0 m-1 badge bg-black text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm"
+                          style={{
+                            width: '24px',
+                            height: '24px',
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                            zIndex: 10
+                          }}
+                        >
+                          {index + 1}
+                        </div>
+
+                        <img
+                          src={`${backendURL}/getFiles${image}`}
+                          className="rounded border"
+                          style={{
+                            width: '112px',
+                            height: '112px',
+                            objectFit: 'fill',
+                            display: 'block',
+                            filter: isSubmitting ? 'grayscale(50%)' : 'none',
+                            opacity: isSubmitting ? 0.7 : 1
+                          }}
+                          alt={`Preview ${index + 1}`}
+                        />
+
+                        <button
+                          type="button"
+                          className="position-absolute top-0 end-0 m-1 btn btn-danger btn-sm p-0 rounded-circle d-flex align-items-center justify-content-center shadow-sm"
+                          style={{ width: '20px', height: '20px', lineHeight: 1, zIndex: 15 }}
+                          onClick={() => removeImage(index)}
+                          disabled={isSubmitting}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+                          </svg>
+                        </button>
                       </div>
+                    ))}
+
+                    {/* Add Image Button */}
+                    <label
+                      className="d-flex align-items-center justify-content-center border border-2 border-dotted 1px solid border-secondary rounded cursor-pointer hover-bg-light transition-all"
+                      style={{
+                        width: '112px',
+                        height: '112px',
+                        cursor: 'pointer',
+                        backgroundColor: 'transparent'
+                      }}
+                    >
+                      <span className="text-secondary fw-medium">+ Add</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple={false}
+                        className="d-none"
+                        onChange={handleImageUpload}
+                        disabled={isSubmitting}
+                      />
                     </label>
                   </div>
 
                   {images.length > 0 && (
-                    <div className="row g-2 mt-3">
-                      {images?.map((image, index) => (
-                        <div key={index} className="col-4 col-sm-3 col-md-2 position-relative">
-                          <img
-                            src={`${backendURL}/getFiles${image}`}
-                            className="img-fluid rounded shadow-sm border w-100"
-                            style={{ height: '80px', objectFit: 'fill', display: 'block' }}
-                            alt={`Preview ${index + 1}`}
-                          />
-                          <button
-                            type="button"
-                            className="position-absolute top-0 end-0 m-1 btn btn-danger btn-sm p-0 rounded-circle d-flex align-items-center justify-content-center shadow-sm"
-                            style={{ width: '20px', height: '20px', lineHeight: 1 }}
-                            onClick={() => removeImage(index)}
-                            disabled={isSubmitting}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
-                              <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
-                            </svg>
-                          </button>
-                        </div>
-                      ))}
+                    <div className="mt-2">
+
                     </div>
                   )}
                 </div>
+
+                {/* Salon Features/Status Checkboxes */}
+                {/* <div className="col-12 mt-3">
+                  <div className="d-flex flex-wrap gap-4">
+                    <label className="d-inline-flex align-items-center gap-2 text-sm text-gray-700">
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        style={{ width: '16px', height: '16px' }}
+                        checked={formData.isPopular || false}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            isPopular: e.target.checked,
+                          }))
+                        }
+                        disabled={isSubmitting}
+                      />
+                      <span className="fw-medium">Popular Salon</span>
+                    </label>
+
+                    <label className="d-inline-flex align-items-center gap-2 text-sm text-gray-700">
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        style={{ width: '16px', height: '16px' }}
+                        checked={formData.isFeatured || false}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            isFeatured: e.target.checked,
+                          }))
+                        }
+                        disabled={isSubmitting}
+                      />
+                      <span className="fw-medium">Featured</span>
+                    </label>
+
+                    <label className="d-inline-flex align-items-center gap-2 text-sm text-gray-700">
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        style={{ width: '16px', height: '16px' }}
+                        checked={formData.isVerified || false}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            isVerified: e.target.checked,
+                          }))
+                        }
+                        disabled={isSubmitting}
+                      />
+                      <span className="fw-medium">Verified</span>
+                    </label>
+                  </div>
+                </div> */}
 
               </div>
             </div>
@@ -1004,11 +1298,11 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                 disabled={isSubmitting}
               >
                 <span className="d-flex align-items-center">
-                  <i className={`bi ${isSubmitting ? 'bi-hourglass-split' : 'bi-check-circle'} me-1`}></i>
+                  <i className={`bi ${isSubmitting ? '' : ''} me-1`}></i>
                   {isSubmitting ? (modalMode === "add" ? 'Adding...' : 'Updating...') : (modalMode === "add" ? 'Add Salon' : 'Update Salon')}
                 </span>
                 {isSubmitting && (
-                  <div className="spinner-border spinner-border-sm ms-2" role="status">
+                  <div className=" spinner-border-sm ms-2" role="status">
                     <span className="visually-hidden">Loading...</span>
                   </div>
                 )}

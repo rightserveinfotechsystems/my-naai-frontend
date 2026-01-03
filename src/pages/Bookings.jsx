@@ -9,6 +9,104 @@ import Loader from "../components/Loader.jsx";
 
 const ITEMS_PER_PAGE = 20;
 
+// Date formatting helper to show in 1/3/2026 format
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A';
+
+  try {
+    // If it's already in the desired format, return as is
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateString)) {
+      return dateString;
+    }
+
+    // Handle ISO date strings like "2026-01-03T11:29:00.602Z"
+    let date;
+    if (dateString.includes('T') && dateString.includes('Z')) {
+      date = new Date(dateString);
+    } else {
+      // Try parsing other formats
+      date = new Date(dateString);
+    }
+
+    if (!isNaN(date.getTime())) {
+      const month = date.getMonth() + 1; // getMonth() returns 0-based month
+      const day = date.getDate();
+      const year = date.getFullYear();
+      return `${month}/${day}/${year}`;
+    }
+
+    // If parsing fails, return original
+    return dateString;
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return dateString;
+  }
+};
+
+// Time formatting helper to extract time from various formats (12-hour format)
+const formatTime = (dateString, booking) => {
+  // First try to get time from booking.time field
+  if (booking && booking.time) {
+    try {
+      // Parse time string like "14:30" or "2:30 PM"
+      const timeStr = booking.time.toString();
+
+      // If already in 12-hour format, return as is
+      if (timeStr.includes('AM') || timeStr.includes('PM')) {
+        return timeStr;
+      }
+
+      // Parse 24-hour format
+      const timeParts = timeStr.split(':');
+      if (timeParts.length >= 2) {
+        let hours = parseInt(timeParts[0]);
+        const minutes = timeParts[1].padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+
+        // Convert to 12-hour format
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+
+        return `${hours}:${minutes} ${ampm}`;
+      }
+    } catch (error) {
+      console.error('Error parsing booking.time:', error);
+    }
+  }
+
+  // Fallback to parsing from date string
+  if (!dateString) return 'N/A';
+
+  try {
+    let date;
+
+    // Handle ISO date strings like "2026-01-03T11:29:00.602Z"
+    if (dateString.includes('T') && dateString.includes('Z')) {
+      date = new Date(dateString);
+    } else {
+      // Try parsing other date formats
+      date = new Date(dateString);
+    }
+
+    if (!isNaN(date.getTime())) {
+      let hours = date.getHours();
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+
+      // Convert to 12-hour format
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+
+      return `${hours}:${minutes} ${ampm}`;
+    }
+
+    return 'N/A';
+  } catch (error) {
+    console.error('Error formatting time:', error);
+    return 'N/A';
+  }
+};
+
 const Bookings = () => {
   console.log("🏗️ Bookings component rendered");
 
@@ -463,8 +561,8 @@ const Bookings = () => {
                         <td className="px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '130px' }}>{booking.serviceName}</td>
                         <td className="px-2 px-md-3 py-2">
                           <div className="small">
-                            <div>{booking.date}</div>
-                            <div className="text-muted">{booking.time}</div>
+                            <div>{formatDate(booking.createdAt || booking.date)}</div>
+                            <div className="text-muted">{formatTime(booking.createdAt || booking.date, booking)}</div>
                           </div>
                         </td>
                         <td className="fw-semibold text-black px-2 px-md-3 py-2 ">₹{booking.totalAmount}</td>
@@ -506,8 +604,8 @@ const Bookings = () => {
                     <div className="text-muted small mb-2 text-truncate">{booking.serviceName}</div>
                     <div className="d-flex justify-content-between align-items-center">
                       <div className="small">
-                        <div>{booking.date}</div>
-                        <div className="text-muted">{booking.time}</div>
+                        <div>{formatDate(booking.createdAt || booking.date)}</div>
+                        <div className="text-muted">{formatTime(booking.createdAt || booking.date, booking)}</div>
                       </div>
                       <div className="fw-semibold text-primary fs-6 flex-shrink-0 ms-2">₹{booking.totalAmount}</div>
                     </div>
