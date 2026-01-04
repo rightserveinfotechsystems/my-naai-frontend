@@ -368,7 +368,7 @@ const Salons = () => {
                             <StatusBadge status={salon.isActive ? "active" : "inactive"} size="sm" />
                           </div>
                           <span className="small text-muted">
-                            {salon.gender ?? "Unisex"}
+                            {salon.genderType ?? salon.gender ?? "Unisex"}
                           </span>
                         </div>
                       </div>
@@ -454,7 +454,7 @@ const Salons = () => {
                             <StatusBadge status={salon.isActive ? "active" : "inactive"} size="sm" />
                           </div>
                           <span className="small text-muted">
-                            {salon.gender ?? "Unisex"}
+                            {salon.genderType ?? salon.gender ?? "Unisex"}
                           </span>
                         </div>
                       </div>

@@ -9,7 +9,7 @@ import Loader from "../components/Loader.jsx";
 
 const ITEMS_PER_PAGE = 20;
 
-// Date formatting helper to show in 1/3/2026 format
+// Date formatting helper to show in dd/mm/yyyy format
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
 
@@ -29,10 +29,10 @@ const formatDate = (dateString) => {
     }
 
     if (!isNaN(date.getTime())) {
-      const month = date.getMonth() + 1; // getMonth() returns 0-based month
-      const day = date.getDate();
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0'); // getMonth() returns 0-based month
       const year = date.getFullYear();
-      return `${month}/${day}/${year}`;
+      return `${day}/${month}/${year}`;
     }
 
     // If parsing fails, return original

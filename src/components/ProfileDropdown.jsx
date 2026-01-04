@@ -1,9 +1,27 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../contexts/UserContext.jsx";
+
+// Helper function to format date and time as dd/mm/yyyy hh:mm AM/PM
+const formatDate = (dateString) => {
+  if (!dateString) return "N/A";
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12; // the hour '0' should be '12'
+  hours = String(hours).padStart(2, '0');
+  return `${day}/${month}/${year} ${hours}:${minutes} ${ampm}`;
+};
 
 const ProfileDropdown = ({ isOpen, onClose, onChangePassword, position = 'mobile' }) => {
   const navigate = useNavigate();
   const { user, logout, loading } = useUser();
+  const [showAdminDetails, setShowAdminDetails] = useState(false);
 
   const handleLogout = () => {
     console.log("User logged out - navigating to login");
@@ -27,13 +45,7 @@ const ProfileDropdown = ({ isOpen, onClose, onChangePassword, position = 'mobile
     );
   }
 
-  // Fallback user data if no user is loaded
-  const displayUser = user || {
-    name: "Admin User",
-    email: "admin@salonharmony.com",
-    role: "Administrator",
-    avatar: "👤"
-  };
+  const displayUser = user || {}; 
 
   if (!isOpen) return null;
 
@@ -81,8 +93,34 @@ const ProfileDropdown = ({ isOpen, onClose, onChangePassword, position = 'mobile
             <div className="fs-4 mb-1">{displayUser.avatar || "👤"}</div>
             <div className="fw-semibold text-dark">{displayUser.name || "Admin User"}</div>
             <div className="small text-muted">{displayUser.email || "admin@salonharmony.com"}</div>
-            <div className="badge bg-info mt-2">{displayUser.role || "Administrator"}</div>
+            <div
+              className="badge bg-info mt-2 cursor-pointer"
+              style={{ cursor: 'pointer' }}
+              onClick={() => setShowAdminDetails(!showAdminDetails)}
+            >
+              {displayUser.role || "Administrator"}
+              <i className={`bi ms-1 ${showAdminDetails ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
+            </div>
           </div>
+
+          {/* Administrator Information - Collapsible */}
+          {showAdminDetails && (
+            <div className="mb-3 pb-3 border-bottom text-center">
+              <div className="small text-muted fw-semibold mb-2 text-center">Administrator Details</div>
+              <div className="small text-muted mb-1">
+                <i className="bi bi-clock-history me-1"></i>
+                Last Login: {formatDate(displayUser.lastLogin)}
+              </div>
+              <div className="small text-muted mb-1">
+                <i className="bi bi-calendar-plus me-1"></i>
+                Created: {formatDate(displayUser.createdAt)}
+              </div>
+              <div className="small text-muted">
+                <i className="bi bi-pencil-square me-1"></i>
+                Updated: {formatDate(displayUser.updatedAt)}
+              </div>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="d-grid gap-2">

@@ -1424,11 +1424,62 @@ img {
     vertical-align: middle !important;
   }
 
+  /* Enhanced mobile table styling */
+  .bookings-table-scroll {
+    border-radius: 0.5rem !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+    background: white !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Make table headers more static on mobile */
+  @media (max-width: 768px) {
+    .bookings-table-scroll thead th {
+      font-size: 0.75rem !important;
+      padding: 0.5rem 0.25rem !important;
+      white-space: nowrap !important;
+      min-width: 80px !important;
+      position: sticky !important;
+      top: 0 !important;
+      z-index: 15 !important;
+      background: linear-gradient(135deg, #f8f9fa, #e9ecef) !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .bookings-table-scroll .table td {
+      font-size: 0.8rem !important;
+      padding: 0.4rem 0.25rem !important;
+      white-space: nowrap !important;
+    }
+  }
+
   /* Table body styles */
   .table tbody tr:hover {
     background-color: #f8f9fa !important;
     transform: scale(1.002) !important;
     transition: all 0.2s ease !important;
+  }
+
+  /* Enhanced table scrolling and static behavior */
+  .bookings-table-scroll {
+    position: relative !important;
+    border: 1px solid #dee2e6 !important;
+  }
+
+  .bookings-table-scroll .table {
+    margin-bottom: 0 !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+  }
+
+  /* Make sure table headers are always visible and static */
+  .bookings-table-scroll thead {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 20 !important;
+    background: white !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
   }
 
   /* Page content spacing for 768px */
@@ -1438,12 +1489,14 @@ img {
     min-height: 100vh !important;
   }
 
-  /* Filter card styling */
-  .bookings-filter-sticky {
-    position: sticky !important;
-    top: 0.5rem !important;
-    z-index: 1015 !important;
-    margin-bottom: 1rem !important;
+  /* Filter card styling - Desktop/Tablet */
+  @media (min-width: 601px) {
+    .bookings-filter-sticky {
+      position: sticky !important;
+      top: 0.5rem !important;
+      z-index: 1015 !important;
+      margin-bottom: 1rem !important;
+    }
   }
 
   .card.shadow-sm {
@@ -1688,13 +1741,16 @@ img {
 
 /* Mobile Header - Fixed/Sticky */
 .mobile-header-fixed {
-  position: sticky !important;
+  position: fixed !important;
   top: 0 !important;
-  z-index: 1040 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 1050 !important;
   /* Higher than mobile bottom nav */
-  background-color: white !important;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
-  backdrop-filter: blur(10px) !important;
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(15px) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
 }
 
 /* Sidebar Profile Section */
@@ -1736,16 +1792,17 @@ img {
 
 /* Profile Dropdown Positioning */
 
-/* Mobile Profile Dropdown - opens below the header button */
+/* Mobile Profile Dropdown - opens below the fixed header button */
 .mobile-dropdown {
-  top: 60px !important;
-  /* Position below the header */
+  top: 70px !important;
+  /* Position below the fixed header (70px height) */
   right: 10px !important;
   width: 280px !important;
-  max-height: calc(100vh - 200px) !important;
+  max-height: calc(100vh - 220px) !important;
   position: fixed !important;
   /* Use fixed positioning for mobile */
   transform: none !important;
+  z-index: 1060 !important; /* Above header */
 }
 
 /* Desktop Profile Dropdown - opens downward in sidebar */
@@ -1762,13 +1819,14 @@ img {
 
 /* Mobile Bottom Navigation */
 .mobile-bottom-nav {
-  height: 65px !important;
-  background: rgba(255, 255, 255, 0.95) !important;
-  backdrop-filter: blur(10px) !important;
-  border-top: 1px solid rgba(0, 0, 0, 0.1) !important;
-  z-index: 1030 !important;
+  height: 70px !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  backdrop-filter: blur(15px) !important;
+  border-top: 2px solid rgba(0, 0, 0, 0.15) !important;
+  z-index: 1040 !important;
   padding-bottom: env(safe-area-inset-bottom) !important;
   /* iPhone notch support */
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15) !important;
 }
 
 .mobile-nav-item {
@@ -1802,15 +1860,15 @@ img {
   color: #6c8a88 !important;
 }
 
-/* Adjust main content padding for bottom nav */
+/* Adjust main content padding for fixed header and bottom nav */
 @media (max-width: 767px) {
   main {
-    padding-bottom: 75px !important;
-    /* Space for bottom nav */
+    padding-top: 70px !important; /* Space for fixed header */
+    padding-bottom: 80px !important; /* Space for bottom nav */
   }
 
   .mobile-bottom-nav {
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15) !important;
   }
 
   /* Active state animations */
@@ -1827,6 +1885,9 @@ img {
   left: 0 !important;
   right: 0 !important;
   width: 100% !important;
+  /* Enhanced visibility and static positioning */
+  background: rgba(255, 255, 255, 0.98) !important;
+  backdrop-filter: blur(15px) !important;
 }
 
 /* Icon sizing for mobile nav */
@@ -1887,12 +1948,34 @@ img {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+/* Enhanced table header for better visibility */
+.bookings-table-scroll thead th {
+  position: sticky !important;
+  top: 0 !important;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef) !important;
+  border-bottom: 2px solid #dee2e6 !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  font-size: 0.875rem !important;
+  z-index: 11 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
 /* Mobile Layout (320px - 600px) - Cards View */
 @media (max-width: 600px) {
   .bookings-filter-sticky {
-    top: 3.5rem;
-    /* Mobile header के नीचे */
-    z-index: 1020;
+    position: fixed !important;
+    top: 70px !important; /* Fixed header height */
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1035 !important; /* Between header (1050) and bottom nav (1040) */
+    background: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(15px) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+    border-radius: 0 !important;
+    margin-bottom: 0 !important;
+    padding: 0.5rem !important;
   }
 
   /* Hide desktop table, show mobile cards */
@@ -1910,7 +1993,7 @@ img {
     .bookings-mobile-cards {
       gap: 0.5rem !important;
       overflow-y: auto !important;
-      max-height: calc(100dvh - 200px) !important;
+      max-height: calc(100dvh - 300px) !important; /* Account for fixed header + filter card */
     }
 
     /* Better form controls on mobile */
@@ -1926,12 +2009,112 @@ img {
     margin-top: 0;
   }
 
-  /* Ensure mobile cards scroll properly below sticky header */
+  /* Ensure mobile cards scroll properly below fixed header and filter card */
   .bookings-mobile-cards {
-    max-height: calc(100vh - 120px) !important;
+    max-height: calc(100vh - 220px) !important; /* Account for fixed header (70px) + filter card (~80px) */
     overflow-y: auto !important;
     overflow-x: hidden !important;
     scroll-behavior: smooth !important;
+    margin-top: 80px !important; /* Space for fixed filter card */
+    padding-top: 1rem !important; /* Extra spacing */
+  }
+
+  /* Fixed filter card styling for mobile */
+  .bookings-filter-sticky .card {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+  }
+
+  .bookings-filter-sticky .card-body {
+    padding: 0.75rem 1rem !important;
+  }
+
+  /* Mobile Single Card Static View */
+  .bookings-mobile-cards-static {
+    position: fixed !important;
+    bottom: 80px !important; /* Above mobile bottom nav */
+    left: 0 !important;
+    right: 0 !important;
+    background: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(15px) !important;
+    border-top: 2px solid rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15) !important;
+    z-index: 1035 !important; /* Between filter card (1035) and bottom nav (1040) */
+    padding: 1rem !important;
+    max-height: 40vh !important; /* Limit height */
+    overflow: hidden !important;
+  }
+
+  .mobile-card-container {
+    max-width: 100% !important;
+  }
+
+  .mobile-card-nav {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .mobile-nav-btn {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.2rem !important;
+    font-weight: bold !important;
+    padding: 0 !important;
+    border: 2px solid #e9ecef !important;
+    transition: all 0.3s ease !important;
+  }
+
+  .mobile-nav-btn:hover:not(:disabled) {
+    border-color: #94b6b4 !important;
+    background-color: rgba(148, 182, 180, 0.1) !important;
+    transform: scale(1.05) !important;
+  }
+
+  .mobile-nav-btn:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+  }
+
+  .card-counter {
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+    color: #6c8a88 !important;
+    min-width: 60px !important;
+    text-align: center !important;
+  }
+
+  .mobile-single-card {
+    animation: fadeInCard 0.3s ease-in-out !important;
+  }
+
+  .mobile-single-card .card {
+    border-radius: 12px !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+    border: 1px solid rgba(0, 0, 0, 0.05) !important;
+    transition: transform 0.3s ease !important;
+  }
+
+  .mobile-single-card .card:hover {
+    transform: translateY(-2px) !important;
+  }
+
+  @keyframes fadeInCard {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }
 
@@ -1948,6 +2131,7 @@ img {
   }
 
   .bookings-filter-sticky {
+    position: sticky !important;
     top: 0.5rem;
     z-index: 1015;
   }
@@ -2452,3 +2636,11 @@ img {
   }
 }
 
+.switch-green:checked {
+  background-color: #0eb234;  
+  border-color: #0cb834;
+}
+
+.switch-green:focus {
+  box-shadow: 0 0 0 0.25rem rgba(40, 167, 69, 0.25);
+}

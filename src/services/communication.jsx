@@ -108,21 +108,6 @@ export const adminAPI = {
       // For network errors, return mock data for development
       if (error.code === 'ERR_NETWORK' || !error.response) {
         console.warn("Backend server not responding, using mock profile data");
-
-        return {
-          success: true,
-          data: {
-            name: "Admin User",
-            email: "admin@salonharmony.com",
-            role: "Administrator",
-            avatar: "👤",
-            id: "admin-001",
-            phoneNumber: "9876543210",
-            createdAt: new Date().toISOString(),
-            lastLogin: new Date().toISOString()
-          },
-          message: "Mock profile data loaded (Backend server not responding)"
-        };
       }
 
       return {

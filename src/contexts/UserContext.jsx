@@ -32,28 +32,13 @@ export const UserProvider = ({ children }) => {
 
       if (result.success) {
         setUser(result.data);
-      } else {
-        // If profile API fails, set default user data
-        setUser({
-          name: "Admin User",
-          email: "admin@salonharmony.com",
-          role: "Administrator",
-          avatar: "👤"
-        });
-        console.warn("Profile API not available, using default data");
-      }
-    } catch (error) {
-      // If profile API fails, set default user data
-      setUser({
-        name: "Admin User",
-        email: "admin@salonharmony.com",
-        role: "Administrator",
-        avatar: "👤"
-      });
-      console.warn("Profile API failed, using default data");
-    }
+      } 
 
     setLoading(false);
+    } catch (err) {
+      setError('Failed to fetch user profile.');
+      setLoading(false);
+    }   
   };
 
   // Update user profile

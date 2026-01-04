@@ -18,96 +18,20 @@ const sampleSalons = [
 const ITEMS_PER_PAGE = 20;
 
 const formatDate = (dateString) => {
-  if (!dateString) return 'N/A';
-
-  try {
-    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateString)) {
-      return dateString;
-    }
-
-    let date;
-    if (dateString.includes('T') && dateString.includes('Z')) {
-      date = new Date(dateString);
-    } else {
-      date = new Date(dateString);
-    }
-
-    if (!isNaN(date.getTime())) {
-      const month = date.getMonth() + 1;
-      const day = date.getDate();
-      const year = date.getFullYear();
-      return `${month}/${day}/${year}`;
-    }
-
-    return dateString;
-  } catch (error) {
-    console.error('Error formatting date:', error);
-    return dateString;
-  }
+  if (!dateString) return "N/A";
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12; 
+  hours = String(hours).padStart(2, '0');
+  return `${day}/${month}/${year} ${hours}:${minutes} ${ampm}`;
 };
 
-const formatTime = (dateString, booking) => {
-  // First try to get time from booking.time field
-  if (booking && booking.time) {
-    try {
-      // Parse time string like "14:30" or "2:30 PM"
-      const timeStr = booking.time.toString();
-
-      // If already in 12-hour format, return as is
-      if (timeStr.includes('AM') || timeStr.includes('PM')) {
-        return timeStr;
-      }
-
-      // Parse 24-hour format
-      const timeParts = timeStr.split(':');
-      if (timeParts.length >= 2) {
-        let hours = parseInt(timeParts[0]);
-        const minutes = timeParts[1].padStart(2, '0');
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-
-        // Convert to 12-hour format
-        hours = hours % 12;
-        hours = hours ? hours : 12;
-
-        return `${hours}:${minutes} ${ampm}`;
-      }
-    } catch (error) {
-      console.error('Error parsing booking.time:', error);
-    }
-  }
-
-  // Fallback to parsing from date string
-  if (!dateString) return 'N/A';
-
-  try {
-    let date;
-
-    // Handle ISO date strings like "2026-01-03T11:29:00.602Z"
-    if (dateString.includes('T') && dateString.includes('Z')) {
-      date = new Date(dateString);
-    } else {
-      // Try parsing other date formats
-      date = new Date(dateString);
-    }
-
-    if (!isNaN(date.getTime())) {
-      let hours = date.getHours();
-      const minutes = date.getMinutes().toString().padStart(2, '0');
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-
-      // Convert to 12-hour format
-      hours = hours % 12;
-      hours = hours ? hours : 12;
-
-      return `${hours}:${minutes} ${ampm}`;
-    }
-
-    return 'N/A';
-  } catch (error) {
-    console.error('Error formatting time:', error);
-    return 'N/A';
-  }
-};
 
 const SalonRequest = () => {
   const navigate = useNavigate();
@@ -513,7 +437,7 @@ const SalonRequest = () => {
                   </div>
                 )} */}
 
-                {/* <div className="row g-2">
+                <div className="row g-2">
                   <div className="col-12 d-flex justify-content-end">
                     <Pagination
                       currentPage={currentPage}
@@ -522,7 +446,7 @@ const SalonRequest = () => {
                       size="sm"
                     />
                   </div>
-                </div> */}
+                </div>
               </div>
             </div>
           </div>
@@ -553,7 +477,7 @@ const SalonRequest = () => {
                 <th style={{ width: '150px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Salon Name</th>
                 <th style={{ width: '220px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Address</th>
                 <th style={{ width: '140px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Mobile</th>
-                <th style={{ width: '160px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom text-center">Date & Time</th>
+                <th style={{ width: '200px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom text-center">Created / Updated</th>
                 <th style={{ width: '80px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom text-center">Action</th>
               </tr>
             </thead>
@@ -590,9 +514,15 @@ const SalonRequest = () => {
                         {booking.phoneNumber || 'N/A'}
                       </td>
                         <td className="px-2 px-md-3 py-2 text-center">
-                          <div className="small">
-                           <div> {formatDate(booking.createdAt)}</div>
-                           <div className="text-muted text-center"> {formatTime(booking.createdAt, booking)}</div>
+                          <div className="d-flex flex-column align-items-center gap-1">
+                            <div className="d-flex align-items-center gap-1 mb-1 ">
+                              <i className="bi bi-calendar-plus text-primary" style={{ fontSize: '0.7rem' }}></i>
+                              <span>{formatDate(booking.createdAt)}</span>
+                            </div>
+                            <div className="d-flex align-items-center gap-1">
+                              <i className="bi bi-pencil-square text-muted" style={{ fontSize: '0.7rem' }}></i>
+                              <span className="text-muted">{formatDate(booking.updatedAt)}</span>
+                            </div>
                           </div>
                         </td>
                       <td className="text-center px-2 px-md-3 py-2">
@@ -675,8 +605,14 @@ const SalonRequest = () => {
                         <div className="small text-truncate">{booking.phoneNumber || 'N/A'}</div>
                       </div>
                       <div className="small">
-                        <div><strong>Date:</strong> {formatDate(booking.createdAt)}</div>
-                        <div className="text-muted"><strong>Time:</strong> {formatTime(booking.createdAt, booking)}</div>
+                        <div className="d-flex align-items-center gap-2 mb-1">
+                          <i className="bi bi-calendar-plus text-primary" style={{ fontSize: '0.8rem' }}></i>
+                          <span><strong>Created:</strong> {formatDate(booking.createdAt)}</span>
+                        </div>
+                        <div className="d-flex align-items-center gap-2">
+                          <i className="bi bi-pencil-square text-muted" style={{ fontSize: '0.8rem' }}></i>
+                          <span className="text-muted"><strong>Updated:</strong> {formatDate(booking.updatedAt)}</span>
+                        </div>
                       </div>
                     </div>
                   </div>

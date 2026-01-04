@@ -69,9 +69,7 @@ const Layout = ({ children }) => {
 
   // Fallback user data if no user is loaded
   const displayUser = user || {
-    name: "Admin User",
-    email: "admin@salonharmony.com",
-    role: "Administrator"
+  
   };
 
   return (
@@ -209,7 +207,7 @@ const Layout = ({ children }) => {
       <div className="flex-grow-1 d-flex flex-column">
         {/* Mobile Topbar */}
         <div className="d-md-none position-relative">
-          <header className="navbar bg-white shadow-sm sticky-top px-2 mobile-header-fixed">
+          <header className="navbar bg-white shadow-sm px-2 mobile-header-fixed">
             <div className="d-flex align-items-center justify-content-between w-100">
               <div className="d-flex align-items-center gap-2 min-w-0 flex-grow-1">
                 <Link
