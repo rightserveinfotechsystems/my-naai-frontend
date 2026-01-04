@@ -33,8 +33,9 @@ const navItems = [
 const Layout = ({ children }) => {
   const [open, setOpen] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
-  const [showLogoutModal, setShowLogoutModal] = useState(false); // NEW: Logout modal state
-  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false); // Change password modal state
+  const [showLogoutModal, setShowLogoutModal] = useState(false); 
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false); 
+  const [isLogoutLoading, setIsLogoutLoading] = useState(false); 
   const navigate = useNavigate();
   const { user, logout } = useUser();
 
@@ -48,12 +49,13 @@ const Layout = ({ children }) => {
     setShowLogoutModal(true);
   };
 
-  const handleLogoutConfirm = () => {
-    console.log("User logged out - navigating to login");
+  const handleLogoutConfirm = async () => {
+    setIsLogoutLoading(true);
     logout();
     setShowLogoutModal(false);
     setTimeout(() => {
       navigate("/login");
+      setIsLogoutLoading(false);
     }, 100);
   };
 
@@ -168,8 +170,16 @@ const Layout = ({ children }) => {
                   type="button"
                   className="btn btn-danger px-4"
                   onClick={handleLogoutConfirm}
+                  disabled={isLogoutLoading}
                 >
-                  Yes, Logout
+                  {isLogoutLoading ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                      Logging out...
+                    </>
+                  ) : (
+                    "Yes, Logout"
+                  )}
                 </button>
               </div>
             </div>

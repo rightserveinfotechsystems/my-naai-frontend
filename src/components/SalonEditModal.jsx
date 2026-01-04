@@ -109,7 +109,15 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                 closingTime: salon.businessHours?.[0]?.closingTime || "21:00",
                 breakStartTime: salon.businessHours?.[0]?.breakStartTime || "13:00",
                 breakEndTime: salon.businessHours?.[0]?.breakEndTime || "14:00",
-                day: salon.businessHours?.[0]?.holidayDays?.[0] !== undefined ? getDayName(salon.businessHours[0].holidayDays[0]) : "",
+                day: (() => {
+                  const holidayDays = salon.businessHours?.[0]?.holidayDays;
+                  if (holidayDays && holidayDays.length > 0) {
+                    const firstHoliday = holidayDays[0];
+                    const normalizedDay = normalizeDayName(firstHoliday);
+                    return normalizedDay;
+                  }
+                  return "";
+                })(),
                 holidayDays: salon.businessHours?.[0]?.holidayDays || [],
                 originalServices: salon.services ? salon.services.map(service => ({
                   id: service.serviceId || service.id,
@@ -120,22 +128,27 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                 })) : []
               });
 
-              // Load existing gallery images (from imagesArray, NOT the main image)
               console.log("Salon data for debugging:", salon);
+              console.log("Available fields in salon data:", Object.keys(salon));
+              console.log("Business hours data:", salon.businessHours);
+              console.log("Holiday days:", salon.businessHours?.[0]?.holidayDays);
               let loadedImages = [];
 
-              // Check different possible image array field names (these contain gallery images only)
-              const imageFields = ['imagesArray', 'images', 'salonImages', 'imageUrls', 'photos', 'pictures'];
+              const imageFields = ['imagesArray', 'images', 'salonImages', 'imageUrls', 'photos', 'pictures', 'galleryImages', 'salonGallery', 'additionalImages', 'media'];
 
               for (const field of imageFields) {
                 if (salon[field] && Array.isArray(salon[field]) && salon[field].length > 0) {
                   console.log(`Found gallery images in ${field}:`, salon[field]);
                   loadedImages = salon[field].map(img => {
                     if (typeof img === 'string') {
+                      console.log(`Processing string image: ${img}`);
                       return img;
                     } else if (img && typeof img === 'object') {
-                      return img.url || img.imageUrl || img.photoUrl || img.src || img.path;
+                      const imageUrl = img.url || img.imageUrl || img.photoUrl || img.src || img.path;
+                      console.log(`Processing object image:`, img, `-> extracted URL: ${imageUrl}`);
+                      return imageUrl;
                     }
+                    console.log(`Invalid image format:`, img);
                     return null;
                   }).filter(img => img !== null);
                   break;
@@ -146,6 +159,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
               // The main image is handled separately in the form data
 
               console.log("Gallery images loaded:", loadedImages);
+              console.log("Setting images state with:", loadedImages);
               setImages(loadedImages);
 
             } else {
@@ -199,8 +213,8 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
             holidayDays: [],
             originalServices: []
           });
+          setImages([]);
         }
-        setImages([]);
       }
     };
 
@@ -473,7 +487,12 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
 
   };
 
-  console.log("Images", images);
+  console.log("Images state:", images, "Length:", images.length);
+
+  // Debug: Check if images change
+  useEffect(() => {
+    console.log("Images state updated:", images);
+  }, [images]);
 
 
   const removeImage = (index) => {
@@ -536,6 +555,22 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
   const getDayName = (dayNumber) => {
     const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     return dayNames[dayNumber] ?? 'sunday';
+  };
+
+  const normalizeDayName = (dayValue) => {
+    if (typeof dayValue === 'string') {
+      const dayMap = {
+        'sunday': 'sunday', 'monday': 'monday', 'tuesday': 'tuesday', 'wednesday': 'wednesday',
+        'thursday': 'thursday', 'friday': 'friday', 'saturday': 'saturday',
+        'sun': 'sunday', 'mon': 'monday', 'tue': 'tuesday', 'wed': 'wednesday',
+        'thu': 'thursday', 'fri': 'friday', 'sat': 'saturday'
+      };
+      return dayMap[dayValue.toLowerCase()] || '';
+    }
+    if (typeof dayValue === 'number') {
+      return getDayName(dayValue);
+    }
+    return '';
   };
 
   if (!showModal) return null;
