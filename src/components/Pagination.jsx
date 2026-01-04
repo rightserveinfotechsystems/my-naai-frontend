@@ -108,7 +108,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
             disabled={isLastPage}
           >
             <span className="d-none d-sm-inline">Last</span>
-            <span className="d-sm-none">N</span>
+            <span className="d-sm-none">L</span>
           </button>
         </li>
 

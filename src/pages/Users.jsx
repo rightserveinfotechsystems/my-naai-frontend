@@ -11,6 +11,22 @@ import DeleteConfirmModal from "../components/DeleteConfirmModal.jsx";
 import Loader from "../components/Loader.jsx";
 
 const ITEMS_PER_PAGE = 20;
+
+// Helper function to format date and time as dd/mm/yyyy hh:mm AM/PM
+const formatDate = (dateString) => {
+  if (!dateString) return "N/A";
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12; // the hour '0' should be '12'
+  hours = String(hours).padStart(2, '0');
+  return `${day}/${month}/${year} ${hours}:${minutes} ${ampm}`;
+};
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -317,24 +333,25 @@ const Users = () => {
                             </div>
                             <div className="text-muted small text-truncate">{user.phoneNumber}</div>
                           </td>
-                          <td className="px-3 py-2 text-center">
+                          <td className="px-3 py-2 text-center ">
                             <StatusBadge status={user.isActive ? "active" : "inactive"} />
                           </td>
                           <td className="text-muted text-center small px-3 py-2">
-                            {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                            {formatDate(user.createdAt)}
                           </td>
                           <td className="px-3 py-2 text-center">
                             <div className="d-inline-flex align-items-center gap-2">
 
                               {/* Toggle Switch */}
-                              <div className="form-check form-switch m-0">
-                                <input
-                                  className="form-check-input"
-                                  type="checkbox"
-                                  checked={!!user.isActive}
-                                  onChange={() => handleToggleClick(user)}
-                                />
-                              </div>
+                             <div className="form-check form-switch m-0">
+  <input
+    className="form-check-input switch-green"
+    type="checkbox"
+    checked={!!user.isActive}
+    onChange={() => handleToggleClick(user)}
+  />
+</div>
+
 
 
 
@@ -391,7 +408,7 @@ const Users = () => {
                               <StatusBadge status={user.isActive ? "active" : "inactive"} />
                             </div>
                             <div className="d-flex justify-content-between align-items-center pt-2 border-top">
-                              <small className="text-muted">{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</small>
+                              <small className="text-muted">{formatDate(user.createdAt)}</small>
                               <div className="form-check form-switch m-0">
                                 <input
                                   className="form-check-input"
