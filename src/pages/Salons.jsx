@@ -6,6 +6,7 @@ import SearchInput from "../components/SearchInput.jsx";
 import Pagination from "../components/Pagination.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import SalonEditModal from "../components/SalonEditModal.jsx";
+import ToggelModal from "../components/ToggelModal.jsx";
 import { salonAPI } from "../services/communication.jsx";
 import Loader from "../components/Loader.jsx";
 import { toast } from 'react-toastify';
@@ -63,6 +64,10 @@ const Salons = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState("add");
   const [editingSalonId, setEditingSalonId] = useState(null);
+
+  // Toggle modal states
+  const [showToggleModal, setShowToggleModal] = useState(false);
+  const [selectedSalon, setSelectedSalon] = useState(null);
 
 
   const fetchSalons = useCallback(async () => {
@@ -185,12 +190,20 @@ const Salons = () => {
     setShowModal(true);
   };
 
-  const handleToggleSalonStatus = async (salon) => {
+  const handleToggleClick = (salon) => {
+    setSelectedSalon(salon);
+    setShowToggleModal(true);
+  };
+
+  const confirmToggleSalonStatus = async () => {
+    const salon = selectedSalon;
+    if (!salon) return;
+
     const salonId = salon.salonId || salon.barberId || salon.id;
     const currentStatus = salon.isActive;
     const newStatus = !currentStatus;
 
-    console.log('Toggle clicked:', { salonId, currentStatus, newStatus });
+    console.log('Toggle confirmed:', { salonId, currentStatus, newStatus });
 
     // Immediate visual feedback
     setSalons(prev => {
@@ -214,6 +227,8 @@ const Salons = () => {
       if (result.success) {
         console.log('API success, keeping new status');
         toast.success(`Salon ${newStatus ? 'activated' : 'deactivated'} successfully!`);
+        setShowToggleModal(false);
+        setSelectedSalon(null);
       } else {
         console.log('API failed, reverting to:', currentStatus);
         setSalons(prev => prev.map(s => {
@@ -515,7 +530,7 @@ const Salons = () => {
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              handleToggleSalonStatus(salon);
+                              handleToggleClick(salon);
                             }}
                           >
                             <input
@@ -528,7 +543,9 @@ const Salons = () => {
                                 width: '40px',
                                 height: '20px',
                                 borderRadius: '10px',
-                                cursor: 'pointer'
+                                cursor: 'pointer',
+                                backgroundColor: salon.isActive ? '#198754' : '#6c757d',
+                                borderColor: salon.isActive ? '#198754' : '#6c757d'
                               }}
                             />
                             <label
@@ -629,7 +646,7 @@ const Salons = () => {
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              handleToggleSalonStatus(salon);
+                              handleToggleClick(salon);
                             }}
                           >
                             <input
@@ -642,7 +659,9 @@ const Salons = () => {
                                 width: '40px',
                                 height: '20px',
                                 borderRadius: '10px',
-                                cursor: 'pointer'
+                                cursor: 'pointer',
+                                backgroundColor: salon.isActive ? '#198754' : '#6c757d',
+                                borderColor: salon.isActive ? '#198754' : '#6c757d'
                               }}
                             />
                             <label
@@ -686,6 +705,16 @@ const Salons = () => {
         </div>
 
       </div>
+      {/* TOGGLE MODAL */}
+      <ToggelModal
+        show={showToggleModal}
+        onHide={() => setShowToggleModal(false)}
+        onConfirm={confirmToggleSalonStatus}
+        currentStatus={selectedSalon?.isActive}
+        loading={loading}
+        entityType="salon"
+      />
+
       {/* MODAL COMPONENT */}
       {showModal && <SalonEditModal
         showModal={showModal}
