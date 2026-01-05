@@ -584,6 +584,29 @@ export const salonAPI = {
     }
   },
 
+  // Toggle salon status
+  toggleSalonStatus: async (salonId, isActive) => {
+    try {
+      const response = await api.post('/api/salons/status', {
+        salonId: salonId,
+        isActive: isActive
+      });
+
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data,
+        message: response.data?.message || "Salon status updated successfully"
+      };
+    } catch (error) {
+      console.error("Toggle salon status API error:", error);
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to toggle salon status",
+        error: error.response?.data
+      };
+    }
+  },
+
   deleteSalon: async (salonId) => {
     return {
       success: false,

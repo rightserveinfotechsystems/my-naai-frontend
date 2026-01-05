@@ -8,6 +8,7 @@ import StatusBadge from "../components/StatusBadge.jsx";
 import SalonEditModal from "../components/SalonEditModal.jsx";
 import { salonAPI } from "../services/communication.jsx";
 import Loader from "../components/Loader.jsx";
+import { toast } from 'react-toastify';
 const backendURL = import.meta.env.VITE_BACKEND_URL
 
 const ITEMS_PER_PAGE = 20;
@@ -134,6 +135,15 @@ const Salons = () => {
     fetchSalons();
   }, [fetchSalons]);
 
+  // Debug: Monitor salons state changes
+  useEffect(() => {
+    console.log('Salons state changed:', salons.length, 'salons');
+    salons.forEach((salon, index) => {
+      const salonId = salon.salonId || salon.barberId || salon.id;
+      console.log(`Salon ${index + 1}: ID=${salonId}, Active=${salon.isActive}`);
+    });
+  }, [salons]);
+
   useEffect(() => {
     if (!loading && scrollPosition > 0) {
       const timeoutId = setTimeout(() => {
@@ -172,6 +182,57 @@ const Salons = () => {
     setModalMode("edit");
     setEditingSalonId(salon.salonId || salon.barberId || salon.id);
     setShowModal(true);
+  };
+
+  const handleToggleSalonStatus = async (salon) => {
+    const salonId = salon.salonId || salon.barberId || salon.id;
+    const currentStatus = salon.isActive;
+    const newStatus = !currentStatus;
+
+    console.log('Toggle clicked:', { salonId, currentStatus, newStatus });
+
+    // Immediate visual feedback
+    setSalons(prev => {
+      return prev.map(s => {
+        const sId = s.salonId || s.barberId || s.id;
+        if (sId === salonId) {
+          console.log(`Updating salon ${sId} from ${s.isActive} to ${newStatus}`);
+          // Create a completely new object to ensure re-render
+          return {
+            ...s,
+            isActive: newStatus
+          };
+        }
+        return s;
+      });
+    });
+
+    try {
+      // API call to toggle status - using the new dedicated endpoint
+      const result = await salonAPI.toggleSalonStatus(salonId, newStatus);
+
+      if (result.success) {
+        console.log('API success, keeping new status');
+        toast.success(`Salon ${newStatus ? 'activated' : 'deactivated'} successfully!`);
+      } else {
+        console.log('API failed, reverting to:', currentStatus);
+        // Revert on failure
+        setSalons(prev => prev.map(s => {
+          const sId = s.salonId || s.barberId || s.id;
+          return sId === salonId ? { ...s, isActive: currentStatus } : s;
+        }));
+        toast.error(`Failed to ${newStatus ? 'activate' : 'deactivate'} salon`);
+      }
+    } catch (error) {
+      console.log('Error occurred, reverting to:', currentStatus);
+      // Revert on error
+      setSalons(prev => prev.map(s => {
+        const sId = s.salonId || s.barberId || s.id;
+        return sId === salonId ? { ...s, isActive: currentStatus } : s;
+      }));
+      console.error('Toggle salon status error:', error);
+      toast.error('Failed to update salon status');
+    }
   };
 
   return (
@@ -328,9 +389,9 @@ const Salons = () => {
                 <p className="mb-0 text-muted">No salons found matching your criteria.</p>
               </div>
             ) : (
-              <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-3">
+                  <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-3">
                 {paginated.map((salon, index) => (
-                  <div className="col" key={salon.barberId || salon.id || salon.salonId || index}>
+                  <div className="col" key={`${salon.barberId || salon.id || salon.salonId || index}-${salon.isActive}`}>
                     <div
                       className="card h-100 shadow-sm border-0 hover-lift-sm transition-all"
                       style={{ cursor: 'pointer', borderRadius: '12px', overflow: 'hidden' }}
@@ -358,9 +419,39 @@ const Salons = () => {
                           </span>
                         </div>
 
-                        <p className="text-muted small mb-2 text-truncate">
-                          <i className="bi bi-geo-alt-fill me-1 text-primary"></i> {salon.city}
-                        </p>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <p className="text-muted small mb-0 text-truncate">
+                            <i className="bi bi-geo-alt-fill me-1 text-primary"></i> {salon.city}
+                          </p>
+                          <div
+                            className="form-check form-switch mb-0"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleToggleSalonStatus(salon);
+                            }}
+                          >
+                            <input
+                              className="form-check-input"
+                              type="checkbox"
+                              id={`status-toggle-${salon.salonId || salon.barberId || salon.id}`}
+                              checked={Boolean(salon.isActive)}
+                              readOnly
+                              style={{
+                                width: '40px',
+                                height: '20px',
+                                borderRadius: '10px',
+                                cursor: 'pointer'
+                              }}
+                            />
+                            <label
+                              className="form-check-label visually-hidden"
+                              htmlFor={`status-toggle-${salon.salonId || salon.barberId || salon.id}`}
+                            >
+                              Toggle salon status
+                            </label>
+                          </div>
+                        </div>
 
                         <div className="d-flex justify-content-between align-items-center">
                           <div className="d-flex align-items-center gap-1">
@@ -415,7 +506,7 @@ const Salons = () => {
             ) : (
               <div className="row row-cols-1 row-cols-sm-2 g-3"> {/* Mobile: 1-2 cols */}
                 {paginated.map((salon, index) => (
-                  <div className="col" key={salon.barberId || salon.id || salon.salonId || index}>
+                  <div className="col" key={`${salon.barberId || salon.id || salon.salonId || index}-${salon.isActive}`}>
                     {/* EXACT SAME CARD AS DESKTOP */}
                     <div
                       className="card h-100 shadow-sm border-0 hover-lift-sm transition-all"
@@ -444,9 +535,39 @@ const Salons = () => {
                           </span>
                         </div>
 
-                        <p className="text-muted small mb-2 text-truncate">
-                          <i className="bi bi-geo-alt-fill me-1 text-primary"></i> {salon.city}
-                        </p>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <p className="text-muted small mb-0 text-truncate">
+                            <i className="bi bi-geo-alt-fill me-1 text-primary"></i> {salon.city}
+                          </p>
+                          <div
+                            className="form-check form-switch mb-0"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleToggleSalonStatus(salon);
+                            }}
+                          >
+                            <input
+                              className="form-check-input"
+                              type="checkbox"
+                              id={`status-toggle-${salon.salonId || salon.barberId || salon.id}`}
+                              checked={Boolean(salon.isActive)}
+                              readOnly
+                              style={{
+                                width: '40px',
+                                height: '20px',
+                                borderRadius: '10px',
+                                cursor: 'pointer'
+                              }}
+                            />
+                            <label
+                              className="form-check-label visually-hidden"
+                              htmlFor={`status-toggle-${salon.salonId || salon.barberId || salon.id}`}
+                            >
+                              Toggle salon status
+                            </label>
+                          </div>
+                        </div>
 
                         <div className="d-flex justify-content-between align-items-center">
                           <div className="d-flex align-items-center gap-1">

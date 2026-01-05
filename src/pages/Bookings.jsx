@@ -297,7 +297,7 @@ const Bookings = () => {
       return;
     }
 
-    console.log("🔄 Parameters changed, fetching bookings:", {
+    console.log(" Parameters changed, fetching bookings:", {
       currentPage,
       debouncedSearch,
       salonFilter,
@@ -311,7 +311,7 @@ const Bookings = () => {
   const filtered = bookings;
 
   const handleFilterChange = useCallback((setter) => (e) => {
-    console.log("🔄 Filter changed:", setter.name || 'unknown', "Value:", e.target.value, "Type:", typeof e.target.value);
+    console.log(" Filter changed:", setter.name || 'unknown', "Value:", e.target.value, "Type:", typeof e.target.value);
     setter(e.target.value);
     setCurrentPage(1);
   }, []);
@@ -389,14 +389,14 @@ const Bookings = () => {
                         <option key="cancelled" value="cancelled">Cancelled</option>
                       </select>
                     </div>
-                    <div className="col-12 col-md-2">
+                    {/* <div className="col-12 col-md-2">
                       <input
                         type="date"
                         className="form-control form-control-sm"
                         value={dateFilter}
                         onChange={handleDateChange}
                       />
-                    </div>
+                    </div> */}
                   </div>
                 </div>
 
