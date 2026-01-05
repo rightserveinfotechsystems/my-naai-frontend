@@ -207,6 +207,7 @@ const Bookings = () => {
           return { id: salonId, name: b.salonName, fullBooking: b };
         }));
         setBookings(result.data || []);
+        setAllBookings(result.data || []);
         setTotalItems(result.pagination?.total || 0);
         setTotalPages(result.pagination?.totalPages || 1);
         console.log("✅ Bookings loaded:", result.data?.length || 0, "Total:", result.pagination?.total || 0);
@@ -316,7 +317,6 @@ const Bookings = () => {
 
 
   const handleFilterChange = useCallback((setter) => (e) => {
-    console.log(" Filter changed:", setter.name || 'unknown', "Value:", e.target.value, "Type:", typeof e.target.value);
     setter(e.target.value);
     setCurrentPage(1);
   }, []);
@@ -405,15 +405,11 @@ const Bookings = () => {
     let filtered = [...allBookings];
 
     if (statusFilter !== "all") {
-      filtered = filtered.filter(
-        b => b.bookingStatus === statusFilter
-      );
+      filtered = filtered.filter(b => b.bookingStatus === statusFilter);
     }
 
     if (salonFilter !== "all") {
-      filtered = filtered.filter(
-        b => b.salonName === salonFilter
-      );
+      filtered = filtered.filter(b => b.salonName === salonFilter);
     }
 
     if (searchTerm) {
