@@ -31,7 +31,6 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
     imageUrl: "",
     gender: "unisex",
     genderType: "UNISEX",
-    status: "active",
     rating: "",
     numberOfReviews: "",
     latitude: "",
@@ -90,7 +89,6 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                 imageUrl: salon.imageUrl || salon.shopLogo || "",
                 gender: (salon.genderType || "").toLowerCase(),
                 genderType: salon.genderType || "",
-                status: salon.isActive ? "active" : "inactive",
                 rating: salon.ratingAverage || salon.rating || "",
                 numberOfReviews: salon.numberOfReviews || salon.reviewCount || salon.totalReviews || "",
                 latitude: salon.latitude || "",
@@ -190,7 +188,6 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
             imageUrl: "",
             gender: "unisex",
             genderType: "UNISEX",
-            status: "active",
             rating: "",
             numberOfReviews: "",
             latitude: "",
@@ -356,10 +353,6 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
       newErrors.gender = "Please select salon type";
     }
 
-    // Salon Status validation
-    if (!formData.status || formData.status.trim() === "") {
-      newErrors.status = "Please select salon status";
-    }
 
     // Services validation
     if (!formData.services || formData.services.length === 0) {
@@ -422,7 +415,6 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
       imageUrl: "",
       gender: "unisex",
       genderType: "UNISEX",
-      status: "active",
       rating: "",
       numberOfReviews: "",
       latitude: "",
@@ -469,7 +461,6 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
         pincode: formData.pincode || "",
         imageUrl: formData.imageUrl || "",
         genderType: (formData.gender || "unisex").toUpperCase(),
-        isActive: formData.status === "active",
         ratingAverage: formData.rating ? parseInt(formData.rating) : 5,
         totalReviews: formData.numberOfReviews ? parseInt(formData.numberOfReviews) : 0,
         latitude: formData.latitude ? parseFloat(formData.latitude) : null,
@@ -604,7 +595,6 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
       state: "Please select a state",
       pincode: "Please enter pincode",
       gender: "Please select salon type",
-      status: "Please select salon status",
       openingTime: "Please enter opening time",
       closingTime: "Please enter closing time",
       day: "Please select a holiday"
@@ -1040,50 +1030,32 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                     {errors.gender && <div className="invalid-feedback d-block">{errors.gender}</div>}
                   </div>
 
-                  {/* Salon Status */}
+                  {/* Holiday */}
                   <div className="col-12 col-md-6">
-                    <label className="form-label fw-semibold d-flex align-items-center mb-3">
-                      {/* <i className="bi bi-toggle-on me-2" style={{ color: '#a45b06', fontSize: '1.2rem' }}></i> */}
-                      <span className="required-field">Salon Status</span>
+                    <label className="form-label fw-semibold">
+                      <span className="required-field"> Holiday</span>
                     </label>
-
-                    <div className="d-flex align-items-center justify-content-between rounded-3"
-                      style={{
-                        //  background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
-                        //  borderColor: '#dee2e6'
-                      }}>
-
-                      {/* Custom Toggle Switch */}
-                      <div className="form-check form-switch">
-                        <input
-                          className="form-check-input"
-                          type="checkbox"
-                          id="status-toggle"
-                          checked={formData.status === "active"}
-                          onChange={(e) => handleInputChange({
-                            target: {
-                              name: 'status',
-                              value: e.target.checked ? 'active' : 'inactive'
-                            }
-                          })}
-                          disabled={isSubmitting}
-                          style={{
-                            width: '50px',
-                            height: '24px',
-                            borderRadius: '12px',
-                            backgroundColor: formData.status === "active" ? '#28a745' : '#6c757d',
-                            border: 'none',
-                            cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                            transition: 'all 0.3s ease'
-                          }}
-                        />
-                        <label className="form-check-label visually-hidden" htmlFor="status-toggle">
-                          Toggle salon status
-                        </label>
-                      </div>
-                    </div>
-                    {errors.status && <div className="invalid-feedback d-block">{errors.status}</div>}
+                    <select
+                      className={`form-select ${errors.day ? 'is-invalid' : ''}`}
+                      name="day"
+                      value={formData.day || ""}
+                      onChange={handleInputChange}
+                      onInvalid={handleInvalid}
+                      required
+                      disabled={isSubmitting}
+                    >
+                      <option value="">Select Day</option>
+                      <option value="monday">Monday</option>
+                      <option value="tuesday">Tuesday</option>
+                      <option value="wednesday">Wednesday</option>
+                      <option value="thursday">Thursday</option>
+                      <option value="friday">Friday</option>
+                      <option value="saturday">Saturday</option>
+                      <option value="sunday">Sunday</option>
+                    </select>
+                    {errors.day && <div className="invalid-feedback">{errors.day}</div>}
                   </div>
+
                 </div>
 
 
@@ -1315,31 +1287,6 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                   </div>
                 </div>
 
-                {/* Working Day */}
-                <div className="col-12 col-md-4">
-                  <label className="form-label fw-semibold">
-                    <span className="required-field"> Holiday</span>
-                  </label>
-                  <select
-                    className={`form-select ${errors.day ? 'is-invalid' : ''}`}
-                    name="day"
-                    value={formData.day || ""}
-                    onChange={handleInputChange}
-                    onInvalid={handleInvalid}
-                    required
-                    disabled={isSubmitting}
-                  >
-                    <option value="">Select Day</option>
-                    <option value="monday">Monday</option>
-                    <option value="tuesday">Tuesday</option>
-                    <option value="wednesday">Wednesday</option>
-                    <option value="thursday">Thursday</option>
-                    <option value="friday">Friday</option>
-                    <option value="saturday">Saturday</option>
-                    <option value="sunday">Sunday</option>
-                  </select>
-                  {errors.day && <div className="invalid-feedback">{errors.day}</div>}
-                </div>
 
                 {/* Images */}
                 <div className="col-12">
