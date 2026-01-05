@@ -281,12 +281,13 @@ const SalonRequest = () => {
   }, [search]);
 
 
+
   return (
     <Layout>
       <div className="page-content min-vh-100 d-flex flex-column gap-2 gap-md-3 p-2 p-md-3">
 
         {/* FILTERS + PAGINATION + BULK ACTIONS */}
-        <div className="card shadow-sm mb-1 mb-md-3 bg-white bookings-filter-sticky">
+        <div className="card shadow-sm mb-1 mb-md-3 bg-white d-none d-md-block bookings-filter-sticky">
           <div className="card-body p-2 p-md-3">
             {/* DESKTOP LAYOUT */}
             <div className="d-none d-md-block">
@@ -459,6 +460,83 @@ const SalonRequest = () => {
           </div>
         </div>
 
+        {/* MOBILE FILTERS - NON-STICKY */}
+        <div className="d-md-none mb-3">
+          <div className="card shadow-sm bg-white">
+            <div className="card-body p-2 p-md-3">
+              <div className="d-flex flex-column gap-2">
+                <div className="row g-2 align-items-center">
+                  <div className="col-auto">
+                    <button
+                      className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
+                      onClick={() => setShowMobileFilters(!showMobileFilters)}
+                      type="button"
+                      style={{ minWidth: 'auto', padding: '0.25rem 0.5rem' }}
+                      disabled={isLoading}
+                    >
+                      <i className="fa-solid fa-filter"></i>
+                      {(salonFilter !== "all" || dateFilter) ? (
+                        <span className="badge bg-secondary ms-1" style={{ fontSize: '0.65rem', padding: '0.15rem 0.3rem' }}>!</span>
+                      ) : null}
+                    </button>
+                  </div>
+                  <div className="col">
+                    <SearchInput
+                      value={search}
+                      onChange={(val) => { setSearch(val); setCurrentPage(1); }}
+                      placeholder="Search..."
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+
+                {showMobileFilters && (
+                  <div className="card border bg-light mt-2">
+                    <div className="card-body p-3">
+                      <div className="d-flex flex-column gap-2">
+                        <div>
+                          <label className="form-label small mb-1 fw-semibold">City</label>
+                          <select
+                            className="form-select form-select-sm"
+                            value={salonFilter}
+                            onChange={(e) => { setSalonFilter(e.target.value); setCurrentPage(1); }}
+                            disabled={isLoading}
+                          >
+                            <option value="all">All Cities</option>
+                            <option value="Katol">Katol</option>
+                            <option value="Warud">Warud</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="form-label small mb-1 fw-semibold">Date</label>
+                          <input
+                            type="date"
+                            className="form-control form-control-sm"
+                            value={dateFilter}
+                            onChange={(e) => { setDateFilter(e.target.value); setCurrentPage(1); }}
+                            disabled={isLoading}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="row g-2">
+                  <div className="col-12 d-flex justify-content-end">
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={setCurrentPage}
+                      size="sm"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* DESKTOP TABLE */}
         <div
           className="table-responsive d-none d-md-block mb-2 mb-md-3 bg-white bookings-table-scroll"
@@ -562,7 +640,13 @@ const SalonRequest = () => {
         </div>
 
         {/* MOBILE CARDS */}
-        <div className="d-md-none bg-white bookings-mobile-cards">
+        <div
+          className="d-md-none bg-white bookings-mobile-cards"
+          style={{
+            overflow: 'auto',
+            padding: '1rem'
+          }}
+        >
           {isLoading ? (
             <div className="d-flex justify-content-center align-items-center py-5">
               <Loader fullScreen={false} size="sm" text="Loading..." />

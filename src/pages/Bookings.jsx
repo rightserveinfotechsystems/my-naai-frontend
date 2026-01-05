@@ -336,6 +336,7 @@ const Bookings = () => {
   };
 
 
+
   // Debug logging
   console.log("🔍 Bookings component render:", {
     loading,
@@ -433,7 +434,7 @@ const Bookings = () => {
       <div className="page-content min-vh-100 d-flex flex-column gap-2 gap-md-3 p-2 p-md-3">
 
         {/* FILTERS + PAGINATION - WHITE BACKGROUND CARD (STICKY) */}
-        <div className="card shadow-sm mb-1 mb-md-3 bg-white bookings-filter-sticky">
+        <div className="card shadow-sm mb-1 mb-md-3 bg-white d-none d-md-block bookings-filter-sticky">
           <div className="card-body p-2 p-md-3">
             {/* DESKTOP LAYOUT */}
             <div className="d-none d-md-block">
@@ -630,6 +631,100 @@ const Bookings = () => {
           </div>
         </div>
 
+        {/* MOBILE FILTERS - NON-STICKY */}
+        <div className="d-md-none mb-3">
+          <div className="card shadow-sm bg-white">
+            <div className="card-body p-2 p-md-3">
+              <div className="d-flex flex-column gap-2">
+                <div className="row g-2 align-items-center">
+                  <div className="col-auto">
+                    <button
+                      className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
+                      onClick={() => setShowMobileFilters(!showMobileFilters)}
+                      type="button"
+                      style={{ minWidth: 'auto', padding: '0.25rem 0.5rem' }}
+                    >
+                      <i className="fa-solid fa-filter"></i>
+                      {(salonFilter !== "all" || statusFilter !== "all" || dateFilter) ? (
+                        <span className="badge bg-secondary ms-1" style={{ fontSize: '0.65rem', padding: '0.15rem 0.3rem' }}>!</span>
+                      ) : null}
+                    </button>
+                  </div>
+                  <div className="col">
+                    <SearchInput
+                      value={search}
+                      onChange={setSearch}
+                      placeholder="Search..."
+                    />
+                  </div>
+                </div>
+
+                {showMobileFilters && (
+                  <div className="card border bg-light mt-2">
+                    <div className="card-body p-3">
+                      <div className="d-flex flex-column gap-2">
+                        <div>
+                          <label className="form-label small mb-1 fw-semibold">All Salons</label>
+                          <select
+                            className="form-select form-select-sm"
+                            value={salonFilter}
+                            onChange={handleFilterChange(setSalonFilter)}
+                          >
+                            <option value="all">All Salons</option>
+                            {salons.map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="form-label small mb-1 fw-semibold">All Status</label>
+                          <select
+                            className="form-select form-select-sm"
+                            value={statusFilter}
+                            onChange={handleFilterChange(setStatusFilter)}
+                          >
+                            <option value="all">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="form-label small mb-1 fw-semibold">Date</label>
+                          <input
+                            type="date"
+                            className="form-control form-control-sm"
+                            value={dateFilter}
+                            onChange={handleDateChange}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="row g-2">
+                  <div className="col-12 d-flex justify-content-end">
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={setCurrentPage}
+                      size="sm"
+                    />
+                    <button
+                      className="btn btn-outline-secondary btn-sm px-md-3 ms-2"
+                      onClick={handleClearFilters}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* DESKTOP TABLE - SCROLLABLE AREA BELOW STICKY FILTERS */}
         <div
@@ -691,7 +786,13 @@ const Bookings = () => {
         </div>
 
         {/* MOBILE CARDS */}
-        <div className="d-md-none bg-white bookings-mobile-cards">
+        <div
+          className="d-md-none bg-white bookings-mobile-cards"
+          style={{
+            overflow: 'auto',
+            padding: '1rem'
+          }}
+        >
           {loading ? (
             <div className="d-flex justify-content-center align-items-center py-5">
               <Loader fullScreen={false} size="sm" text="Loading..." />

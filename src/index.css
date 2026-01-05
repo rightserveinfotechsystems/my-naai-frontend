@@ -2137,9 +2137,9 @@ img {
   }
 
   /* General tablet styles (applied to 769px-1024px only) */
-  .page-content {
+  /* .page-content {
     padding: 1.5rem 2rem !important;
-  }
+  } */
 
   .table-responsive {
     border-radius: 0.5rem !important;
@@ -2643,4 +2643,44 @@ img {
 
 .switch-green:focus {
   box-shadow: 0 0 0 0.25rem rgba(40, 167, 69, 0.25);
+}
+
+/* Mobile Table Height - Responsive Media Queries */
+@media (max-width: 767.98px) {
+  .bookings-mobile-cards {
+    max-height: calc(100dvh - 300px) !important;
+    max-height: calc(100vh - 300px) !important;
+  }
+}
+
+/* Small mobile screens (phones in portrait ≤ 600px height) */
+@media (max-width: 575.98px) and (max-height: 600px) {
+  .bookings-mobile-cards {
+    max-height: calc(100dvh - 250px) !important;
+    max-height: calc(100vh - 250px) !important;
+  }
+}
+
+/* Medium mobile screens (phones 601px-700px height) */
+@media (max-width: 575.98px) and (min-height: 601px) and (max-height: 700px) {
+  .bookings-mobile-cards {
+    max-height: calc(100dvh - 280px) !important;
+    max-height: calc(100vh - 280px) !important;
+  }
+}
+
+/* Large mobile screens (phones 701px-800px height) */
+@media (max-width: 575.98px) and (min-height: 701px) and (max-height: 800px) {
+  .bookings-mobile-cards {
+    max-height: calc(100dvh - 320px) !important;
+    max-height: calc(100vh - 320px) !important;
+  }
+}
+
+/* Extra large mobile screens (phones > 800px height) */
+@media (max-width: 575.98px) and (min-height: 801px) {
+  .bookings-mobile-cards {
+    max-height: calc(100dvh - 350px) !important;
+    max-height: calc(100vh - 350px) !important;
+  }
 }
