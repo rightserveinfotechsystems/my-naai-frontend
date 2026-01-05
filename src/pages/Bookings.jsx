@@ -492,14 +492,14 @@ const Bookings = () => {
                     </div>
 
 
-                    {/* <div className="col-12 col-md-2">
+                    <div className="col-12 col-md-2">
                       <input
                         type="date"
                         className="form-control form-control-sm"
                         value={dateFilter}
                         onChange={handleDateChange}
                       />
-                    </div> */}
+                    </div>
                   </div>
                 </div>
 
