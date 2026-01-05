@@ -758,64 +758,51 @@ export const bookingAPI = {
     }
   },
 
-  getFilterList: async () => {
-    try {
-      const response = await api.get('/api/booking/filter-list');
-      
-      return {
-        success: response.data?.status === "SUCCESS",
-        data: response.data?.data || {},
-        message: response.data?.message || "Filter list fetched successfully"
-      };
-    } catch (error) {
-      console.error("❌ Filter list API Error:", {
-        message: error.message,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        url: error.config?.url
-      });
-
-      return {
-        success: false,
-        data: {},
-        message: error.response?.data?.message || "Failed to fetch filter list",
-        error: error.response?.data
-      };
-    }
-  },
-
-  getBookingById: async (bookingId) => {
+  getBookingFilterList: async () => {
+  try {
+    const res = await api.get("/api/booking/get-all-list");
+    return res.data;
+  } catch (error) {
     return {
       success: false,
-      message: "Booking endpoint not implemented yet",
-      data: null
-    };
-  },
-
-  createBooking: async (bookingData) => {
-    return {
-      success: false,
-      message: "Booking creation endpoint not implemented yet",
-      data: null
-    };
-  },
-
-  updateBooking: async (bookingId, bookingData) => {
-    return {
-      success: false,
-      message: "Booking update endpoint not implemented yet",
-      data: null
-    };
-  },
-
-  deleteBooking: async (bookingId) => {
-    return {
-      success: false,
-      message: "Booking deletion endpoint not implemented yet",
-      data: null
+      message: error.message
     };
   }
+}
+
+
+
+  // getBookingById: async (bookingId) => {
+  //   return {
+  //     success: false,
+  //     message: "Booking endpoint not implemented yet",
+  //     data: null
+  //   };
+  // },
+
+  // createBooking: async (bookingData) => {
+  //   return {
+  //     success: false,
+  //     message: "Booking creation endpoint not implemented yet",
+  //     data: null
+  //   };
+  // },
+
+  // updateBooking: async (bookingId, bookingData) => {
+  //   return {
+  //     success: false,
+  //     message: "Booking update endpoint not implemented yet",
+  //     data: null
+  //   };
+  // },
+
+  // deleteBooking: async (bookingId) => {
+  //   return {
+  //     success: false,
+  //     message: "Booking deletion endpoint not implemented yet",
+  //     data: null
+  //   };
+  // }
 };
 
 // ==================== SALON REQUEST MANAGEMENT ====================
