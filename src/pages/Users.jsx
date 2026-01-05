@@ -448,6 +448,7 @@ const Users = () => {
         onConfirm={confirmStatusChange}
         currentStatus={selectedUser?.isActive}
         loading={loading}
+        entityType="user"
       />
 
       <DeleteConfirmModal
