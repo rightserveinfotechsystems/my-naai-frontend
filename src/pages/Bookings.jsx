@@ -108,7 +108,7 @@ const formatTime = (dateString, booking) => {
 };
 
 const Bookings = () => {
-  console.log("🏗️ Bookings component rendered");
+  // console.log("🏗️ Bookings component rendered");
 
   const [bookings, setBookings] = useState([]);
   const [salons, setSalons] = useState([]);
@@ -123,6 +123,10 @@ const Bookings = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
+  const [filtersLoaded, setFiltersLoaded] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [allBookings, setAllBookings] = useState([]);
+
 
   // Debounce search input
   useEffect(() => {
@@ -158,7 +162,7 @@ const Bookings = () => {
     });
 
     setLoading(true);
-    
+
     // Check for JWT token
     const token = localStorage.getItem("token");
     if (!token) {
@@ -228,7 +232,7 @@ const Bookings = () => {
       }
     } catch (error) {
       console.error("Error fetching bookings:", error);
-      
+
       // Check for 401 unauthorized errors
       if (error.response?.status === 401) {
         console.error("Authentication error, redirecting to login");
@@ -247,47 +251,47 @@ const Bookings = () => {
   }, [currentPage, debouncedSearch, salonFilter, statusFilter, dateFilter]);
 
   // Fetch filter options from filter-list API
-  const fetchFilterList = useCallback(async () => {
-    try {
-      const result = await bookingAPI.getFilterList();
-      if (result.success) {
-        console.log("✅ Filter list fetched:", result.data);
-        
-        // Normalize salon data - handle different field names
-        let salonData = [];
-        if (result.data?.salons && Array.isArray(result.data.salons)) {
-          salonData = result.data.salons;
-        } else if (result.data?.salonList && Array.isArray(result.data.salonList)) {
-          salonData = result.data.salonList;
-        }
-        
-        // Transform salon data to have consistent structure (id and name)
-        const normalizedSalons = salonData.map(salon => {
-          console.log("🔍 Salon data from API:", salon);
-          return {
-          id: salon.id || salon.salonId || salon._id,
-          name: salon.name || salon.salonName || salon.salon_name || 'Unknown Salon'
-          };
-        });
-        
-        setSalons(normalizedSalons);
-        // Store all filter options
-        setFilterOptions(result.data || { salons: [], statuses: [] });
-      } else {
-        console.warn("API failed for filter list:", result.message);
-        setSalons([]);
-        setFilterOptions({ salons: [], statuses: [] });
-      }
-    } catch (error) {
-      console.error("Error fetching filter list:", error);
-      setSalons([]);
-      setFilterOptions({ salons: [], statuses: [] });
-    }
-  }, []);
+  // const fetchFilterList = useCallback(async () => {
+  //   try {
+  //     const result = await bookingAPI.getFilterList();
+  //     if (result.success) {
+  //       console.log("✅ Filter list fetched:", result.data);
 
-  useEffect(() => {
-    fetchFilterList();
-  }, [fetchFilterList]);
+  //       // Normalize salon data - handle different field names
+  //       let salonData = [];
+  //       if (result.data?.salons && Array.isArray(result.data.salons)) {
+  //         salonData = result.data.salons;
+  //       } else if (result.data?.salonList && Array.isArray(result.data.salonList)) {
+  //         salonData = result.data.salonList;
+  //       }
+
+  //       // Transform salon data to have consistent structure (id and name)
+  //       const normalizedSalons = salonData.map(salon => {
+  //         console.log("🔍 Salon data from API:", salon);
+  //         return {
+  //         id: salon.id || salon.salonId || salon._id,
+  //         name: salon.name || salon.salonName || salon.salon_name || 'Unknown Salon'
+  //         };
+  //       });
+
+  //       setSalons(normalizedSalons);
+  //       // Store all filter options
+  //       setFilterOptions(result.data || { salons: [], statuses: [] });
+  //     } else {
+  //       console.warn("API failed for filter list:", result.message);
+  //       setSalons([]);
+  //       setFilterOptions({ salons: [], statuses: [] });
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching filter list:", error);
+  //     setSalons([]);
+  //     setFilterOptions({ salons: [], statuses: [] });
+  //   }
+  // }, []);
+
+  // useEffect(() => {
+  //   fetchFilterList();
+  // }, [fetchFilterList]);
 
   // Handle parameter changes (skip initial render)
   const isInitialMount = useRef(true);
@@ -310,6 +314,7 @@ const Bookings = () => {
   // Since filtering and pagination is now handled in fetchBookings, we use bookings directly
   const filtered = bookings;
 
+
   const handleFilterChange = useCallback((setter) => (e) => {
     console.log(" Filter changed:", setter.name || 'unknown', "Value:", e.target.value, "Type:", typeof e.target.value);
     setter(e.target.value);
@@ -321,13 +326,15 @@ const Bookings = () => {
     setCurrentPage(1);
   }, []);
 
-  const handleClearFilters = useCallback(() => {
-    setSalonFilter("all");
+  const handleClearFilters = () => {
     setStatusFilter("all");
-    setDateFilter("");
-    setSearch("");
+    setSalonFilter("all");
+    setSearchTerm("");
     setCurrentPage(1);
-  }, []);
+
+    setBookings(allBookings);
+  };
+
 
   // Debug logging
   console.log("🔍 Bookings component render:", {
@@ -339,18 +346,99 @@ const Bookings = () => {
     totalItems
   });
 
+  const fetchFilterList = useCallback(async () => {
+    try {
+      const result = await bookingAPI.getBookingFilterList();
+
+
+
+      if (result.success && Array.isArray(result.data)) {
+        // Agar future me salon list mile to handle
+        const uniqueSalons = [
+          ...new Map(
+            result.data
+              .filter(b => b.salonName)
+              .map(b => [b.salonName, { id: b.salonName, name: b.salonName }])
+          ).values()
+        ];
+
+        setSalons(uniqueSalons);
+        setFiltersLoaded(true);
+      }
+    } catch (error) {
+      console.error("❌ Filter list error:", error);
+    }
+  }, []);
+
+
+  useEffect(() => {
+
+    console.log("🧪 BOOKINGS RAW DATA:", bookings);
+    if (!bookings.length)
+
+      return;
+
+    // Unique salons
+    const uniqueSalons = [
+      ...new Map(
+        bookings
+          .filter(b => b.salonName)
+          .map(b => [b.salonName, { id: b.salonName, name: b.salonName }])
+      ).values()
+    ];
+
+    // Unique statuses
+    const uniqueStatuses = [
+      ...new Set(bookings.map(b => b.bookingStatus).filter(Boolean))
+    ];
+
+
+    setSalons(uniqueSalons);
+    setFilterOptions(prev => ({
+      ...prev,
+      statuses: uniqueStatuses
+    }));
+
+  }, [bookings]);
+  useEffect(() => {
+    let filtered = [...allBookings];
+
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(
+        b => b.bookingStatus === statusFilter
+      );
+    }
+
+    if (salonFilter !== "all") {
+      filtered = filtered.filter(
+        b => b.salonName === salonFilter
+      );
+    }
+
+    if (searchTerm) {
+      filtered = filtered.filter(
+        b =>
+          b.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          b.userPhone?.includes(searchTerm)
+      );
+    }
+
+    setBookings(filtered);
+  }, [statusFilter, salonFilter, searchTerm, allBookings]);
+
+
   return (
     <Layout>
       {/* MAIN WRAPPER - Responsive spacing */}
       <div className="page-content min-vh-100 d-flex flex-column gap-2 gap-md-3 p-2 p-md-3">
-        
+
         {/* FILTERS + PAGINATION - WHITE BACKGROUND CARD (STICKY) */}
         <div className="card shadow-sm mb-1 mb-md-3 bg-white bookings-filter-sticky">
           <div className="card-body p-2 p-md-3">
             {/* DESKTOP LAYOUT */}
             <div className="d-none d-md-block">
               <div className="row g-2 g-md-3 align-items-end">
-                
+
                 {/* LEFT SIDE - Search + Filters */}
                 <div className="col-12 col-lg-7">
                   <div className="row g-2">
@@ -362,33 +450,51 @@ const Bookings = () => {
                         placeholder="Search by user, salon or service..."
                       />
                     </div>
-                    
+
                     <div className="col-12 col-md-2">
                       <select
                         className="form-select form-select-sm"
                         value={salonFilter}
                         onChange={handleFilterChange(setSalonFilter)}
+                        onFocus={() => {
+                          if (!filtersLoaded) {
+                            fetchFilterList();
+                          }
+                        }}
                       >
                         <option value="all">All Salons</option>
-                        {salons.map((s) => (
+                        {salons.map(s => (
                           <option key={s.id} value={s.id}>
                             {s.name}
                           </option>
                         ))}
                       </select>
+
+
+
                     </div>
                     <div className="col-12 col-md-2">
                       <select
                         className="form-select form-select-sm"
                         value={statusFilter}
                         onChange={handleFilterChange(setStatusFilter)}
+                        onFocus={() => {
+                          if (!filtersLoaded) {
+                            fetchFilterList();
+                          }
+                        }}
                       >
-                        <option key="all" value="all">All Status</option>
-                        <option key="pending" value="pending">Pending</option>
-                        <option key="completed" value="completed">Completed</option>
-                        <option key="cancelled" value="cancelled">Cancelled</option>
+                        <option value="all">All Status</option>
+                        {filterOptions.statuses.map(status => (
+                          <option key={status} value={status}>
+                            {status.toUpperCase()}
+                          </option>
+                        ))}
                       </select>
+
                     </div>
+
+
                     {/* <div className="col-12 col-md-2">
                       <input
                         type="date"
@@ -403,8 +509,8 @@ const Bookings = () => {
                 {/* RIGHT SIDE - Pagination + Clear */}
                 <div className="col-12 col-lg-5 d-flex flex-column flex-sm-row gap-2 justify-content-end align-items-end">
                   <div className="d-flex justify-content-end align-items-center flex-wrap gap-2 gap-md-3 w-100 w-sm-auto">
-                   
-                    
+
+
                     {/* PAGINATION */}
                     <div className="flex-grow-1 flex-shrink-0 min-w-0" style={{ minWidth: '200px' }}>
                       <Pagination
@@ -414,13 +520,14 @@ const Bookings = () => {
                         size="sm"
                       />
                     </div>
-                    
+
                     <button
                       className="btn btn-outline-secondary btn-sm px-md-3 flex-shrink-0"
                       onClick={handleClearFilters}
                     >
                       Clear
                     </button>
+
                   </div>
                 </div>
               </div>
