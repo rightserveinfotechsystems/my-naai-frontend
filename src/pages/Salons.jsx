@@ -50,6 +50,7 @@ const Salons = () => {
   const [salons, setSalons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [cityFilter, setCityFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -77,7 +78,7 @@ const Salons = () => {
 
     const apiParams = {
       page: currentPage,
-      searchString: search,
+      searchString: debouncedSearch,
       cityFilter: cityFilter === 'all' ? undefined : cityFilter,
       statusFilter: statusFilter === 'all' ? undefined : statusFilter
     };
@@ -128,7 +129,7 @@ const Salons = () => {
     }
 
     setLoading(false);
-  }, [navigate, currentPage, search, cityFilter, statusFilter]);
+  }, [navigate, currentPage, debouncedSearch, cityFilter, statusFilter]);
 
   useEffect(() => {
     fetchSalons();
@@ -174,6 +175,15 @@ const Salons = () => {
     setShowModal(true);
   };
 
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [search]);
+
   return (
     <Layout>
       <div className="page-content min-vh-100 d-flex flex-column gap-2 gap-md-3 p-2 p-md-3">
@@ -188,7 +198,7 @@ const Salons = () => {
                     <div className="col-12 col-md-6">
                       <SearchInput
                         value={search}
-                        onChange={(val) => { setSearch(val); setCurrentPage(1); }}
+                        onChange={(val) => setSearch(val)}
                         placeholder="Search by name or address..."
                       />
                     </div>
