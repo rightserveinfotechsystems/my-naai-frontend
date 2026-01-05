@@ -27,7 +27,7 @@ const formatDate = (dateString) => {
   const minutes = String(date.getMinutes()).padStart(2, '0');
   const ampm = hours >= 12 ? 'PM' : 'AM';
   hours = hours % 12;
-  hours = hours ? hours : 12; 
+  hours = hours ? hours : 12;
   hours = String(hours).padStart(2, '0');
   return `${day}/${month}/${year} ${hours}:${minutes} ${ampm}`;
 };
@@ -38,6 +38,7 @@ const SalonRequest = () => {
   const [salonFilter, setSalonFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [bookings, setBookings] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
@@ -61,7 +62,7 @@ const SalonRequest = () => {
     return () => clearTimeout(timer);
   }, [salonFilter, dateFilter, search, currentPage]);
 
- 
+
   const handleSelectAll = useCallback((e) => {
     const checked = e.target.checked;
     setSelectAll(checked);
@@ -155,7 +156,7 @@ const SalonRequest = () => {
         page: currentPage,
         salonNameFilter: salonFilter !== "all" ? salonFilter : "",
         requestDate: dateFilter,
-        searchString: search
+        searchString: debouncedSearch
       });
 
       if (response.success) {
@@ -197,7 +198,7 @@ const SalonRequest = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, salonFilter, dateFilter, search, navigate]);
+  }, [currentPage, salonFilter, dateFilter, debouncedSearch, navigate]);
 
   useEffect(() => {
     fetchSalonRequests();
@@ -219,11 +220,11 @@ const SalonRequest = () => {
 
     try {
       const res = await salonRequestAPI.deleteSalonRequests(
-        deleteModal.requestIds 
+        deleteModal.requestIds
       );
 
       if (res.success) {
-        await fetchSalonRequests(); 
+        await fetchSalonRequests();
 
         setSelectedBookings(new Set());
         setSelectAll(false);
@@ -268,6 +269,17 @@ const SalonRequest = () => {
     }
   };
 
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+      setSelectedBookings(new Set());
+      setSelectAll(false);
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(handler);
+  }, [search]);
+
 
   return (
     <Layout>
@@ -284,12 +296,7 @@ const SalonRequest = () => {
                     <div className="col-12 col-md-6">
                       <SearchInput
                         value={search}
-                        onChange={(val) => {
-                          setSearch(val);
-                          setCurrentPage(1);
-                          setSelectedBookings(new Set());
-                          setSelectAll(false);
-                        }}
+                        onChange={(val) => setSearch(val)}
                         placeholder="Search by salon name or owner..."
                       />
                     </div>
@@ -513,18 +520,18 @@ const SalonRequest = () => {
                       <td className="fw-semibold px-2 px-md-3 py-2 text-truncate " style={{ maxWidth: '140px' }}>
                         {booking.phoneNumber || 'N/A'}
                       </td>
-                        <td className="px-2 px-md-3 py-2 text-center">
-                          <div className="d-flex flex-column align-items-center gap-1">
-                            <div className="d-flex align-items-center gap-1 mb-1 ">
-                              <i className="bi bi-calendar-plus text-primary" style={{ fontSize: '0.7rem' }}></i>
-                              <span>{formatDate(booking.createdAt)}</span>
-                            </div>
-                            <div className="d-flex align-items-center gap-1">
-                              <i className="bi bi-pencil-square text-muted" style={{ fontSize: '0.7rem' }}></i>
-                              <span className="text-muted">{formatDate(booking.updatedAt)}</span>
-                            </div>
+                      <td className="px-2 px-md-3 py-2 text-center">
+                        <div className="d-flex flex-column align-items-center gap-1">
+                          <div className="d-flex align-items-center gap-1 mb-1 ">
+                            <i className="bi bi-calendar-plus text-primary" style={{ fontSize: '0.7rem' }}></i>
+                            <span>{formatDate(booking.createdAt)}</span>
                           </div>
-                        </td>
+                          <div className="d-flex align-items-center gap-1">
+                            <i className="bi bi-pencil-square text-muted" style={{ fontSize: '0.7rem' }}></i>
+                            <span className="text-muted">{formatDate(booking.updatedAt)}</span>
+                          </div>
+                        </div>
+                      </td>
                       <td className="text-center px-2 px-md-3 py-2">
                         <button
                           className="btn fontcolor btn-sm"
