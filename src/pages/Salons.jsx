@@ -51,6 +51,7 @@ const Salons = () => {
   const [salons, setSalons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [cityFilter, setCityFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -78,7 +79,7 @@ const Salons = () => {
 
     const apiParams = {
       page: currentPage,
-      searchString: search,
+      searchString: debouncedSearch,
       cityFilter: cityFilter === 'all' ? undefined : cityFilter,
       statusFilter: statusFilter === 'all' ? undefined : statusFilter
     };
@@ -129,7 +130,7 @@ const Salons = () => {
     }
 
     setLoading(false);
-  }, [navigate, currentPage, search, cityFilter, statusFilter]);
+  }, [navigate, currentPage, debouncedSearch, cityFilter, statusFilter]);
 
   useEffect(() => {
     fetchSalons();
@@ -208,7 +209,6 @@ const Salons = () => {
     });
 
     try {
-      // API call to toggle status - using the new dedicated endpoint
       const result = await salonAPI.toggleSalonStatus(salonId, newStatus);
 
       if (result.success) {
@@ -216,7 +216,6 @@ const Salons = () => {
         toast.success(`Salon ${newStatus ? 'activated' : 'deactivated'} successfully!`);
       } else {
         console.log('API failed, reverting to:', currentStatus);
-        // Revert on failure
         setSalons(prev => prev.map(s => {
           const sId = s.salonId || s.barberId || s.id;
           return sId === salonId ? { ...s, isActive: currentStatus } : s;
@@ -225,7 +224,6 @@ const Salons = () => {
       }
     } catch (error) {
       console.log('Error occurred, reverting to:', currentStatus);
-      // Revert on error
       setSalons(prev => prev.map(s => {
         const sId = s.salonId || s.barberId || s.id;
         return sId === salonId ? { ...s, isActive: currentStatus } : s;
@@ -234,6 +232,14 @@ const Salons = () => {
       toast.error('Failed to update salon status');
     }
   };
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [search]);
 
   return (
     <Layout>
@@ -249,7 +255,7 @@ const Salons = () => {
                     <div className="col-12 col-md-6">
                       <SearchInput
                         value={search}
-                        onChange={(val) => { setSearch(val); setCurrentPage(1); }}
+                        onChange={(val) => setSearch(val)}
                         placeholder="Search by name or address..."
                       />
                     </div>
