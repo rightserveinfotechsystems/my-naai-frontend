@@ -671,33 +671,22 @@ export const salonAPI = {
 export const bookingAPI = {
   getBookings: async (params = {}) => {
     try {
-      console.log("📡 Calling booking list API with POST");
       
-      // Build request body with all parameters
       const requestBody = {
         page: params.page || 1,
         searchString: params.search || params.searchString || '',
         statusFilter: (params.status && params.status !== 'all') ? params.status : '',
-        salon: (params.salonId && params.salonId !== 'all') ? params.salonId : '', // Try 'salon' instead of 'salonId'
-        createdDate: params.dateFrom ? (params.dateFrom.includes('T') ? params.dateFrom.split('T')[0] : params.dateFrom) : ''
+        salonFilter: (params.salonId && params.salonId !== 'all') ? params.salonId : '',
+        bookingDate: params.dateFrom ? (params.dateFrom.includes('T') ? params.dateFrom.split('T')[0] : params.dateFrom) : ''
       };
 
-      // Remove empty strings to avoid sending unnecessary parameters
       if (!requestBody.searchString) delete requestBody.searchString;
       if (!requestBody.statusFilter) delete requestBody.statusFilter;
-      if (!requestBody.salon) delete requestBody.salon;
-      if (!requestBody.createdDate) delete requestBody.createdDate;
-
-      console.log("📨 Request body:", requestBody);
-      console.log("🔍 Search string:", requestBody.searchString || 'empty');
-      console.log("📊 Status filter:", requestBody.statusFilter || 'all');
-      console.log("🏪 Salon ID:", requestBody.salon || 'all');
-      console.log("📅 Created date:", requestBody.createdDate || 'none');
-
+      if (!requestBody.salonFilter) delete requestBody.salonFilter;
+      if (!requestBody.bookingDate) delete requestBody.bookingDate;
+      console.log("🔍 API Request body:", requestBody);
       const response = await api.post('/api/booking/list', requestBody);
-      console.log("✅ Booking list response:", response.data);
-      console.log("📊 Raw bookings data:", response.data?.data);
-
+      console.log("✅ API Response status:", response.data?.status);
       if (response.data?.status === "SUCCESS") {
         const bookingsData = response.data.data || [];
         const transformedData = Array.isArray(bookingsData) ? bookingsData.map(booking => {
@@ -705,6 +694,7 @@ export const bookingAPI = {
             id: booking.bookingId || booking.id,
             userName: booking.userName || booking.user_name || 'N/A',
             salonName: booking.salonName || booking.salon_name || 'N/A',
+            salonId: booking.salonId || booking.salon_id || booking.salon?.id || booking.salon?.salonId,
             serviceName: booking.serviceName || booking.service_name || 'N/A',
             date: booking.bookingDate || booking.booking_date || booking.date || 'N/A',
             time: booking.bookingTime || booking.booking_time || booking.time || null,
@@ -759,16 +749,35 @@ export const bookingAPI = {
   },
 
   getBookingFilterList: async () => {
-  try {
-    const res = await api.get("/api/booking/get-all-list");
-    return res.data;
-  } catch (error) {
-    return {
-      success: false,
-      message: error.message
-    };
+    try {
+      // Use booking list API to get salons for filtering
+      const response = await api.post('/api/booking/list', {
+        page: 1,
+        // No filters to get all salons
+      });
+
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data || [],
+        message: response.data?.message || "Filter list fetched successfully"
+      };
+    } catch (error) {
+      console.error("❌ Booking filter list API Error:", {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: error.config?.url
+      });
+
+      return {
+        success: false,
+        data: [],
+        message: error.response?.data?.message || "Failed to fetch booking filter list",
+        error: error.response?.data
+      };
+    }
   }
-}
 
 
 
