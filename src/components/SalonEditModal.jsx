@@ -12,6 +12,7 @@ const backendURL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
 
 const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     // Basic salon info
     name: "",
@@ -228,6 +229,17 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
     }
     newServices[index][field] = value;
     setFormData({ ...formData, services: newServices });
+
+    // Clear error for this service field
+    const errorKey = `service_${index}_${field}`;
+    if (errors[errorKey]) {
+      setErrors(prev => ({ ...prev, [errorKey]: undefined }));
+    }
+
+    // Clear general services error if exists
+    if (errors.services) {
+      setErrors(prev => ({ ...prev, services: undefined }));
+    }
   };
 
   const addService = () => {
@@ -235,6 +247,11 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
       ...formData,
       services: [...formData.services, { name: "", price: "", duration: "", description: "" }]
     });
+
+    // Clear services error when adding a service
+    if (errors.services) {
+      setErrors(prev => ({ ...prev, services: undefined }));
+    }
   };
 
   const removeService = (index) => {
@@ -289,6 +306,100 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
     }
   };
 
+  // Validation function
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Salon Name validation
+    if (!formData.name || formData.name.trim() === "") {
+      newErrors.name = "Please enter salon name";
+    }
+
+    // Phone Number validation
+    if (!formData.phoneNumber || formData.phoneNumber.trim() === "") {
+      newErrors.phoneNumber = "Please enter phone number";
+    } else if (!/^[6-9]\d{9}$/.test(formData.phoneNumber.replace(/\s+/g, ''))) {
+      newErrors.phoneNumber = "Please enter a valid 10-digit phone number";
+    }
+
+    // Email validation
+    if (!formData.email || formData.email.trim() === "") {
+      newErrors.email = "Please enter email address";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    // Address Line 1 validation
+    if (!formData.addressLine1 || formData.addressLine1.trim() === "") {
+      newErrors.addressLine1 = "Please enter address line 1";
+    }
+
+    // City validation
+    if (!formData.city || formData.city.trim() === "") {
+      newErrors.city = "Please select a city";
+    }
+
+    // State validation
+    if (!formData.state || formData.state.trim() === "") {
+      newErrors.state = "Please select a state";
+    }
+
+    // Pincode validation
+    if (!formData.pincode || formData.pincode.trim() === "") {
+      newErrors.pincode = "Please enter pincode";
+    } else if (!/^[1-9]\d{5}$/.test(formData.pincode.replace(/\s+/g, ''))) {
+      newErrors.pincode = "Please enter a valid 6-digit pincode";
+    }
+
+    // Salon Type validation
+    if (!formData.gender || formData.gender.trim() === "") {
+      newErrors.gender = "Please select salon type";
+    }
+
+    // Salon Status validation
+    if (!formData.status || formData.status.trim() === "") {
+      newErrors.status = "Please select salon status";
+    }
+
+    // Services validation
+    if (!formData.services || formData.services.length === 0) {
+      newErrors.services = "Please add at least one service";
+    } else {
+      formData.services.forEach((service, index) => {
+        if (!service.name || service.name.trim() === "") {
+          newErrors[`service_${index}_name`] = "Please enter service name";
+        }
+        if (!service.price || service.price === "" || service.price < 0) {
+          newErrors[`service_${index}_price`] = "Please enter valid price";
+        }
+        if (!service.duration || service.duration === "" || service.duration <= 0) {
+          newErrors[`service_${index}_duration`] = "Please enter valid duration";
+        }
+        if (!service.description || service.description.trim() === "") {
+          newErrors[`service_${index}_description`] = "Please enter service description";
+        }
+      });
+    }
+
+    // Opening Time validation
+    if (!formData.openingTime || formData.openingTime.trim() === "") {
+      newErrors.openingTime = "Please enter opening time";
+    }
+
+    // Closing Time validation
+    if (!formData.closingTime || formData.closingTime.trim() === "") {
+      newErrors.closingTime = "Please enter closing time";
+    }
+
+    // Holiday validation
+    if (!formData.day || formData.day.trim() === "") {
+      newErrors.day = "Please select a holiday";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleCloseModal = () => {
     // Clean up image previews
     images.forEach(image => {
@@ -297,6 +408,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
 
     setShowModal(false);
     setIsSubmitting(false);
+    setErrors({});
     setFormData({
       name: "",
       ownerName: "",
@@ -335,6 +447,12 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate form
+    if (!validateForm()) {
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -465,6 +583,36 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+
+    // Clear error for this field when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: undefined }));
+    }
+
+    // Clear HTML5 validation message
+    e.target.setCustomValidity('');
+  };
+
+  const handleInvalid = (e) => {
+    const { name } = e.target;
+    const customMessages = {
+      name: "Please enter salon name",
+      phoneNumber: "Please enter phone number",
+      email: "Please enter email address",
+      addressLine1: "Please enter address",
+      city: "Please select a city",
+      state: "Please select a state",
+      pincode: "Please enter pincode",
+      gender: "Please select salon type",
+      status: "Please select salon status",
+      openingTime: "Please enter opening time",
+      closingTime: "Please enter closing time",
+      day: "Please select a holiday"
+    };
+
+    if (customMessages[name]) {
+      e.target.setCustomValidity(customMessages[name]);
+    }
   };
 
   const handleImageUpload = async (e) => {
@@ -600,14 +748,16 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                   <label className="form-label fw-semibold required-field">Salon Name</label>
                   <input
                     type="text"
-                    className="form-control"
+                    className={`form-control ${errors.name ? 'is-invalid' : ''}`}
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
+                    onInvalid={handleInvalid}
                     required
                     disabled={isSubmitting}
                     placeholder="Enter salon name"
                   />
+                  {errors.name && <div className="invalid-feedback">{errors.name}</div>}
                 </div>
 
                 {/* 2. Owner Name */}
@@ -629,14 +779,16 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                   <label className="form-label fw-semibold required-field">Phone Number</label>
                   <input
                     type="tel"
-                    className="form-control"
+                    className={`form-control ${errors.phoneNumber ? 'is-invalid' : ''}`}
                     name="phoneNumber"
                     value={formData.phoneNumber || ""}
                     onChange={handleInputChange}
+                    onInvalid={handleInvalid}
                     required
                     disabled={isSubmitting}
                     placeholder="Enter Phone Number"
                   />
+                  {errors.phoneNumber && <div className="invalid-feedback">{errors.phoneNumber}</div>}
                 </div>
 
                 {/* 4. Email ID */}
@@ -644,13 +796,15 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                   <label className="form-label fw-semibold">Email ID</label>
                   <input
                     type="email"
-                    className="form-control"
+                    className={`form-control ${errors.email ? 'is-invalid' : ''}`}
                     name="email"
                     value={formData.email || ""}
                     onChange={handleInputChange}
+                    onInvalid={handleInvalid}
                     disabled={isSubmitting}
                     placeholder="owner@example.com"
                   />
+                  {errors.email && <div className="invalid-feedback">{errors.email}</div>}
                 </div>
 
                 {/* 5. Address Line 1 */}
@@ -658,14 +812,16 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                   <label className="form-label fw-semibold required-field">Address Line 1</label>
                   <input
                     type="text"
-                    className="form-control"
+                    className={`form-control ${errors.addressLine1 ? 'is-invalid' : ''}`}
                     name="addressLine1"
                     value={formData.addressLine1 || ""}
                     onChange={handleInputChange}
+                    onInvalid={handleInvalid}
                     required
                     disabled={isSubmitting}
                     placeholder="Shop/Flat number, Street"
                   />
+                  {errors.addressLine1 && <div className="invalid-feedback">{errors.addressLine1}</div>}
                 </div>
 
                 {/* 6. Address Line 2 */}
@@ -686,10 +842,11 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                 <div className="col-12 col-md-4">
                   <label className="form-label fw-semibold required-field">City</label>
                   <select
-                    className="form-select"
+                    className={`form-select ${errors.city ? 'is-invalid' : ''}`}
                     name="city"
                     value={formData.city}
                     onChange={handleInputChange}
+                    onInvalid={handleInvalid}
                     required
                     disabled={isSubmitting}
                   >
@@ -698,16 +855,18 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                       <option key={city} value={city}>{city}</option>
                     ))}
                   </select>
+                  {errors.city && <div className="invalid-feedback">{errors.city}</div>}
                 </div>
 
                 {/* 8. State */}
                 <div className="col-12 col-md-4">
                   <label className="form-label fw-semibold required-field">State</label>
                   <select
-                    className="form-select"
+                    className={`form-select ${errors.state ? 'is-invalid' : ''}`}
                     name="state"
                     value={formData.state || ""}
                     onChange={handleInputChange}
+                    onInvalid={handleInvalid}
                     required
                     disabled={isSubmitting}
                   >
@@ -715,6 +874,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                     <option value="Maharashtra">Maharashtra</option>
 
                   </select>
+                  {errors.state && <div className="invalid-feedback">{errors.state}</div>}
                 </div>
 
                 {/* 9. Pincode */}
@@ -723,15 +883,17 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
 
                   <input
                     type="number"
-                    className="form-control"
+                    className={`form-control ${errors.pincode ? 'is-invalid' : ''}`}
                     name="pincode"
                     value={formData.pincode || ""}
                     onChange={handleInputChange}
+                    onInvalid={handleInvalid}
                     required
                     disabled={isSubmitting}
                     placeholder="124001"
                     maxLength="6"
                   />
+                  {errors.pincode && <div className="invalid-feedback">{errors.pincode}</div>}
                 </div>
 
 
@@ -832,6 +994,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                           value="male"
                           checked={formData.gender === "male"}
                           onChange={handleInputChange}
+                          onInvalid={handleInvalid}
                           disabled={isSubmitting}
                           required
                         />
@@ -874,6 +1037,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                         </label>
                       </div>
                     </div>
+                    {errors.gender && <div className="invalid-feedback d-block">{errors.gender}</div>}
                   </div>
 
                   {/* Salon Status */}
@@ -918,6 +1082,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                         </label>
                       </div>
                     </div>
+                    {errors.status && <div className="invalid-feedback d-block">{errors.status}</div>}
                   </div>
                 </div>
 
@@ -971,31 +1136,33 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                           <div className="col-12 col-md-4">
                             <input
                               type="text"
-                              className="form-control"
+                              className={`form-control ${errors[`service_${index}_name`] ? 'is-invalid' : ''}`}
                               placeholder="Service Name"
                               value={service.name || ""}
                               onChange={(e) => handleServiceChange(index, 'name', e.target.value)}
                               required
                             />
+                            {errors[`service_${index}_name`] && <div className="invalid-feedback">{errors[`service_${index}_name`]}</div>}
                           </div>
                           <div className="col-12 col-md-4">
                             <div className="input-group">
                               <span className="input-group-text"><i className="bi bi-currency-rupee"></i></span>
                               <input
                                 type="number"
-                                className="form-control"
+                                className={`form-control ${errors[`service_${index}_price`] ? 'is-invalid' : ''}`}
                                 placeholder="Price"
                                 value={service.price || ""}
                                 onChange={(e) => handleServiceChange(index, 'price', e.target.value)}
                                 required
                               />
                             </div>
+                            {errors[`service_${index}_price`] && <div className="invalid-feedback">{errors[`service_${index}_price`]}</div>}
                           </div>
                           <div className="col-12 col-md-4">
                             <div className="input-group">
                               <input
                                 type="number"
-                                className="form-control"
+                                className={`form-control ${errors[`service_${index}_duration`] ? 'is-invalid' : ''}`}
                                 placeholder="Duration"
                                 value={service.duration || ""}
                                 onChange={(e) => handleServiceChange(index, 'duration', e.target.value)}
@@ -1003,15 +1170,17 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                               />
                               <span className="input-group-text">min</span>
                             </div>
+                            {errors[`service_${index}_duration`] && <div className="invalid-feedback">{errors[`service_${index}_duration`]}</div>}
                           </div>
                         </div>
                         <div className="mt-2">
                           <textarea
-                            className="form-control"
+                            className={`form-control ${errors[`service_${index}_description`] ? 'is-invalid' : ''}`}
                             placeholder="Description"
                             value={service.description || ""}
                             onChange={(e) => handleServiceChange(index, 'description', e.target.value)}
                           />
+                          {errors[`service_${index}_description`] && <div className="invalid-feedback">{errors[`service_${index}_description`]}</div>}
                         </div>
                       </div>
                     </div>
@@ -1023,6 +1192,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                   >
                     Add Service
                   </button>
+                  {errors.services && <div className="invalid-feedback d-block">{errors.services}</div>}
                 </div>
 
                 {/* Opening Time */}
@@ -1033,10 +1203,11 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                   <div className="input-group">
                     <input
                       type="time"
-                      className="form-control rounded-start"
+                      className={`form-control rounded-start ${errors.openingTime ? 'is-invalid' : ''}`}
                       name="openingTime"
                       value={formData.openingTime || ""}
                       onChange={handleInputChange}
+                      onInvalid={handleInvalid}
                       required
                       disabled={isSubmitting}
                     />
@@ -1052,6 +1223,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                       <option value="PM">PM</option>
                     </select>
                   </div>
+                  {errors.openingTime && <div className="invalid-feedback d-block">{errors.openingTime}</div>}
                 </div>
 
                 {/* Closing Time */}
@@ -1062,10 +1234,11 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                   <div className="input-group">
                     <input
                       type="time"
-                      className="form-control rounded-start"
+                      className={`form-control rounded-start ${errors.closingTime ? 'is-invalid' : ''}`}
                       name="closingTime"
                       value={formData.closingTime || ""}
                       onChange={handleInputChange}
+                      onInvalid={handleInvalid}
                       required
                       disabled={isSubmitting}
                     />
@@ -1081,6 +1254,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                       <option value="PM">PM</option>
                     </select>
                   </div>
+                  {errors.closingTime && <div className="invalid-feedback d-block">{errors.closingTime}</div>}
                 </div>
 
                 {/* Break Start Time */}
@@ -1147,10 +1321,11 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                     <span className="required-field"> Holiday</span>
                   </label>
                   <select
-                    className="form-select"
+                    className={`form-select ${errors.day ? 'is-invalid' : ''}`}
                     name="day"
                     value={formData.day || ""}
                     onChange={handleInputChange}
+                    onInvalid={handleInvalid}
                     required
                     disabled={isSubmitting}
                   >
@@ -1163,6 +1338,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                     <option value="saturday">Saturday</option>
                     <option value="sunday">Sunday</option>
                   </select>
+                  {errors.day && <div className="invalid-feedback">{errors.day}</div>}
                 </div>
 
                 {/* Images */}
