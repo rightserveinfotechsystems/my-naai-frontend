@@ -241,11 +241,12 @@ const Salons = () => {
     return () => clearTimeout(handler);
   }, [search]);
 
+
   return (
     <Layout>
       <div className="page-content min-vh-100 d-flex flex-column gap-2 gap-md-3 p-2 p-md-3">
         {/* FILTERS + PAGINATION - STICKY HEADER */}
-        <div className="card shadow-sm mb-1 mb-md-3 bg-white bookings-filter-sticky">
+        <div className="card shadow-sm mb-1 mb-md-3 bg-white d-none d-md-block bookings-filter-sticky">
           <div className="card-body p-2 p-md-3">
             {/* DESKTOP LAYOUT */}
             <div className="d-none d-md-block">
@@ -374,6 +375,86 @@ const Salons = () => {
             </div>
           </div>
         </div>
+
+        {/* MOBILE FILTERS - NON-STICKY */}
+        <div className="d-md-none mb-3">
+          <div className="card shadow-sm bg-white">
+            <div className="card-body p-2 p-md-3">
+              <div className="d-flex flex-column gap-2">
+                <div className="row g-2 align-items-center">
+                  <div className="col-auto">
+                    <button
+                      className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
+                      onClick={() => setShowMobileFilters(!showMobileFilters)}
+                      type="button"
+                      style={{ minWidth: 'auto', padding: '0.25rem 0.5rem' }}
+                      disabled={loading}
+                    >
+                      <i className="fa-solid fa-filter"></i>
+                      {(cityFilter !== "all" || statusFilter !== "all") ? (
+                        <span className="badge bg-secondary ms-1" style={{ fontSize: '0.65rem', padding: '0.15rem 0.3rem' }}>!</span>
+                      ) : null}
+                    </button>
+                  </div>
+                  <div className="col">
+                    <SearchInput
+                      value={search}
+                      onChange={(val) => { setSearch(val); setCurrentPage(1); }}
+                      placeholder="Search..."
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+
+                {showMobileFilters && (
+                  <div className="card border bg-light mt-2">
+                    <div className="card-body p-3">
+                      <div className="d-flex flex-column gap-2">
+                        <div>
+                          <label className="form-label small mb-1 fw-semibold">City</label>
+                          <select
+                            className="form-select form-select-sm"
+                            value={cityFilter}
+                            onChange={(e) => { setCityFilter(e.target.value); setCurrentPage(1); }}
+                            disabled={loading}
+                          >
+                            <option value="all">All Cities</option>
+                            {["Katol", "Warud"].map(c => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="form-label small mb-1 fw-semibold">Status</label>
+                          <select
+                            className="form-select form-select-sm"
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            disabled={loading}
+                          >
+                            <option value="all">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="row g-2">
+                  <div className="col-12 d-flex justify-content-end">
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={setCurrentPage}
+                      size="sm"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* DESKTOP CARDS - SCROLLABLE */}
         <div
           className="d-none d-md-block bg-white bookings-table-scroll"
@@ -493,8 +574,6 @@ const Salons = () => {
         <div
           className="d-md-none bg-white bookings-mobile-cards"
           style={{
-            maxHeight: 'calc(100dvh - 200px)',
-            maxHeight: 'calc(100vh - 200px)',
             overflow: 'auto',
             padding: '1rem'
           }}
