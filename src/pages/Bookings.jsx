@@ -146,8 +146,9 @@ const Bookings = () => {
 
   // Initial load
   useEffect(() => {
-    console.log("🏁 Initial component mount - calling fetchBookings");
+    console.log("🏁 Initial component mount - calling fetchBookings and fetchFilterList");
     fetchBookings();
+    fetchFilterList();
   }, []); // Empty dependency array for initial load
 
   // Fetch bookings from API
@@ -185,15 +186,15 @@ const Bookings = () => {
         page: apiParams.page,
         searchString: apiParams.search || '',
         statusFilter: apiParams.status || '',
-        salonId: apiParams.salonId || '',
-        createdDate: apiParams.dateFrom || ''
+        salonFilter: apiParams.salonId || '',
+        bookingDate: apiParams.dateFrom || ''
       });
 
       console.log("🏪 Salon filter debugging:", {
         salonFilter,
         salonFilterType: typeof salonFilter,
-        apiParamsSalonId: apiParams.salonId,
-        apiParamsSalonIdType: typeof apiParams.salonId
+        apiParamsSalonFilter: apiParams.salonId,
+        apiParamsSalonFilterType: typeof apiParams.salonId
       });
 
       const result = await bookingAPI.getBookings(apiParams);
@@ -349,67 +350,77 @@ const Bookings = () => {
 
   const fetchFilterList = useCallback(async () => {
     try {
+      console.log("🏪 Fetching salon filter list from /api/booking/list");
       const result = await bookingAPI.getBookingFilterList();
 
-
-
       if (result.success && Array.isArray(result.data)) {
-        // Agar future me salon list mile to handle
+
         const uniqueSalons = [
           ...new Map(
             result.data
-              .filter(b => b.salonName)
-              .map(b => [b.salonName, { id: b.salonName, name: b.salonName }])
+              .filter(b => b.salonName || b.salon_name)
+              .map(b => {
+                const salonId = b.salonId || b.salon_id || b.salon?.id || b.salon?.salonId;
+                const salonName = b.salonName || b.salon_name || 'Unknown Salon';
+                const finalSalonId = salonId || salonName;
+                return [
+                  finalSalonId,
+                  {
+                    id: finalSalonId,
+                    name: salonName
+                  }
+                ];
+              })
           ).values()
         ];
 
+        console.log("🏪 Unique salons extracted:", uniqueSalons);
         setSalons(uniqueSalons);
         setFiltersLoaded(true);
+      } else {
+        console.warn("❌ Failed to fetch salon filter list:", result.message);
+        setSalons([]);
       }
     } catch (error) {
       console.error("❌ Filter list error:", error);
+      setSalons([]);
     }
   }, []);
 
 
   useEffect(() => {
+    console.log("🧪 BOOKINGS RAW DATA - extracting statuses:", allBookings);
+    if (!allBookings.length) return;
 
-    console.log("🧪 BOOKINGS RAW DATA:", bookings);
-    if (!bookings.length)
-
-      return;
-
-    // Unique salons
-    const uniqueSalons = [
-      ...new Map(
-        bookings
-          .filter(b => b.salonName)
-          .map(b => [b.salonName, { id: b.salonName, name: b.salonName }])
-      ).values()
-    ];
-
-    // Unique statuses
+    // Unique statuses from ALL booking data (not filtered bookings)
     const uniqueStatuses = [
-      ...new Set(bookings.map(b => b.bookingStatus).filter(Boolean))
+      ...new Set(allBookings.map(b => b.bookingStatus || b.status).filter(Boolean))
     ];
 
-
-    setSalons(uniqueSalons);
+    console.log("📊 Unique statuses extracted:", uniqueStatuses);
     setFilterOptions(prev => ({
       ...prev,
       statuses: uniqueStatuses
     }));
 
-  }, [bookings]);
+  }, [allBookings]);
   useEffect(() => {
+    console.log("🔍 Frontend filtering - statusFilter:", statusFilter, "allBookings length:", allBookings.length);
     let filtered = [...allBookings];
 
     if (statusFilter !== "all") {
-      filtered = filtered.filter(b => b.bookingStatus === statusFilter);
+      console.log("📊 Applying status filter:", statusFilter);
+      filtered = filtered.filter(b => (b.bookingStatus || b.status) === statusFilter);
+      console.log("📊 After status filter, filtered length:", filtered.length);
+    } else {
+      console.log("📊 No status filter applied (showing all)");
     }
 
     if (salonFilter !== "all") {
-      filtered = filtered.filter(b => b.salonName === salonFilter);
+      filtered = filtered.filter(b => {
+        const bookingSalonId = b.salonId || b.salon_id || b.salon?.id || b.salon?.salonId || b.salonName;
+        return bookingSalonId === salonFilter;
+      });
     }
 
     if (searchTerm) {
@@ -472,7 +483,7 @@ const Bookings = () => {
                     </div>
                     <div className="col-12 col-md-2">
                       <select
-                        className="form-select form-select-sm"
+                        className="form-select form-select-sm "
                         value={statusFilter}
                         onChange={handleFilterChange(setStatusFilter)}
                         onFocus={() => {
@@ -484,7 +495,7 @@ const Bookings = () => {
                         <option value="all">All Status</option>
                         {filterOptions.statuses.map(status => (
                           <option key={status} value={status}>
-                            {status.toUpperCase()}
+                            {status.toLowerCase()}
                           </option>
                         ))}
                       </select>
@@ -589,10 +600,11 @@ const Bookings = () => {
                             onChange={handleFilterChange(setStatusFilter)}
                           >
                             <option key="all-mobile" value="all">All Status</option>
-                            <option key="pending-mobile" value="pending">Pending</option>
-                            <option key="confirmed-mobile" value="confirmed">Confirmed</option>
-                            <option key="completed-mobile" value="completed">Completed</option>
-                            <option key="cancelled-mobile" value="cancelled">Cancelled</option>
+                            {filterOptions.statuses.map(status => (
+                              <option key={`${status}-mobile`} value={status}>
+                                {status.charAt(0).toLowerCase() + status.slice(1)}
+                              </option>
+                            ))}
                           </select>
                         </div>
 
@@ -682,9 +694,11 @@ const Bookings = () => {
                             onChange={handleFilterChange(setStatusFilter)}
                           >
                             <option value="all">All Status</option>
-                            <option value="pending">Pending</option>
-                            <option value="completed">Completed</option>
-                            <option value="cancelled">Cancelled</option>
+                            {filterOptions.statuses.map(status => (
+                              <option key={`${status}-mobile-2`} value={status}>
+                                {status.charAt(0).toUpperCase() + status.slice(1)}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div>
