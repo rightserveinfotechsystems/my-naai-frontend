@@ -712,7 +712,6 @@ const Salons = () => {
         onConfirm={confirmToggleSalonStatus}
         currentStatus={selectedSalon?.isActive}
         loading={loading}
-        entityType="salon"
       />
 
       {/* MODAL COMPONENT */}
