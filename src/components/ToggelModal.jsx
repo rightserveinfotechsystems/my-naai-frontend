@@ -6,8 +6,7 @@ const StatusConfirmModal = ({
     onHide,
     onConfirm,
     currentStatus,
-    loading,
-    entityType = "user" // "user" or "salon"
+    loading
 }) => {
     const isDeactivate = currentStatus;
 
@@ -39,7 +38,7 @@ const StatusConfirmModal = ({
 
                 {/* TITLE */}
                 <h6 className="fw-bold mb-2 fs-6 fs-md-5">
-                    {isDeactivate ? `Deactivate ${entityType === "salon" ? "Salon" : "User"}?` : `Activate ${entityType === "salon" ? "Salon" : "User"}?`}
+                    {isDeactivate ? "Deactivate User?" : "Activate User?"}
                 </h6>
 
                 {/* DESCRIPTION */}
@@ -48,12 +47,8 @@ const StatusConfirmModal = ({
                     style={{ maxWidth: 360 }}
                 >
                     {isDeactivate
-                        ? (entityType === "salon"
-                            ? "This salon will be hidden from customers and will not accept new bookings until reactivated."
-                            : "This user will no longer be able to access the system until reactivated.")
-                        : (entityType === "salon"
-                            ? "This salon will become visible to customers and can accept bookings again."
-                            : "This user will regain full access to the system.")}
+                        ? "This user will no longer be able to access the system until reactivated."
+                        : "This user will regain full access to the system."}
                 </p>
 
                 {/* ACTION BUTTONS */}

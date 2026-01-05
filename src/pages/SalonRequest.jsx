@@ -601,13 +601,13 @@ const SalonRequest = () => {
                       <td className="px-2 px-md-3 py-2 text-center">
                         <div className="d-flex flex-column align-items-center gap-1">
                           <div className="d-flex align-items-center gap-1 mb-1 ">
-                            <i className="bi bi-calendar-plus text-primary" style={{ fontSize: '0.7rem' }}></i>
+                            <i className=" text-primary" style={{ fontSize: '0.7rem' }}></i>
                             <span>{formatDate(booking.createdAt)}</span>
                           </div>
-                          <div className="d-flex align-items-center gap-1">
+                          {/* <div className="d-flex align-items-center gap-1">
                             <i className="bi bi-pencil-square text-muted" style={{ fontSize: '0.7rem' }}></i>
                             <span className="text-muted">{formatDate(booking.updatedAt)}</span>
-                          </div>
+                          </div> */}
                         </div>
                       </td>
                       <td className="text-center px-2 px-md-3 py-2">
