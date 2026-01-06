@@ -1863,7 +1863,7 @@ img {
 /* Adjust main content padding for fixed header and bottom nav */
 @media (max-width: 767px) {
   main {
-    padding-top: 70px !important; /* Space for fixed header */
+    /* padding-top: 70px !important; Space for fixed header */
     padding-bottom: 80px !important; /* Space for bottom nav */
   }
 
