@@ -156,25 +156,25 @@ export const adminAPI = {
 // ==================== USER MANAGEMENT ====================
 export const userAPI = {
   getUsers: async (payload) => {
-  try {
-    const response = await api.post(
-      '/api/users/get-user-list',
-      payload   
-    );
+    try {
+      const response = await api.post(
+        '/api/users/get-user-list',
+        payload
+      );
 
-    return {
-      success: response.data?.status === "SUCCESS",
-      data: response.data?.data,
-      message: response.data?.message
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message: error.response?.data?.message || "Failed to fetch users",
-      error: error.response?.data
-    };
-  }
-},
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data,
+        message: response.data?.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to fetch users",
+        error: error.response?.data
+      };
+    }
+  },
 
 
   // Create new user
@@ -426,7 +426,7 @@ export const salonAPI = {
         response = await api.get(`/api/salons/get-salon/${salonId}`);
       }
 
-     
+
 
       const isSuccess = response.data?.status === "SUCCESS";
 
@@ -439,9 +439,9 @@ export const salonAPI = {
         salonData = response.data?.data || response.data || {};
       }
 
-      
+
       if (salonData.services && Array.isArray(salonData.services)) {
-     
+
       } else {
         const allServices = [
           ...(salonData?.existingServices || []),
@@ -527,7 +527,7 @@ export const salonAPI = {
 
   createSalon: async (salonData) => {
     try {
-      
+
 
       const response = await api.post('/api/salons/create', salonData);
 
@@ -548,25 +548,25 @@ export const salonAPI = {
 
   updateSalon: async (salonId, salonData) => {
     try {
-      
+
 
       const requestBody = {
         salonId: salonId,
         ...salonData
       };
 
-      
+
 
       const response = await api.post('/api/salons/admin-update-salon', requestBody);
 
-    
+
 
       const isSuccess = response.data?.status === "SUCCESS";
 
 
       return {
         success: isSuccess,
-        data: response.data?.data, 
+        data: response.data?.data,
         message: response.data?.message || "Salon updated successfully",
         fullResponse: response.data
       };
@@ -671,7 +671,7 @@ export const salonAPI = {
 export const bookingAPI = {
   getBookings: async (params = {}) => {
     try {
-      
+
       const requestBody = {
         page: params.page || 1,
         searchString: params.search || params.searchString || '',
@@ -860,7 +860,7 @@ export const salonRequestAPI = {
     }
   },
 
-   uploadImages: async (formData) => {
+  uploadImages: async (formData) => {
     try {
       const res = await api.post("/api/upload/upload-image", formData, {
         headers: {
@@ -990,6 +990,41 @@ export const dashboardAPI = {
       },
       message: "Dashboard stats endpoint not implemented yet"
     };
+  }
+};
+
+// ==================== ADVERTISEMENT MANAGEMENT ====================
+// Helper function to get headers
+const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+
+const getHeaders = () => {
+  const token = localStorage.getItem("token");
+  return { Authorization: `Bearer ${token}` };
+};
+export const advertisementService = {
+  // Fetch List
+  getList: async (page, limit, search) => {
+    const response = await axios.post(
+      `${backendUrl}/api/advertisement/get-list`,
+      { page, limit, search },
+      { headers: getHeaders() }
+    );
+    return response.data;
+  },
+
+  deleteAd: async (id) => {
+    const response = await axios.delete(
+      `${backendUrl}/api/advertisement/delete/${id}`,
+      { headers: getHeaders() }
+    );
+    return response.data;
+  },
+
+  getMediaSrc: (imageUrl) => {
+    if (!imageUrl) return "/placeholder.svg";
+    if (imageUrl.startsWith("http")) return imageUrl;
+    const cleanPath = imageUrl.replace("/public", "");
+    return `${backendUrl.replace(/\/$/, "")}${cleanPath.startsWith("/") ? "" : "/"}${cleanPath}`;
   }
 };
 

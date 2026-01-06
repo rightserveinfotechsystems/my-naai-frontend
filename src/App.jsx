@@ -11,6 +11,7 @@ import Salons from "./pages/Salons.jsx";
 import SalonDetail from "./pages/SalonDetail.jsx";
 import Bookings from "./pages/Bookings.jsx";
 import SalonRequest from "./pages/SalonRequest.jsx";
+import Advertisement from "./pages/Advertisement.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import Login from "./pages/Login.jsx";
 import { UserProvider } from "./contexts/UserContext.jsx";
@@ -74,6 +75,14 @@ const router = createBrowserRouter(
       element: (
         <ProtectedRoute>
           <SalonRequest />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/advertisement",
+      element: (
+        <ProtectedRoute>
+          <Advertisement />
         </ProtectedRoute>
       ),
     },
