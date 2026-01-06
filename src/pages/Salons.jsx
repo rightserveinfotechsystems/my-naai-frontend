@@ -6,7 +6,7 @@ import SearchInput from "../components/SearchInput.jsx";
 import Pagination from "../components/Pagination.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import SalonEditModal from "../components/SalonEditModal.jsx";
-import ToggelModal from "../components/ToggelModal.jsx";
+import StatusConfirmModal from "../components/StatusConfirmModal.jsx";
 import { salonAPI } from "../services/communication.jsx";
 import Loader from "../components/Loader.jsx";
 import { toast } from 'react-toastify';
@@ -706,12 +706,13 @@ const Salons = () => {
 
       </div>
       {/* TOGGLE MODAL */}
-      <ToggelModal
+      <StatusConfirmModal
         show={showToggleModal}
         onHide={() => setShowToggleModal(false)}
         onConfirm={confirmToggleSalonStatus}
         currentStatus={selectedSalon?.isActive}
         loading={loading}
+        type="salon"
       />
 
       {/* MODAL COMPONENT */}

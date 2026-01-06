@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useId } from "react";
 import { toast } from 'react-toastify';
 import { salonAPI, serviceAPI, salonRequestAPI } from "../services/communication.jsx";
 import DeleteConfirmModal from "./DeleteConfirmModal.jsx";
@@ -11,6 +11,10 @@ const cities = [
 const backendURL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
 
 const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, onSuccess }) => {
+  const maleRadioId = useId();
+  const femaleRadioId = useId();
+  const unisexRadioId = useId();
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
@@ -127,13 +131,10 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                 })) : []
               });
 
-              console.log("Salon data for debugging:", salon);
-              console.log("Available fields in salon data:", Object.keys(salon));
-              console.log("Business hours data:", salon.businessHours);
-              console.log("Holiday days:", salon.businessHours?.[0]?.holidayDays);
+             
               let loadedImages = [];
 
-              const imageFields = ['imagesArray', 'images', 'salonImages', 'imageUrls', 'photos', 'pictures', 'galleryImages', 'salonGallery', 'additionalImages', 'media'];
+              const imageFields = ['imagesArray'];
 
               for (const field of imageFields) {
                 if (salon[field] && Array.isArray(salon[field]) && salon[field].length > 0) {
@@ -980,7 +981,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                           className="form-check-input"
                           type="radio"
                           name="gender"
-                          id="male"
+                          id={maleRadioId}
                           value="male"
                           checked={formData.gender === "male"}
                           onChange={handleInputChange}
@@ -988,7 +989,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                           disabled={isSubmitting}
                           required
                         />
-                        <label className="form-check-label fw-medium" htmlFor="male">
+                        <label className="form-check-label fw-medium" htmlFor={maleRadioId}>
                           <i className="bi bi-person-fill text-primary me-2"></i>Male
                         </label>
                       </div>
@@ -998,14 +999,14 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                           className="form-check-input"
                           type="radio"
                           name="gender"
-                          id="female"
+                          id={femaleRadioId}
                           value="female"
                           checked={formData.gender === "female"}
                           onChange={handleInputChange}
                           disabled={isSubmitting}
                           required
                         />
-                        <label className="form-check-label fw-medium" htmlFor="female">
+                        <label className="form-check-label fw-medium" htmlFor={femaleRadioId}>
                           <i className="bi bi-person-heart text-danger me-2"></i>Female
                         </label>
                       </div>
@@ -1015,14 +1016,14 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                           className="form-check-input"
                           type="radio"
                           name="gender"
-                          id="unisex"
+                          id={unisexRadioId}
                           value="unisex"
                           checked={formData.gender === "unisex"}
                           onChange={handleInputChange}
                           disabled={isSubmitting}
                           required
                         />
-                        <label className="form-check-label fw-medium" htmlFor="unisex">
+                        <label className="form-check-label fw-medium" htmlFor={unisexRadioId}>
                           <i className="bi bi-gender-trans text-success me-2"></i>Unisex
                         </label>
                       </div>

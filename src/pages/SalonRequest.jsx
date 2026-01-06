@@ -18,7 +18,7 @@ const sampleSalons = [
 const ITEMS_PER_PAGE = 20;
 
 const formatDate = (dateString) => {
-  if (!dateString) return "N/A";
+  if (!dateString) return { date: "N/A", time: "" };
   const date = new Date(dateString);
   const day = String(date.getDate()).padStart(2, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -29,7 +29,10 @@ const formatDate = (dateString) => {
   hours = hours % 12;
   hours = hours ? hours : 12;
   hours = String(hours).padStart(2, '0');
-  return `${day}/${month}/${year} ${hours}:${minutes} ${ampm}`;
+  return {
+    date: `${day}/${month}/${year}`,
+    time: `${hours}:${minutes} ${ampm}`
+  };
 };
 
 
@@ -543,10 +546,12 @@ const SalonRequest = () => {
           style={{
             maxHeight: 'calc(100dvh - 160px)',
             maxHeight: 'calc(100vh - 160px)',
-            overflow: 'auto'
+            // overflow: 'auto'
           }}
         >
-          <table className="table table-hover mb-0">
+          <div className="table-responsive">
+          <table className="table table-hover mb-0 align-middle text-nowrap">
+             
             <thead className="table-light position-sticky top-0 bg-white border-bottom z-10">
               <tr>
                 <th style={{ width: '50px' }} className="px-2 py-2 border-bottom text-center">
@@ -562,11 +567,12 @@ const SalonRequest = () => {
                 <th style={{ width: '150px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Salon Name</th>
                 <th style={{ width: '220px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Address</th>
                 <th style={{ width: '140px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Mobile</th>
-                <th style={{ width: '200px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom text-center">Created / Updated</th>
+                <th style={{ width: '200px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom text-center">Created</th>
                 <th style={{ width: '80px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom text-center">Action</th>
               </tr>
             </thead>
             <tbody>
+              
               {isLoading ? (
                 <tr><td colSpan={8} className="text-center py-5"><Loader fullScreen={false} size="sm" text="Loading..." /></td></tr>
               ) : (
@@ -600,14 +606,10 @@ const SalonRequest = () => {
                       </td>
                       <td className="px-2 px-md-3 py-2 text-center">
                         <div className="d-flex flex-column align-items-center gap-1">
-                          <div className="d-flex align-items-center gap-1 mb-1 ">
-                            <i className=" text-primary" style={{ fontSize: '0.7rem' }}></i>
-                            <span>{formatDate(booking.createdAt)}</span>
+                          <div className="text-center">
+                            <div className="fw-medium small">{formatDate(booking.createdAt).date}</div>
+                            <div className="text-muted small">{formatDate(booking.createdAt).time}</div>
                           </div>
-                          {/* <div className="d-flex align-items-center gap-1">
-                            <i className="bi bi-pencil-square text-muted" style={{ fontSize: '0.7rem' }}></i>
-                            <span className="text-muted">{formatDate(booking.updatedAt)}</span>
-                          </div> */}
                         </div>
                       </td>
                       <td className="text-center px-2 px-md-3 py-2">
@@ -637,6 +639,7 @@ const SalonRequest = () => {
               )}
             </tbody>
           </table>
+          </div>
         </div>
 
         {/* MOBILE CARDS */}
@@ -698,11 +701,11 @@ const SalonRequest = () => {
                       <div className="small">
                         <div className="d-flex align-items-center gap-2 mb-1">
                           <i className="bi bi-calendar-plus text-primary" style={{ fontSize: '0.8rem' }}></i>
-                          <span><strong>Created:</strong> {formatDate(booking.createdAt)}</span>
+                          <span><strong>Created:</strong></span>
                         </div>
-                        <div className="d-flex align-items-center gap-2">
-                          <i className="bi bi-pencil-square text-muted" style={{ fontSize: '0.8rem' }}></i>
-                          <span className="text-muted"><strong>Updated:</strong> {formatDate(booking.updatedAt)}</span>
+                        <div className="ms-3 mb-1">
+                          <div className="fw-medium small">{formatDate(booking.createdAt).date}</div>
+                          <div className="text-muted small">{formatDate(booking.createdAt).time}</div>
                         </div>
                       </div>
                     </div>
