@@ -1,9 +1,13 @@
+import { useId } from "react";
+
 const SearchInput = ({ value, onChange, placeholder = "Search..." }) => {
+  const searchInputId = useId();
+
   return (
     <div className="input-group position-relative">
       {/* Search Icon - INSIDE INPUT FIELD */}
       <span className="input-group-text bg-white border-end-0 pe-0 position-relative">
-        <label htmlFor="searchInput" className="labelforsearch mb-0 p-0">
+        <label htmlFor={searchInputId} className="labelforsearch mb-0 p-0">
           <svg 
             className="searchIcon" 
             viewBox="0 0 512 512" 
@@ -18,7 +22,7 @@ const SearchInput = ({ value, onChange, placeholder = "Search..." }) => {
       
       {/* Main Input Field */}
       <input
-        id="searchInput"
+        id={searchInputId}
         type="text"
         className="form-control border-start-0 ps-2 border border-1"
         value={value}

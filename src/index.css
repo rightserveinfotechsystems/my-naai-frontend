@@ -1617,7 +1617,7 @@ img {
   }
 
   .table th {
-    min-width: 150px !important;
+    min-width: 59px !important;
     max-width: 200px !important;
   }
 }
@@ -2684,3 +2684,10 @@ img {
     max-height: calc(100vh - 350px) !important;
   }
 }
+
+  /* @media (max-width: 575.98px) and (min-height: 801px) {
+ .table th {
+    min-width: 59px !important;
+    max-width: 200px !important;
+  }
+} */

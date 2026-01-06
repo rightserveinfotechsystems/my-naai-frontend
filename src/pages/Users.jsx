@@ -6,13 +6,12 @@ import StatusBadge from "../components/StatusBadge.jsx";
 import Pagination from "../components/Pagination.jsx";
 import { FaTrash } from "react-icons/fa";
 import { userAPI } from "../services/communication.jsx";
-import ToggelModal from "../components/ToggelModal.jsx";
+import StatusConfirmModal from "../components/StatusConfirmModal.jsx";
 import DeleteConfirmModal from "../components/DeleteConfirmModal.jsx";
 import Loader from "../components/Loader.jsx";
 
 const ITEMS_PER_PAGE = 20;
 
-// Helper function to format date and time as dd/mm/yyyy hh:mm AM/PM
 const formatDate = (dateString) => {
   if (!dateString) return "N/A";
   const date = new Date(dateString);
@@ -23,7 +22,7 @@ const formatDate = (dateString) => {
   const minutes = String(date.getMinutes()).padStart(2, '0');
   const ampm = hours >= 12 ? 'PM' : 'AM';
   hours = hours % 12;
-  hours = hours ? hours : 12; // the hour '0' should be '12'
+  hours = hours ? hours : 12;
   hours = String(hours).padStart(2, '0');
   return `${day}/${month}/${year} ${hours}:${minutes} ${ampm}`;
 };
@@ -313,6 +312,7 @@ const Users = () => {
                               <input
                                 className="form-check-input shadow-none"
                                 type="checkbox"
+                                id={`user-select-${user.userId}`}
                                 checked={selectedUsers.includes(user.userId)}
                                 onChange={() => handleUserSelect(user.userId)}
                               />
@@ -343,14 +343,14 @@ const Users = () => {
                             <div className="d-inline-flex align-items-center gap-2">
 
                               {/* Toggle Switch */}
-                             <div className="form-check form-switch m-0">
-  <input
-    className="form-check-input switch-green"
-    type="checkbox"
-    checked={!!user.isActive}
-    onChange={() => handleToggleClick(user)}
-  />
-</div>
+                              <div className="form-check form-switch m-0">
+                                <input
+                                  className="form-check-input switch-green"
+                                  type="checkbox"
+                                  checked={!!user.isActive}
+                                  onChange={() => handleToggleClick(user)}
+                                />
+                              </div>
 
 
 
@@ -395,6 +395,7 @@ const Users = () => {
                                   <input
                                     className="form-check-input"
                                     type="checkbox"
+                                    id={`user-select-mobile-${user.userId}`}
                                     checked={selectedUsers.includes(user.userId)}
                                     onChange={() => handleUserSelect(user.userId)}
                                   />
@@ -442,12 +443,13 @@ const Users = () => {
           </div>
         </div>
       </div>
-      <ToggelModal
+      <StatusConfirmModal
         show={showModal}
         onHide={() => setShowModal(false)}
         onConfirm={confirmStatusChange}
         currentStatus={selectedUser?.isActive}
         loading={loading}
+        type="user"
       />
 
       <DeleteConfirmModal

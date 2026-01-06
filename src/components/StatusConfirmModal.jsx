@@ -6,9 +6,11 @@ const StatusConfirmModal = ({
     onHide,
     onConfirm,
     currentStatus,
-    loading
+    loading,
+    type = "user" // "user" or "salon"
 }) => {
     const isDeactivate = currentStatus;
+    const entityName = type === "salon" ? "Salon" : "User";
 
     return (
         <Modal
@@ -38,7 +40,7 @@ const StatusConfirmModal = ({
 
                 {/* TITLE */}
                 <h6 className="fw-bold mb-2 fs-6 fs-md-5">
-                    {isDeactivate ? "Deactivate User?" : "Activate User?"}
+                    {isDeactivate ? `Deactivate ${entityName}?` : `Activate ${entityName}?`}
                 </h6>
 
                 {/* DESCRIPTION */}
@@ -46,9 +48,15 @@ const StatusConfirmModal = ({
                     className="text-muted mb-4 small mx-auto"
                     style={{ maxWidth: 360 }}
                 >
-                    {isDeactivate
-                        ? "This user will no longer be able to access the system until reactivated."
-                        : "This user will regain full access to the system."}
+                    {type === "salon" ? (
+                        isDeactivate
+                            ? "This salon will be deactivated and will not be visible to customers until reactivated."
+                            : "This salon will be activated and will be visible to customers."
+                    ) : (
+                        isDeactivate
+                            ? "This user will no longer be able to access the system until reactivated."
+                            : "This user will regain full access to the system."
+                    )}
                 </p>
 
                 {/* ACTION BUTTONS */}
@@ -71,8 +79,8 @@ const StatusConfirmModal = ({
                         {loading
                             ? "Please wait..."
                             : isDeactivate
-                                ? "Deactivate"
-                                : "Activate"}
+                                ? `Deactivate ${entityName}`
+                                : `Activate ${entityName}`}
                     </Button>
                 </div>
 

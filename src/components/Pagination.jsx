@@ -13,8 +13,12 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   const isFirstPage = currentPage <= 1;
   const isLastPage = currentPage >= safeTotalPages;
 
-  const getButtonClass = (disabled) => 
-    `page-link border-warning text-warning shadow-none ${disabled ? "opacity-50 cursor-not-allowed" : ""}`;
+  const getButtonClass = (disabled) =>
+    `page-link border-warning shadow-none ${disabled ? "cursor-not-allowed" : "text-warning"}`;
+
+  const getButtonStyle = (disabled) => ({
+    color: disabled ? '#333' : undefined
+  });
 
   const handleInputChange = (e) => {
     setInputPage(e.target.value);
@@ -44,6 +48,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
         <li className={`page-item ${isFirstPage ? "disabled" : ""}`}>
           <button
             className={getButtonClass(isFirstPage)}
+            style={getButtonStyle(isFirstPage)}
             onClick={() => !isFirstPage && onPageChange(currentPage - 1)}
             disabled={isFirstPage}
           >
@@ -56,6 +61,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
         <li className={`page-item ${isFirstPage ? "disabled" : ""}`}>
           <button
             className={getButtonClass(isFirstPage)}
+            style={getButtonStyle(isFirstPage)}
             onClick={() => !isFirstPage && onPageChange(currentPage - 1)}
             disabled={isFirstPage}
           >
@@ -71,16 +77,17 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
           >
             <input
               type="number"
+              name="pageInput"
               className="form-control p-0 text-center fw-bold text-white bg-transparent border-0 shadow-none"
               value={inputPage}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               onBlur={handleBlur}
-              style={{ 
-                width: '40px', 
+              style={{
+                width: '40px',
                 height: 'auto',
                 fontSize: 'inherit',
-                color: 'white' 
+                color: 'white'
               }}
               min="1"
               max={safeTotalPages}
@@ -93,6 +100,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
         <li className={`page-item ${isLastPage ? "disabled" : ""}`}>
           <button
             className={getButtonClass(isLastPage)}
+            style={getButtonStyle(isLastPage)}
             onClick={() => !isLastPage && onPageChange(currentPage + 1)}
             disabled={isLastPage}
           >
@@ -104,6 +112,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
         <li className={`page-item ${isLastPage ? "disabled" : ""}`}>
           <button
             className={getButtonClass(isLastPage)}
+            style={getButtonStyle(isLastPage)}
             onClick={() => !isLastPage && onPageChange(currentPage + 1)}
             disabled={isLastPage}
           >
