@@ -73,9 +73,9 @@ const Layout = ({ children }) => {
 
   // Fallback user data if no user is loaded
   const displayUser = user || {
-    name: "Admin User",
-    email: "admin@salonharmony.com",
-    role: "Administrator"
+    name: "",
+    email: "",
+    role: ""
   };
 
   return (

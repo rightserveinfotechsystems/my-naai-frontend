@@ -8,9 +8,10 @@ const AdvertisementCreateModal = ({ showModal, setShowModal, onSuccess, initialA
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({ title: "" });
-  const [images, setImages] = useState([]); 
+  const [images, setImages] = useState([]);
+  const isEditMode = Boolean(initialAd);
 
-  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://72.60.195.95:3006";
+  const API_BASE_URL = "http://72.60.195.95:3006";
 
   const handleCloseModal = () => {
     images.forEach(img => {
@@ -26,14 +27,20 @@ const AdvertisementCreateModal = ({ showModal, setShowModal, onSuccess, initialA
   };
 
   const handleImageUpload = (e) => {
+    console.log("FILES SELECTED:", e.target.files);
+
     const files = Array.from(e.target.files);
     const newImages = files.map(file => ({
-      file: file,
+      file,
       preview: URL.createObjectURL(file)
     }));
+
+    console.log("NEW IMAGES:", newImages);
+
     setImages(prev => [...prev, ...newImages]);
-    e.target.value = ''; 
+    e.target.value = '';
   };
+
 
   const removeImage = (indexToRemove) => {
     setImages(prev => {
@@ -46,7 +53,7 @@ const AdvertisementCreateModal = ({ showModal, setShowModal, onSuccess, initialA
   // --- MAIN SUBMIT LOGIC ---
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.title.trim()) {
       setErrors({ title: "Title is required" });
       return;
@@ -65,7 +72,7 @@ const AdvertisementCreateModal = ({ showModal, setShowModal, onSuccess, initialA
       for (const img of images) {
         if (img.file) {
           const uploadData = new FormData();
-          uploadData.append("image", img.file); 
+          uploadData.append("image", img.file);
 
           const uploadRes = await axios.post(`${API_BASE_URL}/api/upload/upload-image`, uploadData, {
             headers: {
@@ -73,18 +80,22 @@ const AdvertisementCreateModal = ({ showModal, setShowModal, onSuccess, initialA
               "Authorization": `Bearer ${token}`
             }
           });
-          
+
           const path = uploadRes.data.url || uploadRes.data.url;
           if (path) finalImagePaths.push(path);
         } else {
-          const existingPath = img.preview.replace(API_BASE_URL, "");
+          const existingPath = img.preview
+            .replace(API_BASE_URL, "")
+            .replace(/^\/getfiles/, "");
+
           finalImagePaths.push(existingPath);
+
         }
       }
 
       const finalPayload = {
         title: formData.title.trim(),
-        images: finalImagePaths 
+        images: finalImagePaths
       };
 
 
@@ -117,7 +128,7 @@ const AdvertisementCreateModal = ({ showModal, setShowModal, onSuccess, initialA
           response = await advertisementService.createAd(finalPayload);
         } else {
           response = await axios.post(`${API_BASE_URL}/api/advertisement/create`, finalPayload, {
-            headers: { 
+            headers: {
               "Authorization": `Bearer ${token}`,
               "Content-Type": "application/json"
             }
@@ -140,16 +151,25 @@ const AdvertisementCreateModal = ({ showModal, setShowModal, onSuccess, initialA
   };
 
   useEffect(() => {
-    if (showModal && initialAd) {
-      setFormData({ title: initialAd.title || "" });
-      if (initialAd.images) {
-        setImages(initialAd.images.map(path => ({
+    if (!showModal || !initialAd?.images?.length) return;
+
+    setFormData({ title: initialAd.title || "" });
+
+    setImages(
+      initialAd.images.map(path => {
+        const cleanPath = path.replace(/^\/getfiles/, "");
+
+        return {
           file: null,
-          preview: path.startsWith('http') ? path : `${API_BASE_URL}${path}`
-        })));
-      }
-    }
-  }, [showModal, initialAd, API_BASE_URL]);
+          preview: path.startsWith("http")
+            ? path
+            : `${API_BASE_URL}/getfiles${cleanPath}`
+        };
+      })
+    );
+  }, [initialAd, showModal]);
+
+
 
   if (!showModal) return null;
 
@@ -157,10 +177,14 @@ const AdvertisementCreateModal = ({ showModal, setShowModal, onSuccess, initialA
     <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }} onClick={handleCloseModal}>
       <div className="modal-dialog modal-lg modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
         <div className="modal-content border-0 shadow-lg" style={{ borderRadius: '15px' }}>
-          
+
           <div className="modal-header border-0 pb-0">
-            <h5 className="modal-title fw-bold">Create Advertisement</h5>
-            <button type="button" className="btn-close" onClick={handleCloseModal}></button>
+            <h5 className="modal-title fw-bold">
+              {isEditMode ? "Update Advertisement" : "Create Advertisement"}
+            </h5>
+
+
+
           </div>
 
           <form onSubmit={handleSubmit}>
@@ -180,13 +204,26 @@ const AdvertisementCreateModal = ({ showModal, setShowModal, onSuccess, initialA
                 <label className="form-label fw-bold">Images</label>
                 <div className="d-flex flex-wrap gap-3">
                   {images.map((img, index) => (
+
                     <div key={index} className="position-relative">
-                      <img src={img.preview} style={{ width: '100px', height: '100px', objectFit: 'cover' }} className="rounded border" alt="preview" />
-                      <button type="button" onClick={() => removeImage(index)} className="btn btn-danger btn-sm position-absolute top-0 end-0 rounded-circle" style={{ transform: 'translate(40%, -40%)' }}>
+                      <img
+                        src={img.preview}
+                        style={{ width: '100px', height: '100px', objectFit: 'fill' }}
+                        className="rounded border"
+                        alt="preview"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="btn btn-danger btn-sm position-absolute top-0 end-0 rounded-circle"
+                        style={{ transform: 'translate(40%, -40%)' }}
+                      >
                         <FaTimes size={10} />
                       </button>
                     </div>
                   ))}
+
                   <label className="border border-secondary border-dashed rounded d-flex align-items-center justify-content-center bg-light" style={{ width: '100px', height: '100px', cursor: 'pointer', borderStyle: 'dashed' }}>
                     <FaPlus className="text-muted" />
                     <input type="file" multiple accept="image/*" className="d-none" onChange={handleImageUpload} />
@@ -196,11 +233,27 @@ const AdvertisementCreateModal = ({ showModal, setShowModal, onSuccess, initialA
             </div>
 
             <div className="modal-footer border-0">
-              <button type="button" className="btn btn-light px-4" onClick={handleCloseModal}>Cancel</button>
-              <button type="submit" className="btn btn-primary px-4" style={{ backgroundColor: '#7e470cff', border: 'none' }} disabled={isSubmitting}>
-                {isSubmitting ? "Uploading..." : "Publish Ad"}
+              <button
+                type="button"
+                className="btn btn-light px-4"
+                onClick={handleCloseModal}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="submit"
+                className="btn btn-primary px-4"
+                style={{ backgroundColor: "#7e470cff", border: "none" }}
+                disabled={isSubmitting}
+              >
+                {isSubmitting
+                  ? (isEditMode ? "Updating..." : "Uploading...")
+                  : (isEditMode ? "Update Ad" : "Publish Ad")}
               </button>
             </div>
+
           </form>
         </div>
       </div>

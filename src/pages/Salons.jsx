@@ -475,7 +475,7 @@ const Salons = () => {
           className="d-none d-md-block bg-white bookings-table-scroll"
           style={{
             maxHeight: 'calc(100dvh - 160px)',
-            maxHeight: 'calc(100vh - 160px)',
+            // maxHeight: 'calc(100vh - 160px)',
             overflow: 'auto',
             padding: '1rem'
           }}

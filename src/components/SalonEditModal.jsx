@@ -816,7 +816,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                 </div>
 
                 {/* 6. Address Line 2 */}
-                <div className="col-12 col-md-6">
+                {/* <div className="col-12 col-md-6">
                   <label className="form-label fw-semibold">Address Line 2</label>
                   <input
                     type="text"
@@ -827,7 +827,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                     disabled={isSubmitting}
                     placeholder="Landmark, Area"
                   />
-                </div>
+                </div> */}
 
                 {/* 7. City */}
                 <div className="col-12 col-md-4">
@@ -1231,7 +1231,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                 </div>
 
                 {/* Break Start Time */}
-                <div className="col-12 col-md-6">
+                {/* <div className="col-12 col-md-6">
                   <label className="form-label fw-semibold">
                     Break Start Time
                   </label>
@@ -1257,10 +1257,10 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                       <option value="PM">PM</option>
                     </select>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Break End Time */}
-                <div className="col-12 col-md-6">
+                {/* <div className="col-12 col-md-6">
                   <label className="form-label fw-semibold">
                     Break End Time
                   </label>
@@ -1286,7 +1286,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                       <option value="PM">PM</option>
                     </select>
                   </div>
-                </div>
+                </div> */}
 
 
                 {/* Images */}

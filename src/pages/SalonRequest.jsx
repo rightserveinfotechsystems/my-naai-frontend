@@ -545,7 +545,7 @@ const SalonRequest = () => {
           className="table-responsive d-none d-md-block mb-2 mb-md-3 bg-white bookings-table-scroll"
           style={{
             maxHeight: 'calc(100dvh - 160px)',
-            maxHeight: 'calc(100vh - 160px)',
+            // maxHeight: 'calc(100vh - 160px)',
             // overflow: 'auto'
           }}
         >
