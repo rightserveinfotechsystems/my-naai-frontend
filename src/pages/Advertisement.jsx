@@ -37,17 +37,35 @@ const Advertisement = () => {
         debouncedSearch
       );
 
-      if (result?.data) {
-        const formattedAds = result.data.map((item) => ({
-          id: item._id || item.advertisementId,
-          title: item.title,
-          imageUrl: buildImageUrl(item.images?.[0]),
-          rawData: item,
-        }));
+      // Normalize response shapes from backend (some APIs return { data: [] }, others return [] directly)
+      let items = [];
+      let pagination = null;
 
-        setAdvertisements(formattedAds);
-        setTotalPages(result.pagination?.totalPages || 1);
+      if (Array.isArray(result)) {
+        items = result;
+      } else if (Array.isArray(result?.data)) {
+        items = result.data;
+        pagination = result.pagination || null;
+      } else if (Array.isArray(result?.data?.data)) {
+        items = result.data.data;
+        pagination = result.data.pagination || result.pagination || null;
+      } else if (Array.isArray(result?.barberShops)) {
+        items = result.barberShops;
+        pagination = result.pagination || null;
+      } else if (result?.data && typeof result.data === 'object' && !Array.isArray(result.data)) {
+        items = result.data.items || result.data.advertisements || [];
+        pagination = result.pagination || result.data.pagination || null;
       }
+
+      const formattedAds = (items || []).map((item) => ({
+        id: item._id || item.advertisementId || item.id,
+        title: item.title || item.name || "",
+        imageUrl: buildImageUrl(item.images?.[0] || item.imageUrl || item.image),
+        rawData: item,
+      }));
+
+      setAdvertisements(formattedAds);
+      setTotalPages(pagination?.totalPages || result?.pagination?.totalPages || 1);
     } catch (error) {
       toast.error("Failed to load ads");
     } finally {
@@ -79,18 +97,6 @@ const Advertisement = () => {
     }
   };
 
-
-
-  // Only update debounced search, don't reset currentPage here
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 500);
-    return () => clearTimeout(timer);
-  }, [search]);
-
-  // Reset page when search changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearch]);
 
   return (
     <Layout>

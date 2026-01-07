@@ -217,7 +217,7 @@ const AdvertisementCreateModal = ({ showModal, setShowModal, onSuccess, initialA
                         type="button"
                         onClick={() => removeImage(index)}
                         className="btn btn-danger btn-sm position-absolute top-0 end-0 rounded-circle"
-                        style={{ transform: 'translate(40%, -40%)' }}
+                        style={{ transform: 'translate(20%, -20%)' }}
                       >
                         <FaTimes size={10} />
                       </button>

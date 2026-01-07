@@ -1000,11 +1000,19 @@ const getHeaders = () => {
 export const advertisementService = {
   // Fetch List
   getList: async (page, limit, search) => {
+    const payload = { page, limit };
+    const q = (typeof search === 'string') ? search.trim() : search;
+    if (q !== undefined && q !== null && q !== '') {
+      payload.search = q;
+      payload.searchString = q;
+    }
+
     const response = await axios.post(
       `${API_BASE_URL}/api/advertisement/get-list`,
-      { page, limit, search },
+      payload,
       { headers: getHeaders() }
     );
+
     return response.data;
   },
 
