@@ -770,7 +770,7 @@ const Bookings = () => {
                         </td>
                         <td className="fw-semibold px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '140px' }}>{booking.userName}</td>
                         <td className="px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '150px' }}>{booking.salonName}</td>
-                        <td className="px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '130px' }}>{booking.serviceName}</td>
+                        <td className="px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '130px' }}>{booking.serviceNames}</td>
                         <td className="px-2 px-md-3 py-2">
                           <div className="small">
                             <div>{formatDate(booking.createdAt || booking.date)}</div>
@@ -819,7 +819,7 @@ const Bookings = () => {
                       </div>
                       <StatusBadge status={booking.status} />
                     </div>
-                    <div className="text-muted small mb-2 text-truncate">{booking.serviceName}</div>
+                    <div className="text-muted small mb-2 text-truncate">{booking.serviceNames}</div>
                     <div className="d-flex justify-content-between align-items-center">
                       <div className="small">
                         <div>{formatDate(booking.createdAt || booking.date)}</div>

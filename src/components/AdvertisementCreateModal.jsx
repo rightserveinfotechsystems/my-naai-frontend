@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { toast } from 'react-toastify';
 import { FaTimes, FaPlus } from "react-icons/fa";
 import axios from "axios";
+import { advertisementService } from "../services/communication";
 
 const AdvertisementCreateModal = ({ showModal, setShowModal, onSuccess, initialAd = null }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -9,7 +10,7 @@ const AdvertisementCreateModal = ({ showModal, setShowModal, onSuccess, initialA
   const [formData, setFormData] = useState({ title: "" });
   const [images, setImages] = useState([]); 
 
-  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "";
+  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://72.60.195.95:3006";
 
   const handleCloseModal = () => {
     images.forEach(img => {
@@ -87,17 +88,48 @@ const AdvertisementCreateModal = ({ showModal, setShowModal, onSuccess, initialA
       };
 
 
-      const response = await axios.post(`${API_BASE_URL}/api/advertisement/create`, finalPayload, {
-        headers: { 
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      });
+      let response;
+      if (initialAd) {
+        const adId = initialAd._id || initialAd.id || initialAd.advertisementId;
+        if (!adId) throw new Error('Ad ID not found for update');
 
-      if (response.data.status === "SUCCESS") {
-        toast.success("Advertisement Created!");
-        if (onSuccess) onSuccess(response.data.data);
-        handleCloseModal();
+        if (advertisementService.updateAd) {
+          response = await advertisementService.updateAd(adId, finalPayload);
+        } else {
+          try {
+            response = await axios.post(`${API_BASE_URL}/api/advertisement/update`, { id: adId, ...finalPayload }, {
+              headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" }
+            }).then(r => r.data);
+          } catch (err) {
+            response = await axios.post(`${API_BASE_URL}/api/advertisement/update/${adId}`, finalPayload, {
+              headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" }
+            }).then(r => r.data);
+          }
+        }
+
+        if (response.status === "SUCCESS") {
+          toast.success("Advertisement Updated!");
+          if (onSuccess) onSuccess(response.data || response.data?.data);
+          handleCloseModal();
+        }
+      } else {
+        if (advertisementService.createAd) {
+          response = await advertisementService.createAd(finalPayload);
+        } else {
+          response = await axios.post(`${API_BASE_URL}/api/advertisement/create`, finalPayload, {
+            headers: { 
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            }
+          });
+          response = response.data;
+        }
+
+        if (response.status === "SUCCESS") {
+          toast.success("Advertisement Created!");
+          if (onSuccess) onSuccess(response.data || response.data?.data);
+          handleCloseModal();
+        }
       }
     } catch (error) {
       console.error("API Error:", error.response?.data || error);
