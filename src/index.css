@@ -2015,7 +2015,7 @@ img {
     overflow-y: auto !important;
     overflow-x: hidden !important;
     scroll-behavior: smooth !important;
-    margin-top: 80px !important; /* Space for fixed filter card */
+    /* margin-top: 80px !important;  */
     padding-top: 1rem !important; /* Extra spacing */
   }
 
@@ -2691,3 +2691,26 @@ img {
     max-width: 200px !important;
   }
 } */
+
+
+
+.button22 {
+    background-color: #e1b378;
+    border: none;
+    border-radius: 5px;
+    color: #2d1b0f;
+    font-weight: 600;
+    height: 33px;
+    font-size: 13px;
+}
+
+.button23 {
+    background-color: #e1b378;
+    border: none;
+    border-radius: 5px;
+    color: #2d1b0f;
+    font-weight: 600;
+    height: 35px;
+    font-size: 13px;
+    margin-top: 3px;
+}
