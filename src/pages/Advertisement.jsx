@@ -22,11 +22,11 @@ const Advertisement = () => {
   const [deleteModal, setDeleteModal] = useState({ show: false, target: null });
 
   const handleSaveSuccess = () => {
-  fetchAdvertisements();
-  setShowCreateModal(false);
-  setEditingAd(null); // Zaroori: edit state reset karein taaki next time "Add" chale
-  toast.success(editingAd ? "Updated successfully" : "Created successfully");
-};
+    fetchAdvertisements();
+    setShowCreateModal(false);
+    setEditingAd(null); // Zaroori: edit state reset karein taaki next time "Add" chale
+    toast.success(editingAd ? "Updated successfully" : "Created successfully");
+  };
 
   const fetchAdvertisements = useCallback(async () => {
     try {
@@ -38,7 +38,7 @@ const Advertisement = () => {
           id: item._id || item.advertisementId,
           title: item.title,
           status: item.status,
-          imageUrl: item.images && item.images.length > 0 ? item.images[0] : "",
+          imageUrl: advertisementService.getMediaSrc(item.images && item.images.length > 0 ? item.images[0] : ""),
           createdAt: item.createdAt,
           rawData: item
         }));
@@ -78,7 +78,7 @@ const Advertisement = () => {
     <Layout>
       {/* Main Wrapper: Fixed Height to enable inner scroll */}
       <div className="page-content d-flex flex-column p-2 p-md-3" style={{ height: "calc(100vh - 70px)", overflow: "hidden" }}>
-        
+
         {/* Header: Static Section */}
         <div className="card shadow-sm mb-3 bg-white border-0 flex-shrink-0" style={{ borderRadius: '12px' }}>
           <div className="card-body p-3">
@@ -87,8 +87,8 @@ const Advertisement = () => {
                 <SearchInput value={search} onChange={setSearch} placeholder="Search ads..." />
               </div>
               <div className="col-12 col-md-7 d-flex flex-column flex-sm-row justify-content-md-end align-items-sm-center gap-2">
-                <button className="btn btn-primary d-flex align-items-center justify-content-center gap-2" 
-                        onClick={() => { setEditingAd(null); setShowCreateModal(true); }}>
+                <button className="bg d-flex align-items-center justify-content-center gap-2"
+                  onClick={() => { setEditingAd(null); setShowCreateModal(true); }}>
                   <span>Add Advertisement</span>
                 </button>
                 <div className="d-flex justify-content-center">
@@ -100,40 +100,40 @@ const Advertisement = () => {
         </div>
 
         {/* Scrollable Area: Pure White Background */}
-        <div className="flex-grow-1 p-3 shadow-sm border-0" 
-             style={{ 
-               overflowY: "auto", 
-               backgroundColor: '#ffffff', 
-               borderRadius: '12px',
-               minHeight: '400px' 
-             }}>
-          
+        <div className="flex-grow-1 p-3 shadow-sm border-0"
+          style={{
+            overflowY: "auto",
+            backgroundColor: '#ffffff',
+            borderRadius: '12px',
+            minHeight: '400px'
+          }}>
+
           {isLoading ? (
             <div className="text-center py-5 mt-5"><Loader size="sm" /></div>
           ) : advertisements.length === 0 ? (
             <div className="text-center py-5 text-muted">No ads found.</div>
           ) : (
-            <div className="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-2 g-md-3 pb-4">
+            <div className="row row-cols-md-3 row-cols-lg-4 g-2 g-md-3 pb-4">
               {advertisements.map((ad) => (
-                <div className="col" key={ad.id}>
+                <div key={ad.id}>
                   {/* Puraane style wala card */}
                   <div className="card h-100 shadow-sm border-0" style={{ borderRadius: '12px', overflow: 'hidden', backgroundColor: '#f8f9fa' }}>
                     <div className="ratio ratio-16x9 bg-light">
-                      <img 
-                        src={advertisementService.getMediaSrc(ad.imageUrl)} 
-                        className="w-100 h-100" 
-                        style={{ objectFit: "cover" }} 
-                        onError={(e) => { e.target.src = "/placeholder.svg"; }}
-                        alt={ad.title} 
+                      <img
+                        src={ad.imageUrl}
+                        className="w-100 h-100"
+                        style={{ objectFit: "cover" }}
+                        onError={(e) => { e.target.src = "/images/image4.jpeg"; }}
+                        alt={ad.title}
                       />
                     </div>
                     <div className="card-body p-2 p-md-3">
                       <h6 className="card-title mb-2 fw-bold text-truncate" title={ad.title}>{ad.title}</h6>
                       <div className="d-flex justify-content-between align-items-center mt-3">
-                        <button className="btn btn-sm btn-outline-primary" onClick={() => { setEditingAd(ad.rawData); setShowCreateModal(true); }}>
-                          <i className="bi bi-pencil-square"></i> <span className="d-none d-sm-inline">Edit</span>
+                        <button className="bg" onClick={() => { setEditingAd(ad.rawData); setShowCreateModal(true); }}>
+                          <i className="bi bi-pencil-square"></i> <span className="d-none d-sm-inline">Edit ad</span>
                         </button>
-                        <button className="btn btn-sm btn-outline-danger" onClick={() => setDeleteModal({ show: true, target: ad })}>
+                        <button className="btn btn-sm btn-danger" onClick={() => setDeleteModal({ show: true, target: ad })}>
                           <i className="bi bi-trash3"></i>
                         </button>
                       </div>
@@ -146,16 +146,48 @@ const Advertisement = () => {
         </div>
       </div>
 
-      <AdvertisementCreateModal 
-        showModal={showCreateModal} 
-        setShowModal={setShowCreateModal} 
-        initialAd={editingAd} 
-        onSuccess={() => { fetchAdvertisements(); setShowCreateModal(false); }} 
+      <AdvertisementCreateModal
+        showModal={showCreateModal}
+        setShowModal={setShowCreateModal}
+        initialAd={editingAd}
+        onSuccess={(returnedAd) => {
+          // If modal returns the created/updated ad, update local list immediately
+          if (returnedAd && returnedAd.advertisementId || returnedAd && returnedAd._id || returnedAd && returnedAd.id) {
+            const adId = returnedAd._id || returnedAd.id || returnedAd.advertisementId;
+            const formatted = {
+              id: adId,
+              title: returnedAd.title || '',
+              status: returnedAd.status,
+              imageUrl: advertisementService.getMediaSrc((returnedAd.images && returnedAd.images[0]) || ''),
+              createdAt: returnedAd.createdAt,
+              rawData: returnedAd
+            };
+
+            setAdvertisements(prev => {
+              // replace if exists
+              const found = prev.findIndex(a => a.id === adId);
+              if (found !== -1) {
+                const copy = [...prev];
+                copy[found] = formatted;
+                return copy;
+              }
+              // otherwise prepend
+              return [formatted, ...prev];
+            });
+            setShowCreateModal(false);
+            setEditingAd(null);
+            return;
+          }
+
+          // Fallback: refetch list
+          fetchAdvertisements();
+          setShowCreateModal(false);
+        }}
       />
-      <DeleteConfirmModal 
-        show={deleteModal.show} 
-        onHide={() => setDeleteModal({ show: false, target: null })} 
-        onConfirm={handleConfirmDelete} 
+      <DeleteConfirmModal
+        show={deleteModal.show}
+        onHide={() => setDeleteModal({ show: false, target: null })}
+        onConfirm={handleConfirmDelete}
       />
     </Layout>
   );

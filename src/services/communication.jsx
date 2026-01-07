@@ -496,14 +496,14 @@ export const salonAPI = {
             services: [
               {
                 serviceId: "158ef1c3-d1e0-4fd8-863a-d3c0a14f31c8",
-                serviceName: "Rajat2",
+                serviceNames: "Rajat2",
                 durationMinutes: 20,
                 price: "10.00",
                 description: "no"
               },
               {
                 serviceId: "fea7b4fc-d5c1-4fb0-8cb6-c0b3af4ee1aa",
-                serviceName: "Rajat3",
+                serviceNames: "Rajat3",
                 durationMinutes: 60,
                 price: "40.00",
                 description: "nothing"
@@ -684,9 +684,7 @@ export const bookingAPI = {
       if (!requestBody.statusFilter) delete requestBody.statusFilter;
       if (!requestBody.salonFilter) delete requestBody.salonFilter;
       if (!requestBody.bookingDate) delete requestBody.bookingDate;
-      console.log("🔍 API Request body:", requestBody);
       const response = await api.post('/api/booking/list', requestBody);
-      console.log("✅ API Response status:", response.data?.status);
       if (response.data?.status === "SUCCESS") {
         const bookingsData = response.data.data || [];
         const transformedData = Array.isArray(bookingsData) ? bookingsData.map(booking => {
@@ -695,7 +693,7 @@ export const bookingAPI = {
             userName: booking.userName || booking.user_name || 'N/A',
             salonName: booking.salonName || booking.salon_name || 'N/A',
             salonId: booking.salonId || booking.salon_id || booking.salon?.id || booking.salon?.salonId,
-            serviceName: booking.serviceName || booking.service_name || 'N/A',
+            serviceNames: booking.serviceNames || booking.service_name || 'N/A',
             date: booking.bookingDate || booking.booking_date || booking.date || 'N/A',
             time: booking.bookingTime || booking.booking_time || booking.time || null,
             status: booking.bookingStatus || booking.booking_status || booking.status || 'pending',
@@ -994,8 +992,6 @@ export const dashboardAPI = {
 };
 
 // ==================== ADVERTISEMENT MANAGEMENT ====================
-// Helper function to get headers
-const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
 const getHeaders = () => {
   const token = localStorage.getItem("token");
@@ -1005,26 +1001,78 @@ export const advertisementService = {
   // Fetch List
   getList: async (page, limit, search) => {
     const response = await axios.post(
-      `${backendUrl}/api/advertisement/get-list`,
+      `${API_BASE_URL}/api/advertisement/get-list`,
       { page, limit, search },
       { headers: getHeaders() }
     );
     return response.data;
   },
 
+  // Update Advertisement (tries multiple endpoints, sends advertisementId in body)
+  updateAd: async (adId, payload) => {
+    let lastError = null;
+
+    // 1) POST /api/advertisement/update with advertisementId in body
+    try {
+      const res = await axios.post(
+        `${API_BASE_URL}/api/advertisement/update`,
+        { advertisementId: adId, ...payload },
+        { headers: getHeaders() }
+      );
+      return res.data;
+    } catch (err) {
+      lastError = err;
+      console.warn('updateAd: POST /update with body failed', err.response?.status);
+    }
+
+    // 2) POST /api/advertisement/update/:id
+    try {
+      const res = await axios.post(
+        `${API_BASE_URL}/api/advertisement/update/${adId}`,
+        payload,
+        { headers: getHeaders() }
+      );
+      return res.data;
+    } catch (err) {
+      lastError = err;
+      console.warn('updateAd: POST /update/:id failed', err.response?.status);
+    }
+
+    // 3) PUT /api/advertisement/:id
+    try {
+      const res = await axios.put(`${API_BASE_URL}/api/advertisement/${adId}`, payload, { headers: getHeaders() });
+      return res.data;
+    } catch (err) {
+      console.error('updateAd: all attempts failed', err.response?.status, err.response?.data || err.message);
+      throw lastError || err;
+    }
+  },
+
   deleteAd: async (id) => {
-    const response = await axios.delete(
-      `${backendUrl}/api/advertisement/delete/${id}`,
-      { headers: getHeaders() }
-    );
-    return response.data;
+    let lastError = null;
+
+    // 4) Try POST /api/advertisement/delete with { advertisementId }
+    try {
+      const res = await axios.post(`${API_BASE_URL}/api/advertisement/delete`, { advertisementId: id }, { headers: getHeaders() });
+      return res.data;
+    } catch (err) {
+      throw lastError || err;
+    }
   },
 
   getMediaSrc: (imageUrl) => {
     if (!imageUrl) return "/placeholder.svg";
     if (imageUrl.startsWith("http")) return imageUrl;
-    const cleanPath = imageUrl.replace("/public", "");
-    return `${backendUrl.replace(/\/$/, "")}${cleanPath.startsWith("/") ? "" : "/"}${cleanPath}`;
+
+    let path = imageUrl || "";
+    // Ensure leading slash
+    if (!path.startsWith('/')) path = `/${path}`;
+
+    // If path contains /public prefix, remove it (server serves from root)
+    if (path.startsWith('/public')) path = path.replace('/public', '');
+
+    // Some backends return /uploads/... paths; keep those as-is (after ensuring leading slash)
+    return `${API_BASE_URL.replace(/\/$/, '')}${path}`;
   }
 };
 
