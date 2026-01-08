@@ -245,7 +245,7 @@ const AdvertisementCreateModal = ({ showModal, setShowModal, onSuccess, initialA
               <button
                 type="submit"
                 className="btn btn-primary px-4"
-                style={{ backgroundColor: "#7e470cff", border: "none" }}
+                style={{ backgroundColor: "#e1b378", border: "none" }}
                 disabled={isSubmitting}
               >
                 {isSubmitting

@@ -287,7 +287,7 @@ const SalonRequest = () => {
 
   return (
     <Layout>
-      <div className="page-content min-vh-100 d-flex flex-column gap-2 gap-md-3 p-2 p-md-3">
+      <div className="page-content min-vh-100 d-flex flex-column gap-2 gap-md-3 p-2">
 
         {/* FILTERS + PAGINATION + BULK ACTIONS */}
         <div className="card shadow-sm mb-1 mb-md-3 bg-white d-none d-md-block bookings-filter-sticky">
