@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
-  
+
   const safeTotalPages = Math.max(1, totalPages);
-  
+
   const [inputPage, setInputPage] = useState(currentPage);
 
   useEffect(() => {
@@ -44,16 +44,15 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
     <nav aria-label="Page navigation">
       <ul className="pagination mb-0 align-items-center gap-1 flex-wrap">
 
-        {/* Prev Text Button */}
         <li className={`page-item ${isFirstPage ? "disabled" : ""}`}>
           <button
             className={getButtonClass(isFirstPage)}
             style={getButtonStyle(isFirstPage)}
-            onClick={() => !isFirstPage && onPageChange(currentPage - 1)}
+            onClick={() => !isFirstPage && onPageChange(1)}
             disabled={isFirstPage}
           >
-            <span className="d-none d-sm-inline">Prev</span>
-            <span className="d-sm-none">P</span>
+            <span className="d-none d-sm-inline">First</span>
+            <span className="d-sm-none">F</span>
           </button>
         </li>
 
@@ -71,7 +70,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
 
         {/* --- INPUT FIELD FOR PAGE NUMBER --- */}
         <li className="page-item active">
-          <div 
+          <div
             className="page-link bg d-flex align-items-center px-2"
             style={{ cursor: 'text' }}
           >
@@ -92,7 +91,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
               min="1"
               max={safeTotalPages}
             />
-         
+
           </div>
         </li>
 
@@ -109,11 +108,13 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
         </li>
 
         {/* Next Text Button */}
+        {/* Next Text Button (Last) */}
         <li className={`page-item ${isLastPage ? "disabled" : ""}`}>
           <button
             className={getButtonClass(isLastPage)}
             style={getButtonStyle(isLastPage)}
-            onClick={() => !isLastPage && onPageChange(currentPage + 1)}
+            // Yahan change kiya: currentPage + 1 ki jagah safeTotalPages use karein
+            onClick={() => !isLastPage && onPageChange(safeTotalPages)}
             disabled={isLastPage}
           >
             <span className="d-none d-sm-inline">Last</span>

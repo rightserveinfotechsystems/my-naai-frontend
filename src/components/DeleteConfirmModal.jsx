@@ -27,12 +27,11 @@ const DeleteConfirmModal = ({ show, onHide, onConfirm, loading, count = 1 }) => 
         </div>
 
         <h6 className="fw-bold mb-2 fs-6 fs-md-5">
-          Delete {count > 1 ? `${count} Users?` : "User?"}
+          {/* Delete {count > 1 ? `${count} Users?` : "User?"} */}
         </h6>
 
         <p className="text-muted mb-4 small mx-auto" style={{ maxWidth: 360 }}>
-          Are you sure you want to delete {count > 1 ? "these users" : "this user"}? This action cannot be undone.
-        </p>
+          “Are you sure you want to delete this item? This action cannot be undone.”        </p>
 
         <div className="d-flex flex-column flex-md-row justify-content-center gap-2">
           <Button
