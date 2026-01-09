@@ -25,7 +25,6 @@ const DeleteConfirmModal = ({ show, onHide, onConfirm, loading, count = 1 }) => 
         >
           <FaTrash />
         </div>
-
         <h6 className="fw-bold mb-2 fs-6 fs-md-5">
           {/* Delete {count > 1 ? `${count} Users?` : "User?"} */}
         </h6>

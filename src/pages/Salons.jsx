@@ -89,14 +89,11 @@ const Salons = () => {
       statusFilter: statusFilter === 'all' ? undefined : statusFilter
     };
 
-    console.log("Making salon API call with params:", apiParams);
 
     let result;
     try {
       result = await salonAPI.getSalons(apiParams);
-      console.log("Salon API result:", result);
     } catch (error) {
-      console.error("Salon API error caught:", error);
       result = {
         success: false,
         message: error.response?.data?.message || "Network error",
@@ -105,8 +102,6 @@ const Salons = () => {
     }
 
     if (result.success) {
-      console.log("Setting salons data:", result.data.barberShops);
-      console.log("Pagination data:", result.data.pagination);
       setSalons(result.data.barberShops || []);
       if (result.data.pagination) {
         setTotalItems(result.data.pagination.total || 0);
@@ -143,10 +138,8 @@ const Salons = () => {
 
   // Debug: Monitor salons state changes
   useEffect(() => {
-    console.log('Salons state changed:', salons.length, 'salons');
     salons.forEach((salon, index) => {
       const salonId = salon.salonId || salon.barberId || salon.id;
-      console.log(`Salon ${index + 1}: ID=${salonId}, Active=${salon.isActive}`);
     });
   }, [salons]);
 
@@ -203,14 +196,12 @@ const Salons = () => {
     const currentStatus = salon.isActive;
     const newStatus = !currentStatus;
 
-    console.log('Toggle confirmed:', { salonId, currentStatus, newStatus });
 
     // Immediate visual feedback
     setSalons(prev => {
       return prev.map(s => {
         const sId = s.salonId || s.barberId || s.id;
         if (sId === salonId) {
-          console.log(`Updating salon ${sId} from ${s.isActive} to ${newStatus}`);
           // Create a completely new object to ensure re-render
           return {
             ...s,
@@ -225,12 +216,10 @@ const Salons = () => {
       const result = await salonAPI.toggleSalonStatus(salonId, newStatus);
 
       if (result.success) {
-        console.log('API success, keeping new status');
         toast.success(`Salon ${newStatus ? 'activated' : 'deactivated'} successfully!`);
         setShowToggleModal(false);
         setSelectedSalon(null);
       } else {
-        console.log('API failed, reverting to:', currentStatus);
         setSalons(prev => prev.map(s => {
           const sId = s.salonId || s.barberId || s.id;
           return sId === salonId ? { ...s, isActive: currentStatus } : s;
@@ -238,7 +227,6 @@ const Salons = () => {
         toast.error(`Failed to ${newStatus ? 'activate' : 'deactivate'} salon`);
       }
     } catch (error) {
-      console.log('Error occurred, reverting to:', currentStatus);
       setSalons(prev => prev.map(s => {
         const sId = s.salonId || s.barberId || s.id;
         return sId === salonId ? { ...s, isActive: currentStatus } : s;

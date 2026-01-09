@@ -24,7 +24,6 @@ const ProfileDropdown = ({ isOpen, onClose, onChangePassword, position = 'mobile
   const [showAdminDetails, setShowAdminDetails] = useState(false);
 
   const handleLogout = () => {
-    console.log("User logged out - navigating to login");
     onClose();
     logout();
     setTimeout(() => {

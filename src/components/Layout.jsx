@@ -228,9 +228,7 @@ const Layout = ({ children }) => {
               <button
                 className="btn btn-outline-secondary btn-sm flex-shrink-0 d-flex align-items-center justify-content-center profile-btn"
                 onClick={() => {
-                  console.log("MOBILE Profile button clicked, current state:", showProfileDropdown);
                   const newState = !showProfileDropdown;
-                  console.log("Setting showProfileDropdown to:", newState);
                   setShowProfileDropdown(newState);
                 }}
                 style={{
