@@ -699,7 +699,6 @@ export const bookingAPI = {
             status: booking.bookingStatus || booking.booking_status || booking.status || 'pending',
             totalAmount: booking.amount || booking.totalAmount || parseFloat(booking.servicePrice || booking.service_price || 0) || 0
           };
-          console.log("🔄 Transformed booking:", transformed);
           return transformed;
         }) : [];
 

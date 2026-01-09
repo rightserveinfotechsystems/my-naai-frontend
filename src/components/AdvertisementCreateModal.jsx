@@ -27,7 +27,6 @@ const AdvertisementCreateModal = ({ showModal, setShowModal, onSuccess, initialA
   };
 
   const handleImageUpload = (e) => {
-    console.log("FILES SELECTED:", e.target.files);
 
     const files = Array.from(e.target.files);
     const newImages = files.map(file => ({
@@ -35,7 +34,6 @@ const AdvertisementCreateModal = ({ showModal, setShowModal, onSuccess, initialA
       preview: URL.createObjectURL(file)
     }));
 
-    console.log("NEW IMAGES:", newImages);
 
     setImages(prev => [...prev, ...newImages]);
     e.target.value = '';

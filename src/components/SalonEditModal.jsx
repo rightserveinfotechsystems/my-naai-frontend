@@ -138,17 +138,13 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
 
               for (const field of imageFields) {
                 if (salon[field] && Array.isArray(salon[field]) && salon[field].length > 0) {
-                  console.log(`Found gallery images in ${field}:`, salon[field]);
                   loadedImages = salon[field].map(img => {
                     if (typeof img === 'string') {
-                      console.log(`Processing string image: ${img}`);
                       return img;
                     } else if (img && typeof img === 'object') {
                       const imageUrl = img.url || img.imageUrl || img.photoUrl || img.src || img.path;
-                      console.log(`Processing object image:`, img, `-> extracted URL: ${imageUrl}`);
                       return imageUrl;
                     }
-                    console.log(`Invalid image format:`, img);
                     return null;
                   }).filter(img => img !== null);
                   break;
@@ -158,8 +154,6 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
               // Note: We do NOT load the main image (imageUrl/shopLogo) into the gallery images array
               // The main image is handled separately in the form data
 
-              console.log("Gallery images loaded:", loadedImages);
-              console.log("Setting images state with:", loadedImages);
               setImages(loadedImages);
 
             } else {
@@ -265,15 +259,13 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
     const { serviceIndex } = deleteModal;
     const serviceToRemove = formData.services[serviceIndex];
 
-    console.log("🔍 Service to delete:", serviceToRemove);
-    console.log("🆔 Service ID:", serviceToRemove?.id || serviceToRemove?.serviceId);
+    
 
     setDeleteModal(prev => ({ ...prev, loading: true }));
 
     try {
       // If service has an ID, it exists in database - call delete API
       if (serviceToRemove && (serviceToRemove.id || serviceToRemove.serviceId)) {
-        console.log("🗑️ Making API call to delete service from database");
         toast.info("Deleting service from database...");
         const result = await salonAPI.deleteService(serviceToRemove.id || serviceToRemove.serviceId);
 
@@ -289,7 +281,6 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
           setDeleteModal({ show: false, serviceIndex: null, loading: false });
         }
       } else {
-        console.log("📝 New service (no ID) - removing from local state only");
         toast.info("Removing unsaved service...");
         // New service (no ID) - just remove from local state
         const newServices = formData.services.filter((_, i) => i !== serviceIndex);
@@ -545,10 +536,8 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
           price: parseFloat(service.price) || 0,
           description: service.description || ""
         }));
-        console.log("apiData", apiData);
 
         result = await salonAPI.createSalon(apiData);
-        console.log("response", result);
 
       }
 
@@ -626,11 +615,9 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
 
   };
 
-  console.log("Images state:", images, "Length:", images.length);
 
   // Debug: Check if images change
   useEffect(() => {
-    console.log("Images state updated:", images);
   }, [images]);
 
 

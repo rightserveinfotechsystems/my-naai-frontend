@@ -101,7 +101,6 @@ const SalonRequest = () => {
     if (window.confirm(`Are you sure you want to delete ${selectedBookings.size} salon request(s)?`)) {
       setIsLoading(true);
       // API call for bulk delete
-      console.log('Bulk delete bookings:', Array.from(selectedBookings));
       setTimeout(() => {
         setSelectedBookings(new Set());
         setSelectAll(false);

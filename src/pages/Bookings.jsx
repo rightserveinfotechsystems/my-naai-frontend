@@ -108,7 +108,6 @@ const formatTime = (dateString, booking) => {
 };
 
 const Bookings = () => {
-  // console.log("🏗️ Bookings component rendered");
 
   const [bookings, setBookings] = useState([]);
   const [salons, setSalons] = useState([]);
@@ -118,7 +117,7 @@ const Bookings = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("");
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState(""); // Initialize with empty string
+  const [debouncedSearch, setDebouncedSearch] = useState(""); 
   const [currentPage, setCurrentPage] = useState(1);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
@@ -131,7 +130,6 @@ const Bookings = () => {
   // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => {
-      console.log("🔍 Search debounced:", search);
       setDebouncedSearch(search);
     }, 500); // 500ms delay
 
@@ -140,27 +138,18 @@ const Bookings = () => {
 
   // Reset page when debounced search changes
   useEffect(() => {
-    console.log("📄 Search changed, resetting page. debouncedSearch:", debouncedSearch);
     setCurrentPage(1);
   }, [debouncedSearch]);
 
   // Initial load
   useEffect(() => {
-    console.log("🏁 Initial component mount - calling fetchBookings and fetchFilterList");
     fetchBookings();
     fetchFilterList();
   }, []); // Empty dependency array for initial load
 
   // Fetch bookings from API
   const fetchBookings = useCallback(async () => {
-    console.log("🚀 fetchBookings STARTED with:", {
-      search: search,
-      debouncedSearch: debouncedSearch,
-      salonFilter: salonFilter,
-      statusFilter: statusFilter,
-      currentPage: currentPage,
-      dateFilter: dateFilter
-    });
+   
 
     setLoading(true);
 
@@ -181,37 +170,16 @@ const Bookings = () => {
         dateFrom: dateFilter || undefined
       };
 
-      console.log("🎯 API Parameters:", apiParams);
-      console.log("📋 Final request will be:", {
-        page: apiParams.page,
-        searchString: apiParams.search || '',
-        statusFilter: apiParams.status || '',
-        salonFilter: apiParams.salonId || '',
-        bookingDate: apiParams.dateFrom || ''
-      });
-
-      console.log("🏪 Salon filter debugging:", {
-        salonFilter,
-        salonFilterType: typeof salonFilter,
-        apiParamsSalonFilter: apiParams.salonId,
-        apiParamsSalonFilterType: typeof apiParams.salonId
-      });
+     
 
       const result = await bookingAPI.getBookings(apiParams);
 
       if (result.success) {
-        console.log("📋 API result data:", result.data);
-        console.log("📋 First booking sample:", result.data?.[0]);
-        console.log("📋 All salon IDs in bookings:", result.data?.map(b => {
-          // Try to find salon ID in booking data
-          const salonId = b.salonId || b.salon_id || b.salon?.id || b.salon?.salonId;
-          return { id: salonId, name: b.salonName, fullBooking: b };
-        }));
+      
         setBookings(result.data || []);
         setAllBookings(result.data || []);
         setTotalItems(result.pagination?.total || 0);
         setTotalPages(result.pagination?.totalPages || 1);
-        console.log("✅ Bookings loaded:", result.data?.length || 0, "Total:", result.pagination?.total || 0);
       } else {
         // Check for authentication errors
         const isAuthError = result.message === "Invalid token payload" ||
@@ -227,7 +195,6 @@ const Bookings = () => {
           return;
         }
 
-        console.error("❌ Failed to fetch bookings:", result.message);
         setBookings([]);
         setTotalItems(0);
         setTotalPages(1);
@@ -257,7 +224,6 @@ const Bookings = () => {
   //   try {
   //     const result = await bookingAPI.getFilterList();
   //     if (result.success) {
-  //       console.log("✅ Filter list fetched:", result.data);
 
   //       // Normalize salon data - handle different field names
   //       let salonData = [];
@@ -269,7 +235,6 @@ const Bookings = () => {
 
   //       // Transform salon data to have consistent structure (id and name)
   //       const normalizedSalons = salonData.map(salon => {
-  //         console.log("🔍 Salon data from API:", salon);
   //         return {
   //         id: salon.id || salon.salonId || salon._id,
   //         name: salon.name || salon.salonName || salon.salon_name || 'Unknown Salon'
@@ -303,13 +268,7 @@ const Bookings = () => {
       return;
     }
 
-    console.log(" Parameters changed, fetching bookings:", {
-      currentPage,
-      debouncedSearch,
-      salonFilter,
-      statusFilter,
-      dateFilter
-    });
+  
     fetchBookings();
   }, [fetchBookings, currentPage, debouncedSearch, salonFilter, statusFilter, dateFilter]);
 
@@ -339,18 +298,10 @@ const Bookings = () => {
 
 
   // Debug logging
-  console.log("🔍 Bookings component render:", {
-    loading,
-    bookingsCount: bookings.length,
-    filteredCount: filtered.length,
-    currentPage,
-    totalPages,
-    totalItems
-  });
+ 
 
   const fetchFilterList = useCallback(async () => {
     try {
-      console.log("🏪 Fetching salon filter list from /api/booking/list");
       const result = await bookingAPI.getBookingFilterList();
 
       if (result.success && Array.isArray(result.data)) {
@@ -374,22 +325,18 @@ const Bookings = () => {
           ).values()
         ];
 
-        console.log("🏪 Unique salons extracted:", uniqueSalons);
         setSalons(uniqueSalons);
         setFiltersLoaded(true);
       } else {
-        console.warn("❌ Failed to fetch salon filter list:", result.message);
         setSalons([]);
       }
     } catch (error) {
-      console.error("❌ Filter list error:", error);
       setSalons([]);
     }
   }, []);
 
 
   useEffect(() => {
-    console.log("🧪 BOOKINGS RAW DATA - extracting statuses:", allBookings);
     if (!allBookings.length) return;
 
     // Unique statuses from ALL booking data (not filtered bookings)
@@ -397,7 +344,6 @@ const Bookings = () => {
       ...new Set(allBookings.map(b => b.bookingStatus || b.status).filter(Boolean))
     ];
 
-    console.log("📊 Unique statuses extracted:", uniqueStatuses);
     setFilterOptions(prev => ({
       ...prev,
       statuses: uniqueStatuses
@@ -405,15 +351,11 @@ const Bookings = () => {
 
   }, [allBookings]);
   useEffect(() => {
-    console.log("🔍 Frontend filtering - statusFilter:", statusFilter, "allBookings length:", allBookings.length);
     let filtered = [...allBookings];
 
     if (statusFilter !== "all") {
-      console.log("📊 Applying status filter:", statusFilter);
       filtered = filtered.filter(b => (b.bookingStatus || b.status) === statusFilter);
-      console.log("📊 After status filter, filtered length:", filtered.length);
     } else {
-      console.log("📊 No status filter applied (showing all)");
     }
 
     if (salonFilter !== "all") {

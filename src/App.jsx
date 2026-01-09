@@ -14,6 +14,8 @@ import SalonRequest from "./pages/SalonRequest.jsx";
 import Advertisement from "./pages/Advertisement.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import Login from "./pages/Login.jsx";
+import TermsAndConditions from "./pages/TermsAndConditions.jsx"; 
+import PrivacyPolicy from "./pages/PrivacyPolicy.jsx"; 
 import { UserProvider } from "./contexts/UserContext.jsx";
 
 const ProtectedRoute = ({ children }) => {
@@ -26,8 +28,6 @@ const PublicRoute = ({ children }) => {
   return token ? <Navigate to="/" replace /> : children;
 };
 
-
-
 const router = createBrowserRouter(
   [
     {
@@ -38,6 +38,16 @@ const router = createBrowserRouter(
         </PublicRoute>
       ),
     },
+    
+    {
+      path: "/terms-and-conditions",
+      element: <TermsAndConditions />, 
+    },
+    {
+      path: "/privacy-policy",
+      element: <PrivacyPolicy />,
+    },
+
     {
       path: "/",
       element: (
@@ -89,6 +99,8 @@ const router = createBrowserRouter(
     {
       path: "*",
       element: (
+        // NotFound ko bhi open rakh sakte hain ya protected, aapki marzi
+        // Filhal ye protected hai
         <ProtectedRoute>
           <NotFound />
         </ProtectedRoute>
@@ -102,7 +114,6 @@ const router = createBrowserRouter(
     },
   }
 );
-
 
 const App = () => {
   return (
@@ -120,4 +131,3 @@ const App = () => {
 };
 
 export default App;
-

@@ -316,7 +316,7 @@ body::-webkit-scrollbar-button,
 
 .login-container {
   min-height: 100vh;
-  /* background: linear-gradient(135deg, #e1b378 0%, #e1b378 50%, #e1b378 100%); */
+  /* background: linear-gradient(135deg, #cec8c1 0%, #d9d0c5 50%, #cdc7bf 100%); */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2569,7 +2569,12 @@ img {
   }
 }
 
-
+/* @media (min-width: 1025px) and (max-width: 1280px) {
+  .bookings-table-scroll {
+    height: calc(100dvh - 80px) !important;
+    height: calc(100vh - 20px) !important;
+  }
+} */
 .fontcolor {
 
   color: #ee190a !important;
