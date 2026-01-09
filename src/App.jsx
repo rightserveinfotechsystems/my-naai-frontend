@@ -17,6 +17,7 @@ import Login from "./pages/Login.jsx";
 import TermsAndConditions from "./pages/TermsAndConditions.jsx"; 
 import PrivacyPolicy from "./pages/PrivacyPolicy.jsx"; 
 import { UserProvider } from "./contexts/UserContext.jsx";
+import AccountDeletion from "./pages/AccountDeletion.jsx";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -40,8 +41,8 @@ const router = createBrowserRouter(
     },
     
     {
-      path: "/terms-and-conditions",
-      element: <TermsAndConditions />, 
+      path: "/account-deletion",
+      element: <AccountDeletion />, 
     },
     {
       path: "/privacy-policy",
