@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://72.60.195.95:3006";
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "https://backend.mynaai.in";
 
 const api = axios.create({
   baseURL: API_BASE_URL,

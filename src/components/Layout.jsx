@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import ProfileDropdown from "./ProfileDropdown.jsx";
 import ChangePasswordModal from "./ChangePasswordModal.jsx";
 import { useUser } from "../contexts/UserContext.jsx";
 import { ClipboardList, Store, CalendarCheck } from "lucide-react";
+import { salonRequestAPI } from "../services/communication.jsx";
 // Icons definitions (SVG)
 const Icons = {
   Salon: () => (
@@ -37,9 +38,10 @@ const navItems = [
 const Layout = ({ children }) => {
   const [open, setOpen] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
-  const [showLogoutModal, setShowLogoutModal] = useState(false); 
-  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false); 
-  const [isLogoutLoading, setIsLogoutLoading] = useState(false); 
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [isLogoutLoading, setIsLogoutLoading] = useState(false);
+  const [salonRequestCount, setSalonRequestCount] = useState(0);
   const navigate = useNavigate();
   const { user, logout } = useUser();
 
@@ -78,6 +80,34 @@ const Layout = ({ children }) => {
     role: ""
   };
 
+  // Fetch salon request count for notifications
+  const fetchSalonRequestCount = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const response = await salonRequestAPI.getSalonRequests({
+        page: 1,
+        salonNameFilter: "",
+        requestDate: "",
+        searchString: ""
+      });
+
+      if (response.success && response.pagination) {
+        setSalonRequestCount(response.pagination.total || 0);
+      }
+    } catch (error) {
+      console.error("Error fetching salon request count:", error);
+    }
+  };
+
+  // Fetch count on mount and every 30 seconds
+  useEffect(() => {
+    fetchSalonRequestCount();
+    const interval = setInterval(fetchSalonRequestCount, 30000); // 30 seconds
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="app-shell d-flex">
       {/* Desktop Sidebar */}
@@ -108,6 +138,11 @@ const Layout = ({ children }) => {
             >
               {item.icon}
               <span>{item.label}</span>
+              {item.path === "/salonrequest" && salonRequestCount > 0 && (
+                <span className="badge bg-danger ms-auto" style={{ fontSize: '0.7rem', padding: '0.2rem 0.4rem' }}>
+                  {salonRequestCount > 99 ? '99+' : salonRequestCount}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -304,9 +339,14 @@ const Layout = ({ children }) => {
                   `nav-link text-center p-2 mobile-nav-item ${isActive ? "active" : ""}`
                 }
               >
-                <div className="d-flex flex-column align-items-center">
+                <div className="d-flex flex-column align-items-center position-relative">
                   <Icons.Salon />
                   <small className="mt-1 nav-text">Salon Request</small>
+                  {salonRequestCount > 0 && (
+                    <span className="badge bg-danger position-absolute top-0 end-0 translate-middle" style={{ fontSize: '0.6rem', padding: '0.15rem 0.25rem' }}>
+                      {salonRequestCount > 99 ? '99+' : salonRequestCount}
+                    </span>
+                  )}
                 </div>
               </NavLink>
 

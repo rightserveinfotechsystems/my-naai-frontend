@@ -11,7 +11,7 @@ const AdvertisementCreateModal = ({ showModal, setShowModal, onSuccess, initialA
   const [images, setImages] = useState([]);
   const isEditMode = Boolean(initialAd);
 
-  const API_BASE_URL = "http://72.60.195.95:3006";
+  const API_BASE_URL = "https://backend.mynaai.in";
 
   const handleCloseModal = () => {
     images.forEach(img => {

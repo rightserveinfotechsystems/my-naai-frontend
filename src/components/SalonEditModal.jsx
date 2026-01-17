@@ -1104,7 +1104,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                             />
                             {errors[`service_${index}_name`] && <div className="invalid-feedback">{errors[`service_${index}_name`]}</div>}
                           </div>
-                          <div className="col-12 col-md-4">
+                          {/* <div className="col-12 col-md-4">
                             <div className="input-group">
                               <span className="input-group-text"><i className="bi bi-currency-rupee"></i></span>
                               <input
@@ -1117,7 +1117,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                               />
                             </div>
                             {errors[`service_${index}_price`] && <div className="invalid-feedback">{errors[`service_${index}_price`]}</div>}
-                          </div>
+                          </div> */}
                           <div className="col-12 col-md-4">
                             <div className="input-group">
                               <input
@@ -1133,7 +1133,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                             {errors[`service_${index}_duration`] && <div className="invalid-feedback">{errors[`service_${index}_duration`]}</div>}
                           </div>
                         </div>
-                        <div className="mt-2">
+                        {/* <div className="mt-2">
                           <textarea
                             className={`form-control ${errors[`service_${index}_description`] ? 'is-invalid' : ''}`}
                             placeholder="Description"
@@ -1141,7 +1141,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                             onChange={(e) => handleServiceChange(index, 'description', e.target.value)}
                           />
                           {errors[`service_${index}_description`] && <div className="invalid-feedback">{errors[`service_${index}_description`]}</div>}
-                        </div>
+                        </div> */}
                       </div>
                     </div>
                   ))}

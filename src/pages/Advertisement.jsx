@@ -9,7 +9,7 @@ import DeleteConfirmModal from "../components/DeleteConfirmModal.jsx";
 import { toast } from "react-toastify";
 
 const ITEMS_PER_PAGE = 20;
-const API_BASE = "http://72.60.195.95:3006";
+const API_BASE = "https://backend.mynaai.in";
 
 const buildImageUrl = (path) => {
   if (!path) return "";
