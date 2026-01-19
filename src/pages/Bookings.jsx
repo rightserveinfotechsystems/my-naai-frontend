@@ -397,7 +397,7 @@ const Bookings = () => {
                       <SearchInput
                         value={search}
                         onChange={setSearch}
-                        placeholder="Search by user, salon or service..."
+                        placeholder="Search by user, salon..."
                       />
                     </div>
 
@@ -688,7 +688,7 @@ const Bookings = () => {
           }}
         >
           <div style={{ minHeight: '320px', backgroundColor: 'white' }}>
-            <table className="table table-hover mb-0" >
+            <table className="table table-hover mb-0  " >
               <thead className="table-light position-sticky top-0 bg-white border-bottom z-10">
                 <tr>
                   <th style={{ minWidth: '50px', maxWidth: '60px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom text-center">No.</th>
@@ -696,7 +696,7 @@ const Bookings = () => {
                   <th style={{ minWidth: '120px', maxWidth: '150px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Salon</th>
                   <th style={{ minWidth: '100px', maxWidth: '130px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Service</th>
                   <th style={{ minWidth: '130px', maxWidth: '160px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Date & Time</th>
-                  <th style={{ minWidth: '80px', maxWidth: '110px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom ">Amount</th>
+                  {/* <th style={{ minWidth: '80px', maxWidth: '110px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom ">Amount</th> */}
                   <th style={{ minWidth: '100px', maxWidth: '120px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Status</th>
                 </tr>
               </thead>
@@ -716,10 +716,10 @@ const Bookings = () => {
                         <td className="px-2 px-md-3 py-2">
                           <div className="small">
                             <div>{formatDate(booking.createdAt || booking.date)}</div>
-                            <div className="text-muted">{formatTime(booking.createdAt || booking.date, booking)}</div>
+                            {/* <div className="text-muted">{formatTime(booking.createdAt || booking.date, booking)}</div> */}
                           </div>
                         </td>
-                        <td className="fw-semibold text-black px-2 px-md-3 py-2 ">₹{booking.totalAmount}</td>
+                        {/* <td className="fw-semibold text-black px-2 px-md-3 py-2 ">₹{booking.totalAmount}</td> */}
                         <td className="px-2 px-md-3 py-2"><StatusBadge status={booking.status} /></td>
                       </tr>
                     ))}

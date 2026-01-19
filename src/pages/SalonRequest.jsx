@@ -539,19 +539,20 @@ const SalonRequest = () => {
           </div>
         </div>
 
-        {/* DESKTOP TABLE */}
+        {/* DESKTOP TABLE - SCROLLABLE AREA BELOW STICKY FILTERS */}
         <div
           className="table-responsive d-none d-md-block mb-2 mb-md-3 bg-white bookings-table-scroll"
           style={{
+                          scrollbarWidth: 'thin',
+
             maxHeight: 'calc(100dvh - 160px)',
             // maxHeight: 'calc(100vh - 160px)',
-            // overflow: 'auto'
+            overflow: 'auto'
           }}
         >
-          <div className="table-responsive">
-          <table className="table table-hover mb-0 align-middle text-nowrap">
-             
-            <thead className="table-light position-sticky top-0 bg-white border-bottom z-10">
+          <div style={{ minHeight: '320px', backgroundColor: 'white' }}>
+            <table className="table table-hover mb-0 align-middle text-nowrap">
+              <thead className="table-light position-sticky top-0 bg-white border-bottom z-10">
               <tr>
                 <th style={{ width: '50px' }} className="px-2 py-2 border-bottom text-center">
                   <input
@@ -565,6 +566,7 @@ const SalonRequest = () => {
                 <th style={{ width: '160px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Salon Owner</th>
                 <th style={{ width: '150px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Salon Name</th>
                 <th style={{ width: '220px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Address</th>
+                <th style={{ width: '140px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">City</th>
                 <th style={{ width: '140px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Mobile</th>
                 <th style={{ width: '200px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom text-center">Created</th>
                 <th style={{ width: '80px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom text-center">Action</th>
@@ -600,6 +602,9 @@ const SalonRequest = () => {
                       <td className="px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '220px' }}>
                         {booking.address || 'N/A'}
                       </td>
+                      <td className="px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '220px' }}>
+                        {booking.city || 'N/A'}
+                      </td>
                       <td className="fw-semibold px-2 px-md-3 py-2 text-truncate " style={{ maxWidth: '140px' }}>
                         {booking.phoneNumber || 'N/A'}
                       </td>
@@ -607,7 +612,7 @@ const SalonRequest = () => {
                         <div className="d-flex flex-column align-items-center gap-1">
                           <div className="text-center">
                             <div className="fw-medium small">{formatDate(booking.createdAt).date}</div>
-                            <div className="text-muted small">{formatDate(booking.createdAt).time}</div>
+                            {/* <div className="text-muted small">{formatDate(booking.createdAt).time}</div> */}
                           </div>
                         </div>
                       </td>
@@ -630,7 +635,7 @@ const SalonRequest = () => {
                   {bookings.length === 0 && !isLoading && (
                     <tr>
                       <td colSpan={8} className="text-center text-muted py-5 bg-white">
-                        No bookings found
+                        No Request found
                       </td>
                     </tr>
                   )}
