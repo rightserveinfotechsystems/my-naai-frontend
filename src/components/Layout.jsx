@@ -118,10 +118,10 @@ const Layout = ({ children }) => {
             className="d-flex justify-content-center align-items-center text-decoration-none"
           >
             <img
-              src="/images/mynaai_logo.jpeg"
+              src="/images/my_naai_logo.png"
               alt="Salon Logo"
               className="object-fit-contain"
-              style={{ maxHeight: "50px" }}
+              style={{ maxHeight: "80px" }}
             />
           </Link>
         </div>

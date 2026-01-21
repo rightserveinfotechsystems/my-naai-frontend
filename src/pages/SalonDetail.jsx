@@ -250,11 +250,14 @@ const SalonDetail = () => {
                           <div className="d-flex justify-content-between align-items-start">
                             <div className="flex-grow-1 me-2">
                               <div className="fw-bold small">{s.serviceName || s.name}</div>
-                              <small className="text-muted d-block">
-                                {s.durationMinutes || s.duration}m{s.description ? ` • ${s.description}` : ''}
-                              </small>
+                              {/* <small className="text-muted d-block">
+                                {s.durationMinutes || s.duration}m
+                              </small> */}
                             </div>
-                            <div className="fw-bold text-dark flex-shrink-0">₹{s.price}</div>
+                            {/* <div className="fw-bold text-dark flex-shrink-0">₹{s.price}</div> */}
+                            <small className="text-muted d-block text-dark">
+                                {s.durationMinutes || s.duration}m
+                              </small>
                           </div>
                         </div>
                       );

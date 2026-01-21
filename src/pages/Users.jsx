@@ -24,7 +24,8 @@ const formatDate = (dateString) => {
   hours = hours % 12;
   hours = hours ? hours : 12;
   hours = String(hours).padStart(2, '0');
-  return `${day}/${month}/${year} ${hours}:${minutes} ${ampm}`;
+  return `${day}/${month}/${year} `;
+  // ${hours}:${minutes} ${ampm}
 };
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -351,9 +352,6 @@ const Users = () => {
                                   onChange={() => handleToggleClick(user)}
                                 />
                               </div>
-
-
-
 
                               {/* Delete Button */}
                               <button
