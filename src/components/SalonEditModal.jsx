@@ -319,9 +319,9 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
     }
 
     // Address Line 1 validation
-    if (!formData.addressLine1 || formData.addressLine1.trim() === "") {
-      newErrors.addressLine1 = "Please enter address line 1";
-    }
+    // if (!formData.addressLine1 || formData.addressLine1.trim() === "") {
+    //   newErrors.addressLine1 = "Please enter address line 1";
+    // }
 
     // City validation
     if (!formData.city || formData.city.trim() === "") {
@@ -329,52 +329,52 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
     }
 
     // State validation
-    if (!formData.state || formData.state.trim() === "") {
-      newErrors.state = "Please select a state";
-    }
+    // if (!formData.state || formData.state.trim() === "") {
+    //   newErrors.state = "Please select a state";
+    // }
 
     // Pincode validation
-    if (!formData.pincode || formData.pincode.trim() === "") {
-      newErrors.pincode = "Please enter pincode";
-    } else if (!/^[1-9]\d{5}$/.test(formData.pincode.replace(/\s+/g, ''))) {
-      newErrors.pincode = "Please enter a valid 6-digit pincode";
-    }
+    // if (!formData.pincode || formData.pincode.trim() === "") {
+    //   newErrors.pincode = "Please enter pincode";
+    // } else if (!/^[1-9]\d{5}$/.test(formData.pincode.replace(/\s+/g, ''))) {
+    //   newErrors.pincode = "Please enter a valid 6-digit pincode";
+    // }
 
     // Salon Type validation
-    if (!formData.gender || formData.gender.trim() === "") {
-      newErrors.gender = "Please select salon type";
-    }
+    // if (!formData.gender || formData.gender.trim() === "") {
+    //   newErrors.gender = "Please select salon type";
+    // }
 
 
     // Services validation
-    if (!formData.services || formData.services.length === 0) {
-      newErrors.services = "Please add at least one service";
-    } else {
-      formData.services.forEach((service, index) => {
-        if (!service.name || service.name.trim() === "") {
-          newErrors[`service_${index}_name`] = "Please enter service name";
-        }
-        if (!service.price || service.price === "" || service.price < 0) {
-          newErrors[`service_${index}_price`] = "Please enter valid price";
-        }
-        if (!service.duration || service.duration === "" || service.duration <= 0) {
-          newErrors[`service_${index}_duration`] = "Please enter valid duration";
-        }
-        if (!service.description || service.description.trim() === "") {
-          newErrors[`service_${index}_description`] = "Please enter service description";
-        }
-      });
-    }
+    // if (!formData.services || formData.services.length === 0) {
+    //   newErrors.services = "Please add at least one service";
+    // } else {
+    //   formData.services.forEach((service, index) => {
+    //     if (!service.name || service.name.trim() === "") {
+    //       newErrors[`service_${index}_name`] = "Please enter service name";
+    //     }
+    //     if (!service.price || service.price === "" || service.price < 0) {
+    //       newErrors[`service_${index}_price`] = "Please enter valid price";
+    //     }
+    //     if (!service.duration || service.duration === "" || service.duration <= 0) {
+    //       newErrors[`service_${index}_duration`] = "Please enter valid duration";
+    //     }
+    //     if (!service.description || service.description.trim() === "") {
+    //       newErrors[`service_${index}_description`] = "Please enter service description";
+    //     }
+    //   });
+    // }
 
     // Opening Time validation
-    if (!formData.openingTime || formData.openingTime.trim() === "") {
-      newErrors.openingTime = "Please enter opening time";
-    }
+    // if (!formData.openingTime || formData.openingTime.trim() === "") {
+    //   newErrors.openingTime = "Please enter opening time";
+    // }
 
     // Closing Time validation
-    if (!formData.closingTime || formData.closingTime.trim() === "") {
-      newErrors.closingTime = "Please enter closing time";
-    }
+    // if (!formData.closingTime || formData.closingTime.trim() === "") {
+    //   newErrors.closingTime = "Please enter closing time";
+    // }
 
     // Holiday validation
     if (!formData.day || formData.day.trim() === "") {
