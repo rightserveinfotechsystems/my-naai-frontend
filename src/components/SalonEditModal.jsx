@@ -17,7 +17,9 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [formData, setFormData] = useState({
+
     // Basic salon info
     name: "",
     ownerName: "",
@@ -131,7 +133,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                 })) : []
               });
 
-             
+
               let loadedImages = [];
 
               const imageFields = ['imagesArray'];
@@ -259,7 +261,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
     const { serviceIndex } = deleteModal;
     const serviceToRemove = formData.services[serviceIndex];
 
-    
+
 
     setDeleteModal(prev => ({ ...prev, loading: true }));
 
@@ -377,9 +379,9 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
     // }
 
     // Holiday validation
-    if (!formData.day || formData.day.trim() === "") {
-      newErrors.day = "Please select a holiday";
-    }
+    // if (!formData.day || formData.day.trim() === "") {
+    //   newErrors.day = "Please select a holiday";
+    // }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -474,7 +476,11 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
         }]
       };
 
-
+      //check image uploaded or not
+      if (images.length === 0) {
+        toast.warning("Please upload at least one image");
+        return;
+      }
 
       let result;
       if (modalMode === "edit" && editingSalonId) {
@@ -537,6 +543,8 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
           description: service.description || ""
         }));
 
+
+
         result = await salonAPI.createSalon(apiData);
 
       }
@@ -583,37 +591,43 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
       addressLine1: "Please enter address",
       city: "Please select a city",
       state: "Please select a state",
-      pincode: "Please enter pincode",
+      // pincode: "Please enter pincode",
       gender: "Please select salon type",
       openingTime: "Please enter opening time",
       closingTime: "Please enter closing time",
-      day: "Please select a holiday"
+      // day: "Please select a holiday"
     };
 
     if (customMessages[name]) {
       e.target.setCustomValidity(customMessages[name]);
     }
   };
+  
+const handleImageUpload = async (e) => {
+  try {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
 
-  const handleImageUpload = async (e) => {
-    try {
-      const files = Array.from(e.target.files);
-      const formData = new FormData();
-      formData.append('image', files[0]);
-      const imagesResponse = await salonRequestAPI.uploadImages(formData);
+    setUploadingImage(true);
 
-      if (imagesResponse?.data?.success) {
-        setImages(prev => [...prev, imagesResponse?.data?.url]);
-        e.target.value = '';
-      } else {
-        toast.info(imagesResponse?.data?.message || "Image upload failed. Please try again.");
-      }
-    } catch (error) {
-      toast.info(error.message || "Image upload failed. Please try again.");
+    const formData = new FormData();
+    formData.append("image", files[0]);
+
+    const imagesResponse = await salonRequestAPI.uploadImages(formData);
+
+    if (imagesResponse?.data?.success) {
+      setImages(prev => [...prev, imagesResponse.data.url]);
+      toast.success("Image uploaded successfully");
+    } else {
+      toast.info(imagesResponse?.data?.message || "Image upload failed. Please try again.");
     }
-
-
-  };
+  } catch (error) {
+    toast.error(error?.message || "Image upload failed. Please try again.");
+  } finally {
+    setUploadingImage(false);
+    e.target.value = "";
+  }
+};
 
 
   // Debug: Check if images change
@@ -765,6 +779,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                     required
                     disabled={isSubmitting}
                     placeholder="Enter Phone Number"
+                    maxLength={10}
                   />
                   {errors.phoneNumber && <div className="invalid-feedback">{errors.phoneNumber}</div>}
                 </div>
@@ -866,7 +881,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                     value={formData.pincode || ""}
                     onChange={handleInputChange}
                     onInvalid={handleInvalid}
-                    required
+                    // required
                     disabled={isSubmitting}
                     placeholder="124001"
                     maxLength="6"
@@ -1029,7 +1044,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                       value={formData.day || ""}
                       onChange={handleInputChange}
                       onInvalid={handleInvalid}
-                      required
+                      // required
                       disabled={isSubmitting}
                     >
                       <option value="">Select Day</option>
@@ -1360,7 +1375,13 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                         onChange={handleImageUpload}
                         disabled={isSubmitting}
                       />
+                      
                     </label>
+                     {uploadingImage && (
+    <div className="spinner-border spinner-border-sm text-warning" role="status">
+      <span className="visually-hidden">Uploading...</span>
+    </div>
+  )}
                   </div>
 
                   {images.length > 0 && (
