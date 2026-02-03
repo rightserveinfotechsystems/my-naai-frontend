@@ -5,6 +5,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useUser } from "../contexts/UserContext.jsx";
 import { adminAPI } from "../services/communication.jsx";
+import { TabArray } from "../utils/TabArray.js";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -24,19 +25,36 @@ const Login = () => {
 
     const result = await adminAPI.login({ email, password });
 
+    // if (result.success) {
+    //   localStorage.setItem("token", result.data.token);
+    //   localStorage.setItem("accessTab", JSON.stringify(result?.data?.admin?.accessTab));
+    //   toast.success("Login Successful!", {
+    //     position: "top-right",
+    //     autoClose: 3000,
+    //   });
+    //   navigate("/");
+    // } 
     if (result.success) {
-      localStorage.setItem("token", result.data.token);
-      toast.success("Login Successful!", {
-        position: "top-right",
-        autoClose: 3000,
-      });
+  const accessTabs = result?.data?.admin?.accessTab || [];
 
-      // Note: Profile fetching is handled by UserContext automatically
-      // No need to call fetchUserProfile() here as it will be called
-      // when the UserProvider detects the token
+  localStorage.setItem("token", result.data.token);
+  localStorage.setItem("accessTab", JSON.stringify(accessTabs));
 
-      navigate("/");
-    } else {
+  // 🔥 Find first allowed tab
+  const firstAllowedTab = TabArray.find(tab =>
+    accessTabs.includes(tab.key)
+  );
+
+  toast.success("Login Successful!", {
+    position: "top-right",
+    autoClose: 3000,
+  });
+
+  // ✅ Redirect to allowed route
+  navigate(firstAllowedTab ? firstAllowedTab.route : "/login");
+}
+
+    else {
       toast.error(result.message || "Login Failed");
     }
 

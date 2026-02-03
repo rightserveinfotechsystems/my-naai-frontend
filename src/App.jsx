@@ -18,6 +18,7 @@ import TermsAndConditions from "./pages/TermsAndConditions.jsx";
 import PrivacyPolicy from "./pages/PrivacyPolicy.jsx"; 
 import { UserProvider } from "./contexts/UserContext.jsx";
 import AccountDeletion from "./pages/AccountDeletion.jsx";
+import RoleManagement from "./pages/RoleManagement.jsx";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -51,6 +52,14 @@ const router = createBrowserRouter(
 
     {
       path: "/",
+      element: (
+        <ProtectedRoute>
+          <RoleManagement />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/customer",
       element: (
         <ProtectedRoute>
           <Users />

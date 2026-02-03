@@ -28,11 +28,12 @@ const Icons = {
 };
 
 const navItems = [
-  { path: "/", label: "User Management", icon: <Icons.Users /> },
-  { path: "/salons", label: "Salon Management", icon: <Store size={20} /> },
-  { path: "/bookings", label: "Booking Management", icon: <CalendarCheck size={20} /> },
-  { path: "/salonrequest", label: "Salon Request", icon: <ClipboardList size={20} /> },
-  { path: "/advertisement", label: "Advertisement", icon: <Icons.Advertisement /> },
+  { path: "/", key: "user", label: "User Management", icon: <Icons.Users /> },
+  { path: "/customer", key: "customer", label: "Customer Management", icon: <Icons.Users /> },
+  { path: "/salons", key: "salonManagement", label: "Salon Management", icon: <Store size={20} /> },
+  { path: "/bookings", key: "bookings", label: "Booking Management", icon: <CalendarCheck size={20} /> },
+  { path: "/salonrequest", key: "salonRequest", label: "Salon Request", icon: <ClipboardList size={20} /> },
+  { path: "/advertisement", key: "advertisement", label: "Advertisement", icon: <Icons.Advertisement /> },
 ];
 
 const Layout = ({ children }) => {
@@ -43,6 +44,16 @@ const Layout = ({ children }) => {
   const [isLogoutLoading, setIsLogoutLoading] = useState(false);
   const [salonRequestCount, setSalonRequestCount] = useState(0);
   const navigate = useNavigate();
+  const accessTab = JSON.parse(localStorage.getItem("accessTab"))
+  const [filteredTabs, setFilterTabs] = useState(navItems.filter((navDetails) => accessTab?.includes(navDetails.key)))
+  // const [filteredTabs, setFilterTabs] = useState(accessTab.map((ele) => {
+  //   const data = navItems.find((navDetails) => navDetails?.key === ele)
+  //   if (data) {
+  //     return data
+  //   }
+  // }).filter(Boolean))
+
+
   const { user, logout } = useUser();
 
   // Profile dropdown close handler
@@ -102,11 +113,15 @@ const Layout = ({ children }) => {
   };
 
   // Fetch count on mount and every 30 seconds
+  // useEffect(() => {
+  //   fetchSalonRequestCount();
+  //   const interval = setInterval(fetchSalonRequestCount, 30000); // 30 seconds
+  //   return () => clearInterval(interval);
+  // }, []);
+
   useEffect(() => {
-    fetchSalonRequestCount();
-    const interval = setInterval(fetchSalonRequestCount, 30000); // 30 seconds
-    return () => clearInterval(interval);
-  }, []);
+
+  }, [])
 
   return (
     <div className="app-shell d-flex">
@@ -127,7 +142,7 @@ const Layout = ({ children }) => {
         </div>
 
         <nav className="nav flex-column gap-1 sidebarmt">
-          {navItems.map((item) => (
+          {filteredTabs?.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}

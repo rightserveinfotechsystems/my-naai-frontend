@@ -277,6 +277,156 @@ export const userAPI = {
 
 };
 
+// ==================== Admin panel USER MANAGEMENT ====================
+export const adminPanelUsersAPI = {
+  getAdminPanelUsers: async (payload) => {
+    try {
+      const response = await api.post(
+        '/api/admin/admin-panel-user-list',
+        payload
+      );
+
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data,
+        message: response.data?.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to fetch users",
+        error: error.response?.data
+      };
+    }
+  },
+
+
+  // Create new user
+  createAdminPanelUser: async (userData) => {
+    try {
+      const response = await api.post('/api/admin/create-admin-panel-user', userData);
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data,
+        message: response.data?.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to create user",
+        error: error.response?.data
+      };
+    }
+  },
+
+  // Update user
+  updateAdminPanelUser: async (userId, userData) => {
+    try {
+      const response = await api.post(`/api/admin/update-admin-panel-user`,
+        {
+          userId: String(userId),
+          ...userData
+        });
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data,
+        message: response.data?.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to update user",
+        error: error.response?.data
+      };
+    }
+  },
+
+    // Toggle Admin Users status
+  toggleAdminUsersStatus: async (userId, isActive) => {
+    try {
+      const response = await api.post('/api/admin/status', {
+        userId: userId,
+        isActive: isActive
+      });
+
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data,
+        message: response.data?.message || "User status updated successfully"
+      };
+    } catch (error) {
+      console.error("Toggle user status API error:", error);
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to toggle user status",
+        error: error.response?.data
+      };
+    }
+  },
+
+
+  // Get user by ID
+  getAdminPanelUserById: async (userId) => {
+    try {
+      const response = await api.get(`/api/admin/get-admin-by-id/${userId}`);
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data,
+        message: response.data?.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to fetch user",
+        error: error.response?.data
+      };
+    }
+  },
+  // changeUserStatus: async (userId) => {
+  //   try {
+  //     const response = await api.post('/api/users/change-user-status', {
+  //       userId
+  //     });
+
+  //     return {
+  //       success: response.data?.status === "SUCCESS",
+  //       data: response.data?.data,
+  //       message: response.data?.message
+  //     };
+  //   } catch (error) {
+  //     console.error("Change status API error:", error);
+  //     return {
+  //       success: false,
+  //       message: error.response?.data?.message || "Failed to change user status",
+  //       error: error.response?.data
+  //     };
+  //   }
+  // },
+  deleteAdminPanelUser: async ({ userId }) => {
+    try {
+      const response = await api.post("/api/admin/admin-panel-user-delete", {
+        userId
+      });
+
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data,
+        message: response.data?.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message:
+          error.response?.data?.message || "Failed to delete users",
+        error: error.response?.data
+      };
+    }
+  }
+  
+
+
+};
+
 // ==================== SALON MANAGEMENT ====================
 export const salonAPI = {
   getSalons: async (params = {}) => {
