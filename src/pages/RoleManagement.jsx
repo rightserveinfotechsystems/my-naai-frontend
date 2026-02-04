@@ -184,8 +184,9 @@ const RoleManagement = () => {
                   </div>
                 </div>
 
-                {/* Users Table */}
-                <div className="table-responsive d-none d-md-block" style={{ maxHeight: '83vh', overflowY: 'auto' }}>
+                {/* Users Table (Desktop Only) */}
+                <div className="table-responsive d-none d-md-block"
+                  style={{ maxHeight: '83vh', overflowY: 'auto' }}>
                   <table className="table table-hover mb-0 align-middle">
                     <thead className="table-light position-sticky top-0 bg-white border-bottom z-10">
                       <tr>
@@ -243,6 +244,44 @@ const RoleManagement = () => {
                       ))}
                     </tbody>
                   </table>
+                </div>
+
+                {/* Users List (Mobile Only) */}
+                <div className="d-block d-md-none">
+                  {loading ? (
+                    <div className="text-center py-5">
+                      <Loader fullScreen={false} size="sm" text="Loading users..." />
+                    </div>
+                  ) : users && users.length === 0 ? (
+                    <div className="text-center text-muted py-5">No users found</div>
+                  ) : (
+                    <div className="user-list-mobile">
+                      {users && users.map((user, index) => (
+                        <div key={user.id} className="card mb-2 shadow-sm">
+                          <div className="card-body p-2 d-flex flex-column gap-1">
+                            <div className="fw-semibold">{user.name}</div>
+                            <div className="small text-muted">{user.email}</div>
+                            <div className="small">Phone: {user.mobile}</div>
+                            <div className="small">Tab Access: {user?.accessTab?.length
+                              ? user.accessTab.map(tab => TabArray.find(t => t.key === tab)?.label || tab).join(", ")
+                              : "—"}</div>
+                            <div className="d-flex align-items-center gap-2 mt-1">
+                              <StatusBadge status={user.isActive ? "active" : "inactive"} />
+                              <button className="btn btn-sm btn-light px-2 py-1" onClick={() => handleEditUser(user)}>
+                                <i className="bi bi-pencil-square"></i>
+                              </button>
+                              <button className="btn btn-sm fontcolor px-2 py-1" onClick={() => setDeleteModal({ show: true, id: String(user.id), loading: false })}>
+                                <FaTrash size={14} />
+                              </button>
+                              <div className="form-check form-switch m-0">
+                                <input className="form-check-input" type="checkbox" checked={!!user.isActive} onChange={() => handleToggleClick(user)} />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

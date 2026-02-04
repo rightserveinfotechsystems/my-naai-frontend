@@ -146,8 +146,14 @@ const SalonDetail = () => {
                 </small>
                 <div className="d-flex gap-2 mt-1">
                   {salon.ownerName && (
-                    <small className="text-muted">by {salon.ownerName}</small>
+                    <small className="text-muted">Owner: {salon.ownerName}</small>
                   )}
+                </div>
+                <div className="d-flex gap-2 mt-1">
+                    <small className="text-muted">Onboarded By: {salon?.creatorAdmin?.name}</small>
+                </div>
+                <div className="d-flex gap-2 mt-1">
+                    <small className="text-muted">Agent Mobile No.: {salon?.creatorAdmin?.mobile}</small>
                 </div>
               </div>
             </div>

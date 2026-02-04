@@ -90,20 +90,20 @@ const ProfileDropdown = ({ isOpen, onClose, onChangePassword, position = 'mobile
           {/* User Info */}
           <div className="text-center mb-3 pb-3 border-bottom">
             <div className="fs-4 mb-1">{displayUser.avatar || "👤"}</div>
-            <div className="fw-semibold text-dark">{displayUser.name || "Admin User"}</div>
-            <div className="small text-muted">{displayUser.email || "admin@salonharmony.com"}</div>
-            <div
+            <div className="fw-semibold text-dark">{displayUser.name || ""}</div>
+            <div className="small text-muted">{displayUser.email || ""}</div>
+            {/* <div
               className="badge bg-info mt-2 cursor-pointer"
               style={{ cursor: 'pointer' }}
               onClick={() => setShowAdminDetails(!showAdminDetails)}
             >
               {displayUser.role || "Administrator"}
               <i className={`bi ms-1 ${showAdminDetails ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
-            </div>
+            </div> */}
           </div>
 
           {/* Administrator Information - Collapsible */}
-          {showAdminDetails && (
+          {/* {showAdminDetails && (
             <div className="mb-3 pb-3 border-bottom text-center">
               <div className="small text-muted fw-semibold mb-2 text-center">Administrator Details</div>
               <div className="small text-muted mb-1">
@@ -119,12 +119,12 @@ const ProfileDropdown = ({ isOpen, onClose, onChangePassword, position = 'mobile
                 Updated: {formatDate(displayUser.updatedAt)}
               </div>
             </div>
-          )}
+          )} */}
 
           {/* Action Buttons */}
           <div className="d-grid gap-2">
             <button
-              className=" logoutbutton btn-sm w-100"
+              className="logoutbutton btn-sm w-100"
               onClick={() => {
                 onClose();
                 onChangePassword();
@@ -133,6 +133,17 @@ const ProfileDropdown = ({ isOpen, onClose, onChangePassword, position = 'mobile
               <i className="bi bi-key me-2"></i>
               Change Password
             </button>          
+          </div>
+
+          {/* Logout Button (fixed for mobile/desktop) */}
+          <div className="p-3 border-top ">
+            <button
+              className="logoutbutton btn-sm w-100"
+              onClick={handleLogout}
+            >
+              <i className="bi bi-box-arrow-right me-2"></i>
+              Logout
+            </button>
           </div>
         </div>
       </div>

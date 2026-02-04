@@ -3,7 +3,7 @@ import { NavLink, Link, useNavigate } from "react-router-dom";
 import ProfileDropdown from "./ProfileDropdown.jsx";
 import ChangePasswordModal from "./ChangePasswordModal.jsx";
 import { useUser } from "../contexts/UserContext.jsx";
-import { ClipboardList, Store, CalendarCheck } from "lucide-react";
+import { ClipboardList, Store, CalendarCheck, User, Users } from "lucide-react";
 import { salonRequestAPI } from "../services/communication.jsx";
 // Icons definitions (SVG)
 const Icons = {
@@ -24,12 +24,20 @@ const Icons = {
   ),
   Logout: () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="me-2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
-  )
+  ),
+  Customer: () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="7" r="4" />
+    <path d="M5.5 21a6.5 6.5 0 0 1 13 0" />
+  </svg>
+)
+
 };
 
 const navItems = [
-  { path: "/", key: "user", label: "User Management", icon: <Icons.Users /> },
-  { path: "/customer", key: "customer", label: "Customer Management", icon: <Icons.Users /> },
+  { path: "/", key: "user", label: "User Management", icon: <User size={20}/> },
+  { path: "/customer", key: "customer", label: "Customer Management", icon: <Users size={20}/> },
   { path: "/salons", key: "salonManagement", label: "Salon Management", icon: <Store size={20} /> },
   { path: "/bookings", key: "bookings", label: "Booking Management", icon: <CalendarCheck size={20} /> },
   { path: "/salonrequest", key: "salonRequest", label: "Salon Request", icon: <ClipboardList size={20} /> },
@@ -271,7 +279,12 @@ const Layout = ({ children }) => {
                   className="navbar-brand fw-semibold text-truncate m-0 d-flex align-items-center gap-2"
                   style={{ maxWidth: "150px", fontSize: '1rem' }}
                 >
-                  <Icons.Salon /> Salon
+                  <img
+              src="/images/my_naai_logo.png"
+              alt="Salon Logo"
+              className="object-fit-contain"
+              style={{ maxHeight: "35px" }}
+            />
                 </Link>
               </div>
 
@@ -292,6 +305,7 @@ const Layout = ({ children }) => {
                 <span style={{ fontSize: '1.2rem' }}>👤</span>
               </button>
             </div>
+            
           </header>
 
           {/* Profile Dropdown */}
@@ -308,74 +322,30 @@ const Layout = ({ children }) => {
           <div className="container-fluid">{children}</div>
         </main>
 
-        {/* Mobile Bottom Navigation */}
+        {/* Mobile Bottom Navigation (now uses filteredTabs for access control) */}
         <div className="d-md-none">
           <nav className="navbar fixed-bottom bg-white border-top shadow-lg mobile-bottom-nav">
             <div className="container-fluid d-flex justify-content-around align-items-center px-2">
-              <NavLink
-                to="/"
-                end
-                className={({ isActive }) =>
-                  `nav-link text-center p-2 mobile-nav-item ${isActive ? "active" : ""}`
-                }
-              >
-                <div className="d-flex flex-column align-items-center">
-                  <Icons.Users />
-                  <small className="mt-1 nav-text">Users</small>
-                </div>
-              </NavLink>
-
-              <NavLink
-                to="/salons"
-                className={({ isActive }) =>
-                  `nav-link text-center p-2 mobile-nav-item ${isActive ? "active" : ""}`
-                }
-              >
-                <div className="d-flex flex-column align-items-center">
-                  <Icons.Scissors />
-                  <small className="mt-1 nav-text">Salons</small>
-                </div>
-              </NavLink>
-
-              <NavLink
-                to="/bookings"
-                className={({ isActive }) =>
-                  `nav-link text-center p-2 mobile-nav-item ${isActive ? "active" : ""}`
-                }
-              >
-                <div className="d-flex flex-column align-items-center">
-                  <Icons.Calendar />
-                  <small className="mt-1 nav-text">Bookings</small>
-                </div>
-              </NavLink>
-              <NavLink
-                to="/salonrequest"
-                className={({ isActive }) =>
-                  `nav-link text-center p-2 mobile-nav-item ${isActive ? "active" : ""}`
-                }
-              >
-                <div className="d-flex flex-column align-items-center position-relative">
-                  <Icons.Salon />
-                  <small className="mt-1 nav-text">Salon Request</small>
-                  {salonRequestCount > 0 && (
-                    <span className="badge bg-danger position-absolute top-0 end-0 translate-middle" style={{ fontSize: '0.6rem', padding: '0.15rem 0.25rem' }}>
-                      {salonRequestCount > 99 ? '99+' : salonRequestCount}
-                    </span>
-                  )}
-                </div>
-              </NavLink>
-
-              <NavLink
-                to="/advertisement"
-                className={({ isActive }) =>
-                  `nav-link text-center p-2 mobile-nav-item ${isActive ? "active" : ""}`
-                }
-              >
-                <div className="d-flex flex-column align-items-center">
-                  <Icons.Advertisement />
-                  <small className="mt-1 nav-text">Ads</small>
-                </div>
-              </NavLink>
+              {filteredTabs?.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  end={item.path === "/"}
+                  className={({ isActive }) =>
+                    `nav-link text-center p-2 mobile-nav-item ${isActive ? "active" : ""}`
+                  }
+                >
+                  <div className={`d-flex flex-column align-items-center${item.path === "/salonrequest" ? " position-relative" : ""}`}>
+                    {item.icon}
+                    <small className="mt-1 nav-text">{item.label.replace(" Management", "").replace("Customer", "Customer").replace("User", "Users").replace("Salon Request", "Salon Request").replace("Advertisement", "Ads")}</small>
+                    {item.path === "/salonrequest" && salonRequestCount > 0 && (
+                      <span className="badge bg-danger position-absolute top-0 end-0 translate-middle" style={{ fontSize: '0.6rem', padding: '0.15rem 0.25rem' }}>
+                        {salonRequestCount > 99 ? '99+' : salonRequestCount}
+                      </span>
+                    )}
+                  </div>
+                </NavLink>
+              ))}
             </div>
           </nav>
         </div>
