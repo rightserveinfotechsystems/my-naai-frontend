@@ -14,11 +14,12 @@ import SalonRequest from "./pages/SalonRequest.jsx";
 import Advertisement from "./pages/Advertisement.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import Login from "./pages/Login.jsx";
-import TermsAndConditions from "./pages/TermsAndConditions.jsx"; 
-import PrivacyPolicy from "./pages/PrivacyPolicy.jsx"; 
+import TermsAndConditions from "./pages/TermsAndConditions.jsx";
+import PrivacyPolicy from "./pages/PrivacyPolicy.jsx";
 import { UserProvider } from "./contexts/UserContext.jsx";
 import AccountDeletion from "./pages/AccountDeletion.jsx";
 import RoleManagement from "./pages/RoleManagement.jsx";
+import { TabArray } from "./utils/TabArray.js";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -27,11 +28,23 @@ const ProtectedRoute = ({ children }) => {
 
 const PublicRoute = ({ children }) => {
   const token = localStorage.getItem("token");
-  return token ? <Navigate to="/" replace /> : children;
+  const accessTabs = localStorage.getItem("accessTabs");
+  const firstTab = TabArray?.find(tab =>
+    accessTabs?.includes(tab.key)
+  )
+  return (token & accessTabs) ? <Navigate to={firstTab.route} replace /> : children;
 };
 
 const router = createBrowserRouter(
   [
+    {
+      path: "/",
+      element: (
+        <PublicRoute>
+          <Login />
+        </PublicRoute>
+      ),
+    },
     {
       path: "/login",
       element: (
@@ -40,10 +53,10 @@ const router = createBrowserRouter(
         </PublicRoute>
       ),
     },
-    
+
     {
       path: "/account-deletion",
-      element: <AccountDeletion />, 
+      element: <AccountDeletion />,
     },
     {
       path: "/privacy-policy",
@@ -51,7 +64,7 @@ const router = createBrowserRouter(
     },
 
     {
-      path: "/",
+      path: "/user",
       element: (
         <ProtectedRoute>
           <RoleManagement />
@@ -111,9 +124,9 @@ const router = createBrowserRouter(
       element: (
         // NotFound ko bhi open rakh sakte hain ya protected, aapki marzi
         // Filhal ye protected hai
-        <ProtectedRoute>
-          <NotFound />
-        </ProtectedRoute>
+        <PublicRoute>
+          <Login />
+        </PublicRoute>
       ),
     },
   ],

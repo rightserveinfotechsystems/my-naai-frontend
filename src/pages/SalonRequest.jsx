@@ -282,7 +282,12 @@ const SalonRequest = () => {
     return () => clearTimeout(handler);
   }, [search]);
 
-
+  useEffect(() => {
+    const tab = localStorage.getItem("accessTab") ? JSON.parse(localStorage.getItem("accessTab")) : null;
+    if (!(tab && tab?.includes("salonRequest"))) {
+      navigate("/login");
+    }
+  }, [])
 
   return (
     <Layout>
@@ -543,7 +548,7 @@ const SalonRequest = () => {
         <div
           className="table-responsive d-none d-md-block mb-2 mb-md-3 bg-white bookings-table-scroll"
           style={{
-                          scrollbarWidth: 'thin',
+            scrollbarWidth: 'thin',
 
             maxHeight: 'calc(100dvh - 160px)',
             // maxHeight: 'calc(100vh - 160px)',
@@ -553,96 +558,96 @@ const SalonRequest = () => {
           <div style={{ minHeight: '320px', backgroundColor: 'white' }}>
             <table className="table table-hover mb-0 align-middle text-nowrap">
               <thead className="table-light position-sticky top-0 bg-white border-bottom z-10">
-              <tr>
-                <th style={{ width: '50px' }} className="px-2 py-2 border-bottom text-center">
-                  <input
-                    type="checkbox"
-                    checked={selectAll}
-                    onChange={handleSelectAll}
-                    disabled={isLoading}
-                  />
-                </th>
-                <th style={{ width: '60px' }} className="px-2 py-2 border-bottom text-center fw-medium">No.</th>
-                <th style={{ width: '160px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Salon Owner</th>
-                <th style={{ width: '150px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Salon Name</th>
-                <th style={{ width: '220px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Address</th>
-                <th style={{ width: '140px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">City</th>
-                <th style={{ width: '140px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Mobile</th>
-                <th style={{ width: '200px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom text-center">Created</th>
-                <th style={{ width: '80px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              
-              {isLoading ? (
-                <tr><td colSpan={8} className="text-center py-5"><Loader fullScreen={false} size="sm" text="Loading..." /></td></tr>
-              ) : (
-                <>
-                  {bookings.map((booking, index) => (
-                    <tr key={booking.requestId || index}>
-                      <td className="px-2 py-2 text-center">
-                        <input
-                          type="checkbox"
-                          checked={selectedBookings.has(booking.requestId)}
-                          onChange={(e) =>
-                            handleSelectBooking(booking.requestId, e.target.checked)
-                          }
-                          disabled={isLoading}
-                        />
-                      </td>
-                      <td className="px-2 py-2 text-center fw-medium text-muted small">
-                        {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
-                      </td>
-                      <td className="fw-semibold px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '160px' }}>
-                        {booking.fullName || 'N/A'}
-                      </td>
-                      <td className="px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '150px' }}>
-                        {booking.salonName}
-                      </td>
-                      <td className="px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '220px' }}>
-                        {booking.address || 'N/A'}
-                      </td>
-                      <td className="px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '220px' }}>
-                        {booking.city || 'N/A'}
-                      </td>
-                      <td className="fw-semibold px-2 px-md-3 py-2 text-truncate " style={{ maxWidth: '140px' }}>
-                        {booking.phoneNumber || 'N/A'}
-                      </td>
-                      <td className="px-2 px-md-3 py-2 text-center">
-                        <div className="d-flex flex-column align-items-center gap-1">
-                          <div className="text-center">
-                            <div className="fw-medium small">{formatDate(booking.createdAt).date}</div>
-                            {/* <div className="text-muted small">{formatDate(booking.createdAt).time}</div> */}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="text-center px-2 px-md-3 py-2">
-                        <button
-                          className="btn fontcolor btn-sm"
-                          onClick={() =>
-                            setDeleteModal({
-                              show: true,
-                              requestIds: [booking.requestId]
-                            })
-                          }
-                        >
-                          <i className="fa-solid fa-trash"></i>
-                        </button>
+                <tr>
+                  <th style={{ width: '50px' }} className="px-2 py-2 border-bottom text-center">
+                    <input
+                      type="checkbox"
+                      checked={selectAll}
+                      onChange={handleSelectAll}
+                      disabled={isLoading}
+                    />
+                  </th>
+                  <th style={{ width: '60px' }} className="px-2 py-2 border-bottom text-center fw-medium">No.</th>
+                  <th style={{ width: '160px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Salon Owner</th>
+                  <th style={{ width: '150px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Salon Name</th>
+                  <th style={{ width: '220px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Address</th>
+                  <th style={{ width: '140px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">City</th>
+                  <th style={{ width: '140px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom">Mobile</th>
+                  <th style={{ width: '200px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom text-center">Created</th>
+                  <th style={{ width: '80px' }} className="px-1 px-md-2 px-lg-3 py-2 border-bottom text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody>
 
-                      </td>
-                    </tr>
-                  ))}
-                  {bookings.length === 0 && !isLoading && (
-                    <tr>
-                      <td colSpan={8} className="text-center text-muted py-5 bg-white">
-                        No Request found
-                      </td>
-                    </tr>
-                  )}
-                </>
-              )}
-            </tbody>
-          </table>
+                {isLoading ? (
+                  <tr><td colSpan={8} className="text-center py-5"><Loader fullScreen={false} size="sm" text="Loading..." /></td></tr>
+                ) : (
+                  <>
+                    {bookings.map((booking, index) => (
+                      <tr key={booking.requestId || index}>
+                        <td className="px-2 py-2 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedBookings.has(booking.requestId)}
+                            onChange={(e) =>
+                              handleSelectBooking(booking.requestId, e.target.checked)
+                            }
+                            disabled={isLoading}
+                          />
+                        </td>
+                        <td className="px-2 py-2 text-center fw-medium text-muted small">
+                          {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
+                        </td>
+                        <td className="fw-semibold px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '160px' }}>
+                          {booking.fullName || 'N/A'}
+                        </td>
+                        <td className="px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '150px' }}>
+                          {booking.salonName}
+                        </td>
+                        <td className="px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '220px' }}>
+                          {booking.address || 'N/A'}
+                        </td>
+                        <td className="px-2 px-md-3 py-2 text-truncate" style={{ maxWidth: '220px' }}>
+                          {booking.city || 'N/A'}
+                        </td>
+                        <td className="fw-semibold px-2 px-md-3 py-2 text-truncate " style={{ maxWidth: '140px' }}>
+                          {booking.phoneNumber || 'N/A'}
+                        </td>
+                        <td className="px-2 px-md-3 py-2 text-center">
+                          <div className="d-flex flex-column align-items-center gap-1">
+                            <div className="text-center">
+                              <div className="fw-medium small">{formatDate(booking.createdAt).date}</div>
+                              {/* <div className="text-muted small">{formatDate(booking.createdAt).time}</div> */}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="text-center px-2 px-md-3 py-2">
+                          <button
+                            className="btn fontcolor btn-sm"
+                            onClick={() =>
+                              setDeleteModal({
+                                show: true,
+                                requestIds: [booking.requestId]
+                              })
+                            }
+                          >
+                            <i className="fa-solid fa-trash"></i>
+                          </button>
+
+                        </td>
+                      </tr>
+                    ))}
+                    {bookings.length === 0 && !isLoading && (
+                      <tr>
+                        <td colSpan={8} className="text-center text-muted py-5 bg-white">
+                          No Request found
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
 

@@ -11,6 +11,7 @@ import UserEditModal from "../components/UserEditModal.jsx";
 import { TabArray } from "../utils/TabArray.js";
 import StatusConfirmModal from "../components/StatusConfirmModal.jsx";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 
 const ITEMS_PER_PAGE = 20;
@@ -41,6 +42,7 @@ const RoleManagement = () => {
     id: null,
     loading: false
   });
+  const navigate = useNavigate()
 
   // Fetch users
   const fetchUsers = async () => {
@@ -148,6 +150,12 @@ const RoleManagement = () => {
     return () => clearTimeout(timer);
   }, [search, currentPage]);
 
+  useEffect(() => {
+    const tab = localStorage.getItem("accessTab") ? JSON.parse(localStorage.getItem("accessTab")) : null;
+    if (!(tab && tab?.includes("user"))) {
+      navigate("/login");
+    }
+  }, [])
   return (
     <Layout>
       <div className="container-fluid px-3 px-md-4 mt-2 mt-md-4 thin-scrollbar">
@@ -309,19 +317,19 @@ const RoleManagement = () => {
         />
       )}
 
-       {/* TOGGLE MODAL */}
-            <StatusConfirmModal
-              show={showToggleModal}
-              onHide={() => {
-                setShowToggleModal(false);
-                setSelectedToggleUser(null);
-              }}
-              onConfirm={confirmToggleUserStatus}
-              currentStatus={selectedToggleUser?.isActive}
-              loading={loading}
-              type="admin"
-            />
-      
+      {/* TOGGLE MODAL */}
+      <StatusConfirmModal
+        show={showToggleModal}
+        onHide={() => {
+          setShowToggleModal(false);
+          setSelectedToggleUser(null);
+        }}
+        onConfirm={confirmToggleUserStatus}
+        currentStatus={selectedToggleUser?.isActive}
+        loading={loading}
+        type="admin"
+      />
+
     </Layout>
   );
 };

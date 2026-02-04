@@ -2,7 +2,7 @@ export const TabArray = [
   {
     key: "user",
     label: "User Management",
-    route: "/",
+    route: "/user",
   },
   {
     key: "customer",

@@ -183,7 +183,12 @@ const Users = () => {
     return () => clearTimeout(timer);
   }, [search, currentPage]);
 
-
+  useEffect(() => {
+    const tab = localStorage.getItem("accessTab") ? JSON.parse(localStorage.getItem("accessTab")) : null;
+    if (!(tab && tab?.includes("customer"))) {
+      navigate("/login");
+    }
+  }, [])
   return (
     <Layout>
       <div className="container-fluid px-3 px-md-4 mt-2 mt-md-4 thin-scrollbar">

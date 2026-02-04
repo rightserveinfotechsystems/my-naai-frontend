@@ -26,18 +26,18 @@ const Icons = {
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="me-2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
   ),
   Customer: () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-    fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="7" r="4" />
-    <path d="M5.5 21a6.5 6.5 0 0 1 13 0" />
-  </svg>
-)
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="7" r="4" />
+      <path d="M5.5 21a6.5 6.5 0 0 1 13 0" />
+    </svg>
+  )
 
 };
 
 const navItems = [
-  { path: "/", key: "user", label: "User Management", icon: <User size={20}/> },
-  { path: "/customer", key: "customer", label: "Customer Management", icon: <Users size={20}/> },
+  { path: "/user", key: "user", label: "User Management", icon: <User size={20} /> },
+  { path: "/customer", key: "customer", label: "Customer Management", icon: <Users size={20} /> },
   { path: "/salons", key: "salonManagement", label: "Salon Management", icon: <Store size={20} /> },
   { path: "/bookings", key: "bookings", label: "Booking Management", icon: <CalendarCheck size={20} /> },
   { path: "/salonrequest", key: "salonRequest", label: "Salon Request", icon: <ClipboardList size={20} /> },
@@ -93,7 +93,7 @@ const Layout = ({ children }) => {
   };
 
   // Fallback user data if no user is loaded
-  const displayUser = user || {
+  const displayUser = JSON.parse(localStorage.getItem("userData")) || user || {
     name: "",
     email: "",
     role: ""
@@ -127,26 +127,23 @@ const Layout = ({ children }) => {
   //   return () => clearInterval(interval);
   // }, []);
 
-  useEffect(() => {
-
-  }, [])
 
   return (
     <div className="app-shell d-flex">
       {/* Desktop Sidebar */}
       <aside className="sidebar d-none d-md-flex flex-column p-3 gap-3 position-sticky top-0 vh-100">
         <div className="d-flex flex-column align-items-center gap-2 mb-3">
-          <Link
+          {/* <Link
             to="/"
             className="d-flex justify-content-center align-items-center text-decoration-none"
-          >
+          > */}
             <img
               src="/images/my_naai_logo.png"
               alt="Salon Logo"
               className="object-fit-contain"
               style={{ maxHeight: "80px" }}
             />
-          </Link>
+          {/* </Link> */}
         </div>
 
         <nav className="nav flex-column gap-1 sidebarmt">
@@ -274,18 +271,18 @@ const Layout = ({ children }) => {
           <header className="navbar bg-white shadow-sm sticky-top px-2 mobile-header-fixed">
             <div className="d-flex align-items-center justify-content-between w-100">
               <div className="d-flex align-items-center gap-2 min-w-0 flex-grow-1">
-                <Link
+                {/* <Link
                   to="/"
                   className="navbar-brand fw-semibold text-truncate m-0 d-flex align-items-center gap-2"
                   style={{ maxWidth: "150px", fontSize: '1rem' }}
-                >
+                > */}
                   <img
-              src="/images/my_naai_logo.png"
-              alt="Salon Logo"
-              className="object-fit-contain"
-              style={{ maxHeight: "35px" }}
-            />
-                </Link>
+                    src="/images/my_naai_logo.png"
+                    alt="Salon Logo"
+                    className="object-fit-contain"
+                    style={{ maxHeight: "35px" }}
+                  />
+                {/* </Link> */}
               </div>
 
               <button
@@ -305,7 +302,7 @@ const Layout = ({ children }) => {
                 <span style={{ fontSize: '1.2rem' }}>👤</span>
               </button>
             </div>
-            
+
           </header>
 
           {/* Profile Dropdown */}

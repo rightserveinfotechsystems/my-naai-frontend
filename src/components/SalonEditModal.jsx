@@ -2,6 +2,9 @@ import { useState, useEffect, useId } from "react";
 import { toast } from 'react-toastify';
 import { salonAPI, serviceAPI, salonRequestAPI } from "../services/communication.jsx";
 import DeleteConfirmModal from "./DeleteConfirmModal.jsx";
+import { maleSalonServices } from "../utils/maleSalonServices.js";
+import { unisexSalonServices } from "../utils/unisexSalonServices.js";
+import { femaleSalonServices } from "../utils/femaleSalonServices.js";
 
 // Cities list for dropdown
 const cities = [
@@ -46,7 +49,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
     // isVerified: false,
 
     // Services
-    services: [],
+    services: unisexSalonServices,
 
     // Business hours
     scheduleId: "",
@@ -194,7 +197,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
             // isVerified: false,
 
             // Services
-            services: [],
+            services: unisexSalonServices,
 
             // Business hours
             scheduleId: "",
@@ -283,7 +286,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
           setDeleteModal({ show: false, serviceIndex: null, loading: false });
         }
       } else {
-        toast.info("Removing unsaved service...");
+        // toast.info("Removing unsaved service...");
         // New service (no ID) - just remove from local state
         const newServices = formData.services.filter((_, i) => i !== serviceIndex);
         setFormData({ ...formData, services: newServices });
@@ -570,8 +573,12 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type } = e.target;
+    if (type === 'radio') {
+      setFormData(prev => ({ ...prev, [name]: value, services: (value === "unisex") ? unisexSalonServices : ((value === "male") ? maleSalonServices : femaleSalonServices) }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
 
     // Clear error for this field when user starts typing
     if (errors[name]) {
@@ -602,32 +609,32 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
       e.target.setCustomValidity(customMessages[name]);
     }
   };
-  
-const handleImageUpload = async (e) => {
-  try {
-    const files = Array.from(e.target.files);
-    if (!files.length) return;
 
-    setUploadingImage(true);
+  const handleImageUpload = async (e) => {
+    try {
+      const files = Array.from(e.target.files);
+      if (!files.length) return;
 
-    const formData = new FormData();
-    formData.append("image", files[0]);
+      setUploadingImage(true);
 
-    const imagesResponse = await salonRequestAPI.uploadImages(formData);
+      const formData = new FormData();
+      formData.append("image", files[0]);
 
-    if (imagesResponse?.data?.success) {
-      setImages(prev => [...prev, imagesResponse.data.url]);
-      toast.success("Image uploaded successfully");
-    } else {
-      toast.info(imagesResponse?.data?.message || "Image upload failed. Please try again.");
+      const imagesResponse = await salonRequestAPI.uploadImages(formData);
+
+      if (imagesResponse?.data?.success) {
+        setImages(prev => [...prev, imagesResponse.data.url]);
+        toast.success("Image uploaded successfully");
+      } else {
+        toast.info(imagesResponse?.data?.message || "Image upload failed. Please try again.");
+      }
+    } catch (error) {
+      toast.error(error?.message || "Image upload failed. Please try again.");
+    } finally {
+      setUploadingImage(false);
+      e.target.value = "";
     }
-  } catch (error) {
-    toast.error(error?.message || "Image upload failed. Please try again.");
-  } finally {
-    setUploadingImage(false);
-    e.target.value = "";
-  }
-};
+  };
 
 
   // Debug: Check if images change
@@ -1375,13 +1382,13 @@ const handleImageUpload = async (e) => {
                         onChange={handleImageUpload}
                         disabled={isSubmitting}
                       />
-                      
+
                     </label>
-                     {uploadingImage && (
-    <div className="spinner-border spinner-border-sm text-warning" role="status">
-      <span className="visually-hidden">Uploading...</span>
-    </div>
-  )}
+                    {uploadingImage && (
+                      <div className="spinner-border spinner-border-sm text-warning" role="status">
+                        <span className="visually-hidden">Uploading...</span>
+                      </div>
+                    )}
                   </div>
 
                   {images.length > 0 && (

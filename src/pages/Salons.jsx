@@ -244,6 +244,12 @@ const Salons = () => {
     return () => clearTimeout(handler);
   }, [search]);
 
+  useEffect(() => {
+    const tab = localStorage.getItem("accessTab") ? JSON.parse(localStorage.getItem("accessTab")) : null;
+    if (!(tab && tab?.includes("salonManagement"))) {
+      navigate("/login");
+    }
+  }, [])
 
   return (
     <Layout>
@@ -479,7 +485,7 @@ const Salons = () => {
                 <p className="mb-0 text-muted">No salons found matching your criteria.</p>
               </div>
             ) : (
-                  <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-3">
+              <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-3">
                 {paginated.map((salon, index) => (
                   <div className="col" key={`${salon.barberId || salon.id || salon.salonId || index}-${salon.isActive}`}>
                     <div

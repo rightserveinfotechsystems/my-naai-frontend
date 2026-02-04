@@ -90,8 +90,8 @@ const ProfileDropdown = ({ isOpen, onClose, onChangePassword, position = 'mobile
           {/* User Info */}
           <div className="text-center mb-3 pb-3 border-bottom">
             <div className="fs-4 mb-1">{displayUser.avatar || "👤"}</div>
-            <div className="fw-semibold text-dark">{displayUser.name || ""}</div>
-            <div className="small text-muted">{displayUser.email || ""}</div>
+            <div className="fw-semibold text-dark">{displayUser?.name || ""}</div>
+            <div className="small text-muted">{displayUser?.email || ""}</div>
             {/* <div
               className="badge bg-info mt-2 cursor-pointer"
               style={{ cursor: 'pointer' }}

@@ -7,6 +7,7 @@ import AdvertisementCreateModal from "../components/AdvertisementCreateModal.jsx
 import Loader from "../components/Loader.jsx";
 import DeleteConfirmModal from "../components/DeleteConfirmModal.jsx";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const ITEMS_PER_PAGE = 20;
 const API_BASE = "https://backend.mynaai.in";
@@ -27,7 +28,7 @@ const Advertisement = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingAd, setEditingAd] = useState(null);
   const [deleteModal, setDeleteModal] = useState({ show: false, target: null });
-
+  const navigate = useNavigate()
   const fetchAdvertisements = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -84,6 +85,13 @@ const Advertisement = () => {
   useEffect(() => {
     fetchAdvertisements();
   }, [fetchAdvertisements]);
+
+  useEffect(() => {
+    const tab = localStorage.getItem("accessTab") ? JSON.parse(localStorage.getItem("accessTab")) : null;
+    if (!(tab && tab?.includes("advertisement"))) {
+      navigate("/login");
+    }
+  }, [])
 
   const handleConfirmDelete = async () => {
     try {

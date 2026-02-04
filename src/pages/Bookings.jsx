@@ -6,6 +6,7 @@ import Pagination from "../components/Pagination.jsx";
 import SearchInput from "../components/SearchInput.jsx";
 import { bookingAPI } from "../services/communication.jsx";
 import Loader from "../components/Loader.jsx";
+import { useNavigate } from "react-router-dom";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -117,7 +118,7 @@ const Bookings = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("");
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState(""); 
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
@@ -126,7 +127,7 @@ const Bookings = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [allBookings, setAllBookings] = useState([]);
 
-
+  const navigate = useNavigate()
   // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -149,7 +150,7 @@ const Bookings = () => {
 
   // Fetch bookings from API
   const fetchBookings = useCallback(async () => {
-   
+
 
     setLoading(true);
 
@@ -170,12 +171,12 @@ const Bookings = () => {
         dateFrom: dateFilter || undefined
       };
 
-     
+
 
       const result = await bookingAPI.getBookings(apiParams);
 
       if (result.success) {
-      
+
         setBookings(result.data || []);
         setAllBookings(result.data || []);
         setTotalItems(result.pagination?.total || 0);
@@ -268,7 +269,7 @@ const Bookings = () => {
       return;
     }
 
-  
+
     fetchBookings();
   }, [fetchBookings, currentPage, debouncedSearch, salonFilter, statusFilter, dateFilter]);
 
@@ -298,7 +299,7 @@ const Bookings = () => {
 
 
   // Debug logging
- 
+
 
   const fetchFilterList = useCallback(async () => {
     try {
@@ -376,7 +377,12 @@ const Bookings = () => {
     setBookings(filtered);
   }, [statusFilter, salonFilter, searchTerm, allBookings]);
 
-
+  useEffect(() => {
+    const tab = localStorage.getItem("accessTab") ? JSON.parse(localStorage.getItem("accessTab")) : null;
+    if (!(tab && tab?.includes("bookings"))) {
+      navigate("/login");
+    }
+  }, [])
   return (
     <Layout>
       {/* MAIN WRAPPER - Responsive spacing */}

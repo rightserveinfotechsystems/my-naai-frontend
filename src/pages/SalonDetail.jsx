@@ -45,6 +45,16 @@ const SalonDetail = () => {
   };
 
   useEffect(() => {
+    const tab = localStorage.getItem("accessTab")
+      ? JSON.parse(localStorage.getItem("accessTab"))
+      : null;
+
+    if (!(tab && tab?.includes("salonManagement"))) {
+      navigate("/login");
+    }
+  }, [navigate]);
+
+  useEffect(() => {
     const fetchSalonDetails = async () => {
       try {
         setLoading(true);
@@ -124,7 +134,12 @@ const SalonDetail = () => {
   const galleryImages = getSalonImages();
 
   const PAGE_MAX_WIDTH = '1400px';
-
+  // useEffect(() => {
+  //   const tab = localStorage.getItem("accessTab") ? JSON.parse(localStorage.getItem("accessTab")) : null;
+  //   if (!(tab && tab?.includes("salonManagement"))) {
+  //     navigate("/login");
+  //   }
+  // }, [])
   return (
     <Layout>
       <div className="d-flex flex-column mx-0 mx-lg-3 mt-4 p-1" style={{ minHeight: 'calc(100vh - 80px)', maxWidth: PAGE_MAX_WIDTH }}>
@@ -150,10 +165,10 @@ const SalonDetail = () => {
                   )}
                 </div>
                 <div className="d-flex gap-2 mt-1">
-                    <small className="text-muted">Onboarded By: {salon?.creatorAdmin?.name}</small>
+                  <small className="text-muted">Onboarded By: {salon?.creatorAdmin?.name}</small>
                 </div>
                 <div className="d-flex gap-2 mt-1">
-                    <small className="text-muted">Agent Mobile No.: {salon?.creatorAdmin?.mobile}</small>
+                  <small className="text-muted">Agent Mobile No.: {salon?.creatorAdmin?.mobile}</small>
                 </div>
               </div>
             </div>
@@ -262,8 +277,8 @@ const SalonDetail = () => {
                             </div>
                             {/* <div className="fw-bold text-dark flex-shrink-0">₹{s.price}</div> */}
                             <small className="text-muted d-block text-dark">
-                                {s.durationMinutes || s.duration}m
-                              </small>
+                              {s.durationMinutes || s.duration}m
+                            </small>
                           </div>
                         </div>
                       );

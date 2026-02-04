@@ -35,26 +35,25 @@ const Login = () => {
     //   navigate("/");
     // } 
     if (result.success) {
-  const accessTabs = result?.data?.admin?.accessTab || [];
+      const accessTabs = result?.data?.admin?.accessTab || [];
 
-  localStorage.setItem("token", result.data.token);
-  localStorage.setItem("accessTab", JSON.stringify(accessTabs));
+      localStorage.setItem("token", result.data.token);
+      localStorage.setItem("accessTab", JSON.stringify(accessTabs));
+      localStorage.setItem("userData", JSON.stringify(result?.data?.admin));
 
-  // 🔥 Find first allowed tab
-  const firstAllowedTab = TabArray.find(tab =>
-    accessTabs.includes(tab.key)
-  );
+      // 🔥 Find first allowed tab
+      const firstAllowedTab = TabArray.find(tab =>
+        accessTabs?.includes(tab.key)
+      );
 
-  toast.success("Login Successful!", {
-    position: "top-right",
-    autoClose: 3000,
-  });
+      toast.success("Login Successful!", {
+        position: "top-right",
+        autoClose: 3000,
+      });
 
-  // ✅ Redirect to allowed route
-  navigate(firstAllowedTab ? firstAllowedTab.route : "/login");
-}
-
-    else {
+      // ✅ Redirect to allowed route
+      navigate(firstAllowedTab ? firstAllowedTab.route : "/login");
+    } else {
       toast.error(result.message || "Login Failed");
     }
 
