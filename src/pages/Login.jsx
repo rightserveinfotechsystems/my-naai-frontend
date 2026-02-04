@@ -52,7 +52,7 @@ const Login = () => {
       });
 
       // ✅ Redirect to allowed route
-      navigate(firstAllowedTab ? firstAllowedTab.route : "/login");
+      navigate(firstAllowedTab ? firstAllowedTab.route : "/login", { replace: true });
     } else {
       toast.error(result.message || "Login Failed");
     }

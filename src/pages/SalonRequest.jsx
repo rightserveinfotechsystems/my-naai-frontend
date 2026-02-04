@@ -148,7 +148,7 @@ const SalonRequest = () => {
     const token = localStorage.getItem("token");
     if (!token) {
       console.warn("No token found, redirecting to login");
-      navigate("/login");
+      navigate("/login", { replace: true });
       setIsLoading(false);
       return;
     }
@@ -175,7 +175,7 @@ const SalonRequest = () => {
           console.error("Authentication error, redirecting to login");
           localStorage.removeItem("token");
           alert("Session expired. Please login again.");
-          navigate("/login");
+          navigate("/login",{ replace: true });
           return;
         }
 
@@ -191,7 +191,7 @@ const SalonRequest = () => {
         console.error("Authentication error, redirecting to login");
         localStorage.removeItem("token");
         alert("Session expired. Please login again.");
-        navigate("/login");
+        navigate("/login",{ replace: true });
         return;
       }
 
@@ -215,7 +215,7 @@ const SalonRequest = () => {
     if (!token) {
       console.warn("No token found, redirecting to login");
       localStorage.removeItem("token");
-      navigate("/login");
+      navigate("/login",{ replace: true });
       setDeleteModal(prev => ({ ...prev, loading: false }));
       return;
     }
@@ -247,7 +247,7 @@ const SalonRequest = () => {
           console.error("Authentication error, redirecting to login");
           localStorage.removeItem("token");
           alert("Session expired. Please login again.");
-          navigate("/login");
+          navigate("/login",{ replace: true });
           return;
         }
 
@@ -262,7 +262,7 @@ const SalonRequest = () => {
         console.error("Authentication error, redirecting to login");
         localStorage.removeItem("token");
         alert("Session expired. Please login again.");
-        navigate("/login");
+        navigate("/login",{ replace: true });
         return;
       }
 
@@ -285,7 +285,7 @@ const SalonRequest = () => {
   useEffect(() => {
     const tab = localStorage.getItem("accessTab") ? JSON.parse(localStorage.getItem("accessTab")) : null;
     if (!(tab && tab?.includes("salonRequest"))) {
-      navigate("/login");
+      navigate("/login",{ replace: true });
     }
   }, [])
 

@@ -78,8 +78,11 @@ const Layout = ({ children }) => {
     setIsLogoutLoading(true);
     logout();
     setShowLogoutModal(false);
+    localStorage.removeItem("token")
+    localStorage.removeItem("accessTab")
+    localStorage.removeItem("userData")
     setTimeout(() => {
-      navigate("/login");
+      navigate("/login", { replace: true });
       setIsLogoutLoading(false);
     }, 100);
   };
@@ -137,12 +140,12 @@ const Layout = ({ children }) => {
             to="/"
             className="d-flex justify-content-center align-items-center text-decoration-none"
           > */}
-            <img
-              src="/images/my_naai_logo.png"
-              alt="Salon Logo"
-              className="object-fit-contain"
-              style={{ maxHeight: "80px" }}
-            />
+          <img
+            src="/images/my_naai_logo.png"
+            alt="Salon Logo"
+            className="object-fit-contain"
+            style={{ maxHeight: "80px" }}
+          />
           {/* </Link> */}
         </div>
 
@@ -276,12 +279,12 @@ const Layout = ({ children }) => {
                   className="navbar-brand fw-semibold text-truncate m-0 d-flex align-items-center gap-2"
                   style={{ maxWidth: "150px", fontSize: '1rem' }}
                 > */}
-                  <img
-                    src="/images/my_naai_logo.png"
-                    alt="Salon Logo"
-                    className="object-fit-contain"
-                    style={{ maxHeight: "35px" }}
-                  />
+                <img
+                  src="/images/my_naai_logo.png"
+                  alt="Salon Logo"
+                  className="object-fit-contain"
+                  style={{ maxHeight: "35px" }}
+                />
                 {/* </Link> */}
               </div>
 

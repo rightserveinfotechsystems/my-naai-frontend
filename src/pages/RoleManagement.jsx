@@ -153,7 +153,7 @@ const RoleManagement = () => {
   useEffect(() => {
     const tab = localStorage.getItem("accessTab") ? JSON.parse(localStorage.getItem("accessTab")) : null;
     if (!(tab && tab?.includes("user"))) {
-      navigate("/login");
+      navigate("/login", { replace: true });
     }
   }, [])
   return (

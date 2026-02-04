@@ -77,7 +77,7 @@ const Salons = () => {
     const token = localStorage.getItem("token");
     if (!token) {
       console.warn("No token found, redirecting to login");
-      navigate("/login");
+      navigate("/login", { replace: true });
       setLoading(false);
       return;
     }
@@ -121,7 +121,7 @@ const Salons = () => {
         console.error("Authentication error, redirecting to login");
         localStorage.removeItem("token");
         alert("Session expired. Please login again.");
-        navigate("/login");
+        navigate("/login", { replace: true });
       } else {
         console.error("API Error:", result.message, result.error);
         setSalons([]);
@@ -247,7 +247,7 @@ const Salons = () => {
   useEffect(() => {
     const tab = localStorage.getItem("accessTab") ? JSON.parse(localStorage.getItem("accessTab")) : null;
     if (!(tab && tab?.includes("salonManagement"))) {
-      navigate("/login");
+      navigate("/login", { replace: true });
     }
   }, [])
 
@@ -491,7 +491,7 @@ const Salons = () => {
                     <div
                       className="card h-100 shadow-sm border-0 hover-lift-sm transition-all"
                       style={{ cursor: 'pointer', borderRadius: '12px', overflow: 'hidden' }}
-                      onClick={() => navigate(`/salons/${salon.salonId || salon.barberId || salon.id}`)}
+                      onClick={() => navigate(`/salons/${salon.salonId || salon.barberId || salon.id}`, { replace: true })}
                     >
                       <div className="ratio ratio-16x9 bg-light">
                         <img
@@ -607,7 +607,7 @@ const Salons = () => {
                     <div
                       className="card h-100 shadow-sm border-0 hover-lift-sm transition-all"
                       style={{ cursor: 'pointer', borderRadius: '12px', overflow: 'hidden' }}
-                      onClick={() => navigate(`/salons/${salon.salonId || salon.barberId || salon.id}`)}
+                      onClick={() => navigate(`/salons/${salon.salonId || salon.barberId || salon.id}`, { replace: true })}
                     >
                       <div className="ratio ratio-16x9 bg-light">
                         <img

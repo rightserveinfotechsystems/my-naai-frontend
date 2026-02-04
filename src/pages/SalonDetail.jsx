@@ -50,7 +50,7 @@ const SalonDetail = () => {
       : null;
 
     if (!(tab && tab?.includes("salonManagement"))) {
-      navigate("/login");
+      navigate("/login", { replace: true });
     }
   }, [navigate]);
 
@@ -94,7 +94,7 @@ const SalonDetail = () => {
       <Layout>
         <div className="text-center py-5">
           <div className="alert alert-danger mb-3">{error || "Salon not found"}</div>
-          <button className="btn btn-primary" onClick={() => navigate('/salons')}>Back to Salons</button>
+          <button className="btn btn-primary" onClick={() => navigate('/salons', { replace: true })}>Back to Salons</button>
         </div>
       </Layout>
     );
@@ -137,7 +137,7 @@ const SalonDetail = () => {
   // useEffect(() => {
   //   const tab = localStorage.getItem("accessTab") ? JSON.parse(localStorage.getItem("accessTab")) : null;
   //   if (!(tab && tab?.includes("salonManagement"))) {
-  //     navigate("/login");
+  //     navigate("/login",{ replace: true });
   //   }
   // }, [])
   return (
@@ -148,7 +148,7 @@ const SalonDetail = () => {
         <div className="card shadow-sm mb-3 border-0" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '15px' }}>
           <div className="card-body p-3 d-flex align-items-center justify-content-between">
             <div className="d-flex align-items-center gap-3">
-              <button className="btn btn-light btn-sm rounded-circle shadow-sm" onClick={() => navigate('/salons')}>
+              <button className="btn btn-light btn-sm rounded-circle shadow-sm" onClick={() => navigate('/salons', { replace: true })}>
                 <i className="bi bi-arrow-left"></i>
               </button>
               <div>

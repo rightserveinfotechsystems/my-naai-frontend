@@ -89,7 +89,7 @@ const Advertisement = () => {
   useEffect(() => {
     const tab = localStorage.getItem("accessTab") ? JSON.parse(localStorage.getItem("accessTab")) : null;
     if (!(tab && tab?.includes("advertisement"))) {
-      navigate("/login");
+      navigate("/login", { replace: true });
     }
   }, [])
 

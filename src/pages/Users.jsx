@@ -186,7 +186,7 @@ const Users = () => {
   useEffect(() => {
     const tab = localStorage.getItem("accessTab") ? JSON.parse(localStorage.getItem("accessTab")) : null;
     if (!(tab && tab?.includes("customer"))) {
-      navigate("/login");
+      navigate("/login",{ replace: true });
     }
   }, [])
   return (

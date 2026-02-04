@@ -27,7 +27,7 @@ const ProfileDropdown = ({ isOpen, onClose, onChangePassword, position = 'mobile
     onClose();
     logout();
     setTimeout(() => {
-      navigate("/login");
+      navigate("/login", { replace: true });
     }, 100);
   };
 
@@ -44,7 +44,7 @@ const ProfileDropdown = ({ isOpen, onClose, onChangePassword, position = 'mobile
     );
   }
 
-  const displayUser = user || {}; 
+  const displayUser = user || {};
 
   if (!isOpen) return null;
 
@@ -63,22 +63,22 @@ const ProfileDropdown = ({ isOpen, onClose, onChangePassword, position = 'mobile
         style={{
           ...(position === 'mobile'
             ? {
-                position: 'fixed',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: '350px',
-                maxHeight: '70vh'
-              }
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '350px',
+              maxHeight: '70vh'
+            }
             : {
-                position: 'fixed',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: '400px',
-                maxHeight: '80vh',
-                zIndex: 9999
-              }
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '400px',
+              maxHeight: '80vh',
+              zIndex: 9999
+            }
           ),
           zIndex: 9999,
           overflowY: 'auto',
@@ -132,7 +132,7 @@ const ProfileDropdown = ({ isOpen, onClose, onChangePassword, position = 'mobile
             >
               <i className="bi bi-key me-2"></i>
               Change Password
-            </button>          
+            </button>
           </div>
 
           {/* Logout Button (fixed for mobile/desktop) */}

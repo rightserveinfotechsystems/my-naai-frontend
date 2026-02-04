@@ -380,7 +380,7 @@ const Bookings = () => {
   useEffect(() => {
     const tab = localStorage.getItem("accessTab") ? JSON.parse(localStorage.getItem("accessTab")) : null;
     if (!(tab && tab?.includes("bookings"))) {
-      navigate("/login");
+      navigate("/login", { replace: true });
     }
   }, [])
   return (
