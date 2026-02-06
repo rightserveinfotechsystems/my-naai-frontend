@@ -319,11 +319,11 @@ const [showCamera, setShowCamera] = useState(false);
     }
 
     // Phone Number validation
-    // if (!formData.phoneNumber || formData.phoneNumber.trim() === "") {
-    //   newErrors.phoneNumber = "Please enter phone number";
-    // } else if (!/^[6-9]\d{9}$/.test(formData.phoneNumber.replace(/\s+/g, ''))) {
-    //   newErrors.phoneNumber = "Please enter a valid 10-digit phone number";
-    // }
+    if (!formData.phoneNumber || formData.phoneNumber.trim() === "") {
+      newErrors.phoneNumber = "Please enter phone number";
+    } else if (!/^[6-9]\d{9}$/.test(formData.phoneNumber.replace(/\s+/g, ''))) {
+      newErrors.phoneNumber = "Please enter a valid 10-digit phone number";
+    }
 
     // Email validation
     // if (!formData.email || formData.email.trim() === "") {
@@ -602,7 +602,7 @@ const [showCamera, setShowCamera] = useState(false);
     const { name } = e.target;
     const customMessages = {
       name: "Please enter salon name",
-      // phoneNumber: "Please enter phone number",
+      phoneNumber: "Please enter phone number",
       // email: "Please enter email address",
       // addressLine1: "Please enter address",
       city: "Please select a city",
