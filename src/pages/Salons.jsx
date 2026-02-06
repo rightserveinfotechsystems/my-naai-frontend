@@ -272,9 +272,14 @@ const Salons = () => {
                     <div className="col-12 col-md-3">
                       <select className="form-select form-select-sm" value={cityFilter} onChange={(e) => { setCityFilter(e.target.value); setCurrentPage(1); }}>
                         <option value="all">All Cities</option>
-                        {["Katol", "Warud"].map(city => (
-                          <option key={city} value={city}>{city}</option>
-                        ))}
+                        {["Kalmeshwar",
+                          "Karanja",
+                          "Katol",
+                          "Nagpur",
+                          "Wardha",
+                          "Warud",].map(city => (
+                            <option key={city} value={city}>{city}</option>
+                          ))}
                       </select>
                     </div>
                     <div className="col-12 col-md-3">
@@ -346,7 +351,12 @@ const Salons = () => {
                             disabled={loading}
                           >
                             <option value="all">All Cities</option>
-                            {["Katol", "Warud"].map(c => <option key={c} value={c}>{c}</option>)}
+                            {["Kalmeshwar",
+                              "Karanja",
+                              "Katol",
+                              "Nagpur",
+                              "Wardha",
+                              "Warud",].map(c => <option key={c} value={c}>{c}</option>)}
                           </select>
                         </div>
                         <div>
@@ -422,19 +432,26 @@ const Salons = () => {
                         <div>
                           <label className="form-label small mb-1 fw-semibold">City</label>
                           <select
-                            className="form-select form-select-sm"
+                            className="form-select form-select-lg"
+                             style={{ width: "150px" }}
                             value={cityFilter}
                             onChange={(e) => { setCityFilter(e.target.value); setCurrentPage(1); }}
                             disabled={loading}
                           >
                             <option value="all">All Cities</option>
-                            {["Katol", "Warud"].map(c => <option key={c} value={c}>{c}</option>)}
+                            {["Kalmeshwar",
+                              "Karanja",
+                              "Katol",
+                              "Nagpur",
+                              "Wardha",
+                              "Warud",].map(c => <option key={c} value={c}>{c}</option>)}
                           </select>
                         </div>
                         <div>
                           <label className="form-label small mb-1 fw-semibold">Status</label>
                           <select
-                            className="form-select form-select-sm"
+                            className="form-select form-select-lg"
+                             style={{ width: "150px" }}
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
                             disabled={loading}
@@ -449,8 +466,8 @@ const Salons = () => {
                   </div>
                 )}
 
-                <div className="row g-2">
-                  <div className="col-12 d-flex justify-content-end">
+                 <div className="col-12 col-md d-flex align-items-center justify-content-md-end gap-2 flex-wrap mt-2">
+                 <div className="mt-0">
                     <Pagination
                       currentPage={currentPage}
                       totalPages={totalPages}
@@ -458,6 +475,9 @@ const Salons = () => {
                       size="sm"
                     />
                   </div>
+                    <button className="btn btn-sm buttoncolor px-3 text-nowrap" onClick={handleAddSalon} disabled={loading}>
+                      Add
+                    </button>
                 </div>
               </div>
             </div>

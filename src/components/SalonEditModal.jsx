@@ -8,8 +8,12 @@ import { femaleSalonServices } from "../utils/femaleSalonServices.js";
 
 // Cities list for dropdown
 const cities = [
+  "Kalmeshwar",
+  "Karanja",
   "Katol",
-  "Warud"
+  "Nagpur",
+  "Wardha",
+  "Warud",
 ];
 const backendURL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
 
@@ -21,6 +25,11 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [showCropModal, setShowCropModal] = useState(false);
+const [capturedImage, setCapturedImage] = useState(null);
+const [showCamera, setShowCamera] = useState(false);
+
+
   const [formData, setFormData] = useState({
 
     // Basic salon info
@@ -310,18 +319,18 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
     }
 
     // Phone Number validation
-    if (!formData.phoneNumber || formData.phoneNumber.trim() === "") {
-      newErrors.phoneNumber = "Please enter phone number";
-    } else if (!/^[6-9]\d{9}$/.test(formData.phoneNumber.replace(/\s+/g, ''))) {
-      newErrors.phoneNumber = "Please enter a valid 10-digit phone number";
-    }
+    // if (!formData.phoneNumber || formData.phoneNumber.trim() === "") {
+    //   newErrors.phoneNumber = "Please enter phone number";
+    // } else if (!/^[6-9]\d{9}$/.test(formData.phoneNumber.replace(/\s+/g, ''))) {
+    //   newErrors.phoneNumber = "Please enter a valid 10-digit phone number";
+    // }
 
     // Email validation
-    if (!formData.email || formData.email.trim() === "") {
-      newErrors.email = "Please enter email address";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address";
-    }
+    // if (!formData.email || formData.email.trim() === "") {
+    //   newErrors.email = "Please enter email address";
+    // } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    //   newErrors.email = "Please enter a valid email address";
+    // }
 
     // Address Line 1 validation
     // if (!formData.addressLine1 || formData.addressLine1.trim() === "") {
@@ -480,10 +489,10 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
       };
 
       //check image uploaded or not
-      if (images.length === 0) {
-        toast.warning("Please upload at least one image");
-        return;
-      }
+      // if (images.length === 0) {
+      //   toast.warning("Please upload at least one image");
+      //   return;
+      // }
 
       let result;
       if (modalMode === "edit" && editingSalonId) {
@@ -593,15 +602,15 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
     const { name } = e.target;
     const customMessages = {
       name: "Please enter salon name",
-      phoneNumber: "Please enter phone number",
-      email: "Please enter email address",
-      addressLine1: "Please enter address",
+      // phoneNumber: "Please enter phone number",
+      // email: "Please enter email address",
+      // addressLine1: "Please enter address",
       city: "Please select a city",
       state: "Please select a state",
       // pincode: "Please enter pincode",
       gender: "Please select salon type",
-      openingTime: "Please enter opening time",
-      closingTime: "Please enter closing time",
+      // openingTime: "Please enter opening time",
+      // closingTime: "Please enter closing time",
       // day: "Please select a holiday"
     };
 
@@ -783,7 +792,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                     value={formData.phoneNumber || ""}
                     onChange={handleInputChange}
                     onInvalid={handleInvalid}
-                    required
+                    // required
                     disabled={isSubmitting}
                     placeholder="Enter Phone Number"
                     maxLength={10}
@@ -817,7 +826,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
                     value={formData.addressLine1 || ""}
                     onChange={handleInputChange}
                     onInvalid={handleInvalid}
-                    required
+                    // required
                     disabled={isSubmitting}
                     placeholder="Shop/Flat number, Street"
                   />
@@ -1115,7 +1124,7 @@ const SalonEditModal = ({ showModal, setShowModal, modalMode, editingSalonId, on
 
                       <div className="mb-2">
                         <div className="row g-2">
-                          <div className="col-12 col-md-4">
+                          <div className="col-12 col-md-8">
                             <input
                               type="text"
                               className={`form-control ${errors[`service_${index}_name`] ? 'is-invalid' : ''}`}
