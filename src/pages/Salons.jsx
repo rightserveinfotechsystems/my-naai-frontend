@@ -433,7 +433,7 @@ const Salons = () => {
                           <label className="form-label small mb-1 fw-semibold">City</label>
                           <select
                             className="form-select form-select-lg"
-                             style={{ width: "150px" }}
+                            style={{ width: "150px" }}
                             value={cityFilter}
                             onChange={(e) => { setCityFilter(e.target.value); setCurrentPage(1); }}
                             disabled={loading}
@@ -451,7 +451,7 @@ const Salons = () => {
                           <label className="form-label small mb-1 fw-semibold">Status</label>
                           <select
                             className="form-select form-select-lg"
-                             style={{ width: "150px" }}
+                            style={{ width: "150px" }}
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
                             disabled={loading}
@@ -466,8 +466,8 @@ const Salons = () => {
                   </div>
                 )}
 
-                 <div className="col-12 col-md d-flex align-items-center justify-content-md-end gap-2 flex-wrap mt-2">
-                 <div className="mt-0">
+                <div className="col-12 col-md d-flex align-items-center justify-content-md-end gap-2 flex-wrap mt-2">
+                  <div className="mt-0">
                     <Pagination
                       currentPage={currentPage}
                       totalPages={totalPages}
@@ -475,9 +475,9 @@ const Salons = () => {
                       size="sm"
                     />
                   </div>
-                    <button className="btn btn-sm buttoncolor px-3 text-nowrap" onClick={handleAddSalon} disabled={loading}>
-                      Add
-                    </button>
+                  <button className="btn btn-sm buttoncolor px-3 text-nowrap" onClick={handleAddSalon} disabled={loading}>
+                    Add
+                  </button>
                 </div>
               </div>
             </div>
@@ -530,9 +530,9 @@ const Salons = () => {
                           <h6 className="card-title mb-0 fw-bold text-truncate" style={{ maxWidth: '75%' }}>
                             {salon.shopName || salon.salonName || salon.name}
                           </h6>
-                          <span className="badge bg-warning-subtle text-dark border-0">
+                          {/* <span className="badge bg-warning-subtle text-dark border-0">
                             ★ {salon.ratingAverage || "5.0"}
-                          </span>
+                          </span> */}
                         </div>
 
                         <div className="d-flex justify-content-between align-items-center mb-2">
@@ -582,7 +582,7 @@ const Salons = () => {
                         </div>
                       </div>
 
-                      <div className="card-footer bg-transparent border-0 p-3 pt-0">
+                      {/* <div className="card-footer bg-transparent border-0 p-3 pt-0">
                         <button
                           className="btn w-100 btn-sm d-flex align-items-center justify-content-center gap-1"
                           style={{ backgroundColor: '#e1b378', color: '#000', fontWeight: '500' }}
@@ -593,6 +593,33 @@ const Salons = () => {
                         >
                           <i className="bi bi-pencil-square"></i> Edit Salon
                         </button>
+                      </div> */}
+                      <div className="card-footer bg-transparent border-0 p-3 pt-0">
+                        <div className="d-flex gap-2">
+
+                          <button
+                            className="btn w-100 btn-sm d-flex align-items-center justify-content-center gap-1"
+                            style={{ backgroundColor: '#e1b378', color: '#000', fontWeight: '500' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditSalon(salon);
+                            }}
+                          >
+                            <i className="bi bi-pencil-square"></i> Edit Salon
+                          </button>
+
+                          <button
+                            className="btn w-100 btn-sm d-flex align-items-center justify-content-center gap-1"
+                            style={{ backgroundColor: '#dc3545', color: '#fff', fontWeight: '500' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteSalon(salon);
+                            }}
+                          >
+                            <i className="bi bi-trash"></i> Delete
+                          </button>
+
+                        </div>
                       </div>
                     </div>
                   </div>

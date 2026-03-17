@@ -154,9 +154,10 @@ const SalonDetail = () => {
               <div>
                 <h4 className="mb-0 fw-bold ">{salon.salonName}</h4>
                 <small className="text-muted">
-                  {salon.city}, {salon.state} • ★ {salon.ratingAverage || '5.0'}
-                  {salon.totalReviews > 0 && ` (${salon.totalReviews} reviews)`}
-                  • Joined {new Date(salon.createdAt).toLocaleDateString()}
+                  {salon.city}, {salon.state} {""}
+                  {/* • ★ {salon.ratingAverage || '5.0'}
+                  {salon.totalReviews > 0 && ` (${salon.totalReviews} reviews)`} */}
+                  • Joined {new Date(salon.createdAt).toLocaleDateString('en-GB')}
 
                 </small>
                 <div className="d-flex gap-2 mt-1">
@@ -271,14 +272,14 @@ const SalonDetail = () => {
                           <div className="d-flex justify-content-between align-items-start">
                             <div className="flex-grow-1 me-2">
                               <div className="fw-bold small">{s.serviceName || s.name}</div>
-                              {/* <small className="text-muted d-block">
-                                {s.durationMinutes || s.duration}m
-                              </small> */}
+                              <small className="text-muted d-block">
+                                {s.durationMinutes || s.duration}Min
+                              </small>
                             </div>
-                            {/* <div className="fw-bold text-dark flex-shrink-0">₹{s.price}</div> */}
-                            <small className="text-muted d-block text-dark">
+                            <div className="fw-bold text-dark flex-shrink-0">₹{s.price}</div>
+                            {/* <small className="text-muted d-block text-dark">
                               {s.durationMinutes || s.duration}m
-                            </small>
+                            </small> */}
                           </div>
                         </div>
                       );

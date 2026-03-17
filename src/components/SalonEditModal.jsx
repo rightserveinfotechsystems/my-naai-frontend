@@ -733,7 +733,7 @@ const [showCamera, setShowCamera] = useState(false);
 
   return (
     <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} tabIndex="-1">
-      <div className="modal-dialog modal-dialog-centered modal-lg" style={{ maxWidth: '40%', margin: '1rem auto' }}>
+      <div className="modal-dialog modal-dialog-centered modal-lg" style={{ maxWidth: '60%', margin: '1rem auto' }}>
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title fw-bold">
@@ -939,7 +939,7 @@ const [showCamera, setShowCamera] = useState(false);
 
 
                 {/* 12. Rating */}
-                <div className="col-12 col-md-6">
+                {/* <div className="col-12 col-md-6">
                   <label className="form-label fw-semibold">Rating</label>
                   <input
                     type="number"
@@ -954,10 +954,10 @@ const [showCamera, setShowCamera] = useState(false);
                     max="5"
                     title="Initial rating (1-5 stars)"
                   />
-                </div>
+                </div> */}
 
                 {/* 13. Number of Reviews */}
-                <div className="col-12 col-md-6">
+                {/* <div className="col-12 col-md-6">
                   <label className="form-label fw-semibold">Number of Reviews</label>
                   <input
                     type="number"
@@ -970,7 +970,7 @@ const [showCamera, setShowCamera] = useState(false);
                     min="0"
                     title="Total number of reviews"
                   />
-                </div>
+                </div> */}
 
                 {/* 11. Image URL */}
                 {/* <div className="col-12 col-md-6">
@@ -1124,7 +1124,7 @@ const [showCamera, setShowCamera] = useState(false);
 
                       <div className="mb-2">
                         <div className="row g-2">
-                          <div className="col-12 col-md-8">
+                          <div className="col-12 col-md-6">
                             <input
                               type="text"
                               className={`form-control ${errors[`service_${index}_name`] ? 'is-invalid' : ''}`}
@@ -1135,7 +1135,7 @@ const [showCamera, setShowCamera] = useState(false);
                             />
                             {errors[`service_${index}_name`] && <div className="invalid-feedback">{errors[`service_${index}_name`]}</div>}
                           </div>
-                          {/* <div className="col-12 col-md-4">
+                          <div className="col-12 col-md-3">
                             <div className="input-group">
                               <span className="input-group-text"><i className="bi bi-currency-rupee"></i></span>
                               <input
@@ -1148,8 +1148,8 @@ const [showCamera, setShowCamera] = useState(false);
                               />
                             </div>
                             {errors[`service_${index}_price`] && <div className="invalid-feedback">{errors[`service_${index}_price`]}</div>}
-                          </div> */}
-                          <div className="col-12 col-md-4">
+                          </div>
+                          <div className="col-12 col-md-3">
                             <div className="input-group">
                               <input
                                 type="number"
@@ -1159,7 +1159,7 @@ const [showCamera, setShowCamera] = useState(false);
                                 onChange={(e) => handleServiceChange(index, 'duration', e.target.value)}
                                 required
                               />
-                              <span className="input-group-text">min</span>
+                              <span className="input-group-text">Min</span>
                             </div>
                             {errors[`service_${index}_duration`] && <div className="invalid-feedback">{errors[`service_${index}_duration`]}</div>}
                           </div>
@@ -1202,7 +1202,7 @@ const [showCamera, setShowCamera] = useState(false);
                       required
                       disabled={isSubmitting}
                     />
-                    <select
+                    {/* <select
                       className="form-select rounded-end"
                       style={{ maxWidth: "100px" }}
                       name="openingPeriod"
@@ -1212,7 +1212,7 @@ const [showCamera, setShowCamera] = useState(false);
                     >
                       <option value="AM">AM</option>
                       <option value="PM">PM</option>
-                    </select>
+                    </select> */}
                   </div>
                   {errors.openingTime && <div className="invalid-feedback d-block">{errors.openingTime}</div>}
                 </div>
@@ -1233,7 +1233,7 @@ const [showCamera, setShowCamera] = useState(false);
                       required
                       disabled={isSubmitting}
                     />
-                    <select
+                    {/* <select
                       className="form-select rounded-end"
                       style={{ maxWidth: "100px" }}
                       name="closingPeriod"
@@ -1243,7 +1243,7 @@ const [showCamera, setShowCamera] = useState(false);
                     >
                       <option value="AM">AM</option>
                       <option value="PM">PM</option>
-                    </select>
+                    </select> */}
                   </div>
                   {errors.closingTime && <div className="invalid-feedback d-block">{errors.closingTime}</div>}
                 </div>
