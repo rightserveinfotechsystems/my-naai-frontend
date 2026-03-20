@@ -341,7 +341,7 @@ export const adminPanelUsersAPI = {
     }
   },
 
-    // Toggle Admin Users status
+  // Toggle Admin Users status
   toggleAdminUsersStatus: async (userId, isActive) => {
     try {
       const response = await api.post('/api/admin/status', {
@@ -422,7 +422,7 @@ export const adminPanelUsersAPI = {
       };
     }
   }
-  
+
 
 
 };
@@ -759,11 +759,25 @@ export const salonAPI = {
   },
 
   deleteSalon: async (salonId) => {
-    return {
-      success: false,
-      message: "Salon deletion endpoint not implemented yet",
-      data: null
-    };
+    // console.log(`/api/salons/${salonId}`)
+    try {
+      const response = await api.delete(`/api/salons/delete-salon-by-admin/${salonId}`, {
+      });
+
+      return {
+        success: true,
+        message: "Salon deleted successfully ✅",
+        data: response.data,
+      };
+    } catch (error) {
+      // console.error("Delete API error:", error);
+
+      return {
+        success: false,
+        message: error?.response?.data?.message || "Failed to delete salon ❌",
+        data: null,
+      };
+    }
   },
 
   // Delete a service from a salon
