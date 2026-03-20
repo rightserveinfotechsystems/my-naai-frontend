@@ -10,6 +10,8 @@ import StatusConfirmModal from "../components/StatusConfirmModal.jsx";
 import { salonAPI } from "../services/communication.jsx";
 import Loader from "../components/Loader.jsx";
 import { toast } from 'react-toastify';
+import DeleteConfirmModal from "../components/DeleteConfirmModal.jsx";
+
 const backendURL = import.meta.env.VITE_BACKEND_URL
 
 const ITEMS_PER_PAGE = 20;
@@ -59,12 +61,20 @@ const Salons = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [totalPagesFromAPI, setTotalPagesFromAPI] = useState(1);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [scrollPosition, setScrollPosition] = useState(0);
+  const [scrollPosition, setScrollPosition] = useState(0)
 
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState("add");
   const [editingSalonId, setEditingSalonId] = useState(null);
 
+
+  // Delete confirmation modal state
+  const [deleteModal, setDeleteModal] = useState({
+    show: false,
+    serviceIndex: null,
+    loading: false
+  });
+console.log(deleteModal)
   // Toggle modal states
   const [showToggleModal, setShowToggleModal] = useState(false);
   const [selectedSalon, setSelectedSalon] = useState(null);
@@ -187,6 +197,26 @@ const Salons = () => {
     setSelectedSalon(salon);
     setShowToggleModal(true);
   };
+
+  const handleConfirmDelete = async () => {
+  if (!deleteModal.serviceIndex) return;
+
+  setDeleteModal(prev => ({ ...prev, loading: true }));
+
+  const result = await salonAPI.deleteSalon(deleteModal.serviceIndex);
+
+  setDeleteModal({ show: false, serviceIndex: null, loading: false });
+
+  if (result.success) {
+    toast.success(result.message);
+    // Remove deleted salon from state
+    setSalons(prev =>
+      prev.filter(s => (s.salonId || s.barberId || s.id) !== deleteModal.serviceIndex)
+    );
+  } else {
+    toast.error(result.message);
+  }
+};
 
   const confirmToggleSalonStatus = async () => {
     const salon = selectedSalon;
@@ -613,7 +643,11 @@ const Salons = () => {
                             style={{ backgroundColor: '#dc3545', color: '#fff', fontWeight: '500' }}
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDeleteSalon(salon);
+                              setDeleteModal({
+                                show: true,
+                                serviceIndex: salon.salonId || salon.barberId || salon.id,
+                                loading: false
+                              });
                             }}
                           >
                             <i className="bi bi-trash"></i> Delete
@@ -754,6 +788,15 @@ const Salons = () => {
         currentStatus={selectedSalon?.isActive}
         loading={loading}
         type="salon"
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        show={deleteModal.show}
+        onHide={() => setDeleteModal({ show: false, serviceIndex: null, loading: false })}
+        onConfirm={handleConfirmDelete}
+        loading={deleteModal.loading}
+        count={1}
       />
 
       {/* MODAL COMPONENT */}
