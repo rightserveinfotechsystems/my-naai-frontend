@@ -20,6 +20,7 @@ import { UserProvider } from "./contexts/UserContext.jsx";
 import AccountDeletion from "./pages/AccountDeletion.jsx";
 import RoleManagement from "./pages/RoleManagement.jsx";
 import { TabArray } from "./utils/TabArray.js";
+import AgentSalons from "./pages/AgentSalons.jsx";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -88,6 +89,14 @@ const router = createBrowserRouter(
       ),
     },
     {
+      path: "/agent-salons/:agentId",
+      element: (
+        <ProtectedRoute>
+          <AgentSalons />
+        </ProtectedRoute>
+      ),
+    },
+    {
       path: "/salons/:id",
       element: (
         <ProtectedRoute>
@@ -103,14 +112,14 @@ const router = createBrowserRouter(
         </ProtectedRoute>
       ),
     },
-    {
-      path: "/salonrequest",
-      element: (
-        <ProtectedRoute>
-          <SalonRequest />
-        </ProtectedRoute>
-      ),
-    },
+    // {
+    //   path: "/salonrequest",
+    //   element: (
+    //     <ProtectedRoute>
+    //       <SalonRequest />
+    //     </ProtectedRoute>
+    //   ),
+    // },
     {
       path: "/advertisement",
       element: (

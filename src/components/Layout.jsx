@@ -40,7 +40,7 @@ const navItems = [
   { path: "/customer", key: "customer", label: "Customer Management", icon: <Users size={20} /> },
   { path: "/salons", key: "salonManagement", label: "Salon Management", icon: <Store size={20} /> },
   { path: "/bookings", key: "bookings", label: "Booking Management", icon: <CalendarCheck size={20} /> },
-  { path: "/salonrequest", key: "salonRequest", label: "Salon Request", icon: <ClipboardList size={20} /> },
+  // { path: "/salonrequest", key: "salonRequest", label: "Salon Request", icon: <ClipboardList size={20} /> },
   { path: "/advertisement", key: "advertisement", label: "Advertisement", icon: <Icons.Advertisement /> },
 ];
 
