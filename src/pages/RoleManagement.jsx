@@ -221,7 +221,15 @@ const RoleManagement = () => {
                       ) : users.map((user, index) => (
                         <tr key={user.id}>
                           <td className="px-3 py-2 text-center">{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
-                          <td className="fw-semibold px-3 py-2">{user.name}</td>
+                          <td className="fw-semibold px-3 py-2">
+                            <span
+                              className="fw-semibold cursor-pointer text-black"
+                              style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                              onClick={() => navigate(`/agent-salons/${user.id}`, { state: { user } })}
+                              title={`View ${user.name}'s salons`}
+                            > {user.name}
+                            </span>
+                          </td>
                           <td className="px-3 py-2">
                             {user?.accessTab?.length
                               ? user.accessTab.map(tab => TabArray.find(t => t.key === tab)?.label || tab).join(", ")

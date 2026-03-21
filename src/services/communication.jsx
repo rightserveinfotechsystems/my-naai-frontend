@@ -421,8 +421,7 @@ export const adminPanelUsersAPI = {
         error: error.response?.data
       };
     }
-  }
-
+  },
 
 
 };
@@ -566,6 +565,31 @@ export const salonAPI = {
       };
     }
   },
+
+
+
+getSalonsByAgent: async ({ agentId, searchString = "" }) => {
+  try {
+    const response = await api.post("/api/salons/get-salon-by-agent", {
+      agentId,
+      searchString
+    });
+
+    return {
+      success: response.data?.status === "SUCCESS",
+      data: response.data?.data || [],
+      message: response.data?.message || "Salons fetched successfully"
+    };
+
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error.response?.data?.message || "Failed to fetch salons",
+      error: error.response?.data || error.message
+    };
+  }
+},
 
   getSalonDetails: async (salonId) => {
     try {
