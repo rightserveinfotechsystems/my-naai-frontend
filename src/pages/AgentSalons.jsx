@@ -5,7 +5,7 @@ import SearchInput from "../components/SearchInput.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import Pagination from "../components/Pagination.jsx";
 import Loader from "../components/Loader.jsx";
-import { salonAPI } from "../services/communication.jsx"; 
+import { salonAPI } from "../services/communication.jsx";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -30,34 +30,34 @@ const AgentSalons = () => {
   const [totalPages, setTotalPages] = useState(1);
 
   // Fetch agent salons
- const fetchAgentSalons = async () => {
-  if (!agentData?.id) {
-    navigate("users");
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    const res = await salonAPI.getSalonsByAgent({
-      agentId: agentData.id,
-      searchString: search
-    });
-
-    if (res.success) {
-      setSalons(res.data?.salons || res.data || []);
-      setTotalPages(res.data?.totalPages || 1);
-    } else {
-      setSalons([]);
+  const fetchAgentSalons = async () => {
+    if (!agentData?.id) {
+      navigate("users");
+      return;
     }
 
-  } catch (error) {
-    console.error("Fetch salons error:", error);
-    setSalons([]);
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      setLoading(true);
+
+      const res = await salonAPI.getSalonsByAgent({
+        agentId: agentData.id,
+        searchString: search
+      });
+
+      if (res.success) {
+        setSalons(res.data?.salons || res.data || []);
+        setTotalPages(res.data?.totalPages || 1);
+      } else {
+        setSalons([]);
+      }
+
+    } catch (error) {
+      console.error("Fetch salons error:", error);
+      setSalons([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const timer = setTimeout(fetchAgentSalons, 500);
@@ -101,7 +101,7 @@ const AgentSalons = () => {
                           setSearch(val);
                           setCurrentPage(1);
                         }}
-                        placeholder="Search by salon name"
+                        placeholder="Search by salon name, owner name"
                       />
                     </div>
                     <div className="col-12 col-md d-flex align-items-center justify-content-md-end gap-2 flex-wrap mt-2">
@@ -124,7 +124,7 @@ const AgentSalons = () => {
                   {/* Agent Info */}
                   <div className="px-3 py-2 bg-white border-top">
                     <h5 className="mb-0">
-                      Salons by <strong>{agentData.name}</strong> ({agentData.email})
+                      Salons by <strong>{agentData?.name}</strong> ({agentData?.email})
                     </h5>
                   </div>
                 </div>
@@ -136,9 +136,10 @@ const AgentSalons = () => {
                       <tr>
                         <th className="px-3 py-2 text-center">No.</th>
                         <th className="px-3 py-2">Salon Name</th>
-                        {/* <th className="px-3 py-2">Location</th>
-                        <th className="px-3 py-2">Phone</th> */}
+                       
                         <th className="px-3 py-2 text-center">Owner Name</th>
+                         {/* <th className="px-3 py-2">Location</th> */}
+                        <th className="px-3 py-2">Phone</th>
                         <th className="px-3 py-2 text-center">Status</th>
                         <th className="px-3 py-2 text-center">Created</th>
                       </tr>
@@ -162,9 +163,9 @@ const AgentSalons = () => {
                             {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
                           </td>
                           <td className="fw-semibold px-3 py-2">{salon?.salonName}</td>
-                          {/* <td className="px-3 py-2">{salon.location || salon.address || '—'}</td>
-                          <td className="px-3 py-2">{salon.phone || salon.mobile || '—'}</td> */}
                           <td className="px-3 py-2 text-center">{salon?.ownerName || '—'}</td>
+                          {/* <td className="px-3 py-2">{salon?.addressLine1 || '—'}</td> */}
+                          <td className="px-3 py-2">{ salon?.phoneNumber || '—'}</td>
                           <td className="px-3 py-2 text-center">
                             <StatusBadge status={salon.isActive ? "active" : "inactive"} />
                           </td>
