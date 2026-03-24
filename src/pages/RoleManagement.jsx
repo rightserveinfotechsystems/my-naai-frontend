@@ -275,7 +275,15 @@ const RoleManagement = () => {
                       {users && users.map((user, index) => (
                         <div key={user.id} className="card mb-2 shadow-sm">
                           <div className="card-body p-2 d-flex flex-column gap-1">
-                            <div className="fw-semibold">{user.name}</div>
+                            {/* <div className="fw-semibold">{user.name}</div>    */}
+                            <div
+                              className="fw-semibold cursor-pointer text-decoration-none"
+                              style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                              onClick={() => navigate(`/agent-salons/${user?.id}`, { state: { user } })}
+                            >
+                              {user?.name}
+                            </div>
+
                             <div className="small text-muted">{user.email}</div>
                             <div className="small">Phone: {user.mobile}</div>
                             <div className="small">Tab Access: {user?.accessTab?.length
