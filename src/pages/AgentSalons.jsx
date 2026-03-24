@@ -76,9 +76,9 @@ const AgentSalons = () => {
       <Layout>
         <div className="text-center py-5">
           <h4>Agent data not found</h4>
-          {/* <button className="btn btn-primary" onClick={() => navigate("/user")}>
+          <button className="btn btn-primary" onClick={() => navigate("/user")}>
             ← Back to Users
-          </button> */}
+          </button>
         </div>
       </Layout>
     );
@@ -113,12 +113,12 @@ const AgentSalons = () => {
                           size="sm"
                         />
                       </div>
-                      {/* <button 
+                      <button 
                         className="btn btn-sm btn-outline-secondary px-3 text-nowrap" 
-                        onClick={() => navigate("/users")}
+                        onClick={() => navigate("/user")}
                       >
                         ← Back to Users
-                      </button> */}
+                      </button>
                     </div>
                   </div>
                   {/* Agent Info */}
@@ -136,9 +136,9 @@ const AgentSalons = () => {
                       <tr>
                         <th className="px-3 py-2 text-center">No.</th>
                         <th className="px-3 py-2">Salon Name</th>
-                       
+
                         <th className="px-3 py-2 text-center">Owner Name</th>
-                         {/* <th className="px-3 py-2">Location</th> */}
+                        {/* <th className="px-3 py-2">Location</th> */}
                         <th className="px-3 py-2">Phone</th>
                         <th className="px-3 py-2 text-center">Status</th>
                         <th className="px-3 py-2 text-center">Created</th>
@@ -165,7 +165,7 @@ const AgentSalons = () => {
                           <td className="fw-semibold px-3 py-2">{salon?.salonName}</td>
                           <td className="px-3 py-2 text-center">{salon?.ownerName || '—'}</td>
                           {/* <td className="px-3 py-2">{salon?.addressLine1 || '—'}</td> */}
-                          <td className="px-3 py-2">{ salon?.phoneNumber || '—'}</td>
+                          <td className="px-3 py-2">{salon?.phoneNumber || '—'}</td>
                           <td className="px-3 py-2 text-center">
                             <StatusBadge status={salon.isActive ? "active" : "inactive"} />
                           </td>
@@ -191,12 +191,12 @@ const AgentSalons = () => {
                       {salons && salons.map((salon, index) => (
                         <div key={salon.id} className="card mb-2 shadow-sm">
                           <div className="card-body p-2 d-flex flex-column gap-1">
-                            <div className="fw-semibold">{salon.name}</div>
-                            <div className="small text-muted">{salon.email || '—'}</div>
-                            <div className="small">Phone: {salon.phone || salon.mobile || '—'}</div>
-                            <div className="small">
-                              Location: {salon.location || salon.address || '—'}
-                            </div>
+                            <div className="fw-semibold">  {salon.salonName}</div>
+                            <div className="small text-muted">{salon?.ownerName || '—'}</div>
+                            {/* <div className="small">
+                              Location: {salon?.addressLine1 || '—'}
+                            </div> */}
+                            <div className="small">Phone: {salon?.phoneNumber || '—'}</div>
                             <div className="small text-muted">
                               Created: {formatDate(salon.createdAt)}
                             </div>
