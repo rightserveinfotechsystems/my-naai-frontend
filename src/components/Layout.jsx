@@ -31,7 +31,13 @@ const Icons = {
       <circle cx="12" cy="7" r="4" />
       <path d="M5.5 21a6.5 6.5 0 0 1 13 0" />
     </svg>
-  )
+  ),
+  Notification: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+    </svg>
+  ),
 
 };
 
@@ -42,6 +48,8 @@ const navItems = [
   { path: "/bookings", key: "bookings", label: "Booking Management", icon: <CalendarCheck size={20} /> },
   // { path: "/salonrequest", key: "salonRequest", label: "Salon Request", icon: <ClipboardList size={20} /> },
   { path: "/advertisement", key: "advertisement", label: "Advertisement", icon: <Icons.Advertisement /> },
+  { path: "/notifications", key: "notifications", label: "Push Notifications", icon: <Icons.Notification /> },
+
 ];
 
 const Layout = ({ children }) => {
