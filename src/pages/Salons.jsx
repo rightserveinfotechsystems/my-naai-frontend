@@ -74,7 +74,7 @@ const Salons = () => {
     serviceIndex: null,
     loading: false
   });
-console.log(deleteModal)
+  console.log(deleteModal)
   // Toggle modal states
   const [showToggleModal, setShowToggleModal] = useState(false);
   const [selectedSalon, setSelectedSalon] = useState(null);
@@ -199,24 +199,24 @@ console.log(deleteModal)
   };
 
   const handleConfirmDelete = async () => {
-  if (!deleteModal.serviceIndex) return;
+    if (!deleteModal.serviceIndex) return;
 
-  setDeleteModal(prev => ({ ...prev, loading: true }));
+    setDeleteModal(prev => ({ ...prev, loading: true }));
 
-  const result = await salonAPI.deleteSalon(deleteModal.serviceIndex);
+    const result = await salonAPI.deleteSalon(deleteModal.serviceIndex);
 
-  setDeleteModal({ show: false, serviceIndex: null, loading: false });
+    setDeleteModal({ show: false, serviceIndex: null, loading: false });
 
-  if (result.success) {
-    toast.success(result.message);
-    // Remove deleted salon from state
-    setSalons(prev =>
-      prev.filter(s => (s.salonId || s.barberId || s.id) !== deleteModal.serviceIndex)
-    );
-  } else {
-    toast.error(result.message);
-  }
-};
+    if (result.success) {
+      toast.success(result.message);
+      // Remove deleted salon from state
+      setSalons(prev =>
+        prev.filter(s => (s.salonId || s.barberId || s.id) !== deleteModal.serviceIndex)
+      );
+    } else {
+      toast.error(result.message);
+    }
+  };
 
   const confirmToggleSalonStatus = async () => {
     const salon = selectedSalon;
@@ -760,16 +760,35 @@ console.log(deleteModal)
                       </div>
 
                       <div className="card-footer bg-transparent border-0 p-3 pt-0">
-                        <button
-                          className="btn w-100 btn-sm d-flex align-items-center justify-content-center gap-1"
-                          style={{ backgroundColor: '#e1b378', color: '#000', fontWeight: '500' }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditSalon(salon);
-                          }}
-                        >
-                          <i className="bi bi-pencil-square"></i> Edit Salon
-                        </button>
+                        <div className="d-flex gap-2 h-100">
+                          {/* EDIT BUTTON - flex-fill takes remaining space */}
+                          <button
+                            className="btn flex-fill btn-sm d-flex align-items-center justify-content-center gap-1"
+                            style={{ backgroundColor: '#e1b378', color: '#000', fontWeight: '500' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditSalon(salon);
+                            }}
+                          >
+                            <i className="bi bi-pencil-square"></i> Edit Salon
+                          </button>
+
+                          {/* DELETE BUTTON - fixed size */}
+                          <button
+                            className="btn btn-sm d-flex align-items-center justify-content-center gap-1 px-2"
+                            style={{ backgroundColor: '#dc3545', color: '#fff', fontWeight: '500', minWidth: '65px' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteModal({
+                                show: true,
+                                serviceIndex: salon.salonId || salon.barberId || salon.id,
+                                loading: false
+                              });
+                            }}
+                          >
+                            <i className="bi bi-trash"></i> Delete
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
