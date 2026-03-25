@@ -223,7 +223,7 @@ const RoleManagement = () => {
                           <td className="px-3 py-2 text-center">{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
                           <td className="fw-semibold px-3 py-2">
                             <span
-                              className="fw-semibold cursor-pointer text-black"
+                              className="fw-semibold cursor-pointer text-black text-capitalize"
                               style={{ cursor: 'pointer', textDecoration: 'underline' }}
                               onClick={() => navigate(`/agent-salons/${user.id}`, { state: { user } })}
                               title={`View ${user.name}'s salons`}
@@ -277,7 +277,7 @@ const RoleManagement = () => {
                           <div className="card-body p-2 d-flex flex-column gap-1">
                             {/* <div className="fw-semibold">{user.name}</div>    */}
                             <div
-                              className="fw-semibold cursor-pointer text-decoration-none"
+                              className="fw-semibold cursor-pointer text-decoration-underline text-capitalize"
                               style={{ cursor: 'pointer', textDecoration: 'underline' }}
                               onClick={() => navigate(`/agent-salons/${user?.id}`, { state: { user } })}
                             >

@@ -568,28 +568,28 @@ export const salonAPI = {
 
 
 
-getSalonsByAgent: async ({ agentId, searchString = "" }) => {
-  try {
-    const response = await api.post("/api/salons/get-salon-by-agent", {
-      agentId,
-      searchString
-    });
+  getSalonsByAgent: async ({ agentId, searchString = "" }) => {
+    try {
+      const response = await api.post("/api/salons/get-salon-by-agent", {
+        agentId,
+        searchString
+      });
 
-    return {
-      success: response.data?.status === "SUCCESS",
-      data: response.data?.data || [],
-      message: response.data?.message || "Salons fetched successfully"
-    };
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data || [],
+        message: response.data?.message || "Salons fetched successfully"
+      };
 
-  } catch (error) {
-    return {
-      success: false,
-      message:
-        error.response?.data?.message || "Failed to fetch salons",
-      error: error.response?.data || error.message
-    };
-  }
-},
+    } catch (error) {
+      return {
+        success: false,
+        message:
+          error.response?.data?.message || "Failed to fetch salons",
+        error: error.response?.data || error.message
+      };
+    }
+  },
 
   getSalonDetails: async (salonId) => {
     try {
@@ -1271,5 +1271,78 @@ export const advertisementService = {
     return `${API_BASE_URL.replace(/\/$/, '')}${path}`;
   }
 };
+
+
+
+// ====================Notification API ====================
+
+
+export const notificationAPI = {
+  // Send notification
+  sendNotification: async (data) => {
+    try {
+      const response = await api.post('/api/adminNotification/send-notification-by-admin', {
+        targetType: data.targetType === "ALL" ? "ALL_USERS" : "ALL_SALONS",
+        title: data.title,
+        body: data.body,
+        data: data.data || "{}"
+      });
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data,
+        message: response.data?.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to send notification",
+        error: error.response?.data
+      };
+    }
+  },
+
+  // Delete notification
+  deleteNotification: async (id) => {
+    try {
+      const response = await api.post('/api/adminNotification/delete-admin-notification', {
+        notificationId: id
+      });
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data,
+        message: response.data?.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to delete notification",
+        error: error.response?.data
+      };
+    }
+  },
+
+  // Get notifications (same as before)
+  getNotifications: async (page = "1", searchString = "") => {
+    try {
+      const response = await api.post('/api/adminNotification/get-admin-notification-list', {
+        page: page.toString(),
+        serachString: searchString  
+      });
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data,
+        message: response.data?.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to fetch notifications",
+        error: error.response?.data
+      };
+    }
+  }
+};
+
+
 
 export default api;

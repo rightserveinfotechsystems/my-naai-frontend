@@ -29,4 +29,9 @@ export const TabArray = [
     label: "Advertisement",
     route: "/advertisement",
   },
+    {
+    key: "notifications",
+    label: "Push Notifications",
+    route: "/notifications",
+  },
 ];
