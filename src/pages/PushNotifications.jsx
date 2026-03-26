@@ -23,7 +23,7 @@ const Notifications = () => {
     const [deleteModal, setDeleteModal] = useState({ show: false, ids: [], loading: false });
 
     const [formData, setFormData] = useState({
-        targetType: "ALL_USERS",
+        targetType: "",
         title: "",
         body: "",
         data: "{}"
@@ -44,11 +44,10 @@ const Notifications = () => {
     const fetchNotifications = async () => {
         try {
             setLoading(true);
-            const res = await notificationAPI.getNotifications({
-                page: currentPage,
-                limit: ITEMS_PER_PAGE,
-                search: debouncedSearch
-            });
+            const res = await notificationAPI.getNotifications(
+                currentPage,
+                debouncedSearch
+            );
             if (res.success) {
                 setRecentNotifications(res.data.notifications || []);
                 setTotalPages(res.data.pagination?.totalPages || 1);
@@ -74,7 +73,7 @@ const Notifications = () => {
             setDeleteModal(prev => ({ ...prev, loading: true }));
             const res = await notificationAPI.sendNotification(formData);
             if (res.success) {
-                setFormData({ targetType: "users", title: "", body: "", data: "{}" });
+                setFormData({ targetType: "", title: "", body: "", data: "{}" });
                 setShowSendModal(false);
                 setShowAddForm(false);
                 fetchNotifications();
@@ -122,17 +121,24 @@ const Notifications = () => {
                                     <div className="row g-3">
                                         <div className="col-md-4">
                                             <label className="form-label fw-semibold">Target</label>
+                                            <p className="text-primary small">Debug: Sending {formData.targetType}</p>
                                             <select
                                                 className="form-select"
                                                 name="targetType"
+                                                autoComplete="off"
                                                 value={formData.targetType}
                                                 onChange={handleInputChange}
                                             >
-                                                <option value="ALL_USERS">Users </option>
-                                                <option value="ALL_SALONS"> Salons</option>
-                                                <option value="ALL">All (Users & Salons)</option>
-
+                                                <option value="">-- Select Target --</option>
+                                                <option value="ALL_USERS">Users</option>
+                                                <option value="ALL_SALONS">Salons</option>
+                                                <option value="ALL">All(Users & Salons)</option>
                                             </select>
+                                            {!formData.targetType && (
+                                                <div className="text-danger mt-1" style={{ fontSize: '12px' }}>
+                                                    <i className="bi bi-exclamation-circle me-1"></i> Please select a target.
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="col-md-8">
                                             <label className="form-label fw-semibold">Title *</label>
@@ -144,6 +150,11 @@ const Notifications = () => {
                                                 onChange={handleInputChange}
                                                 placeholder="Urgent: Special Offer!"
                                             />
+                                            {!formData.title && (
+                                                <div className="text-danger mt-1" style={{ fontSize: '12px' }}>
+                                                    <i className="bi bi-exclamation-circle me-1"></i> Notification title is required.
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="col-12">
                                             <label className="form-label fw-semibold">Message Body *</label>
@@ -155,11 +166,16 @@ const Notifications = () => {
                                                 onChange={handleInputChange}
                                                 placeholder="Write your message here..."
                                             />
+                                            {!formData.body && (
+                                                <div className="text-danger mt-1" style={{ fontSize: '12px' }}>
+                                                    <i className="bi bi-exclamation-circle me-1"></i> Please enter the message content.
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="col-12">
                                             <button
                                                 className="btn-sm buttoncolor px-3 text-nowrap"
-                                                disabled={!formData.title || !formData.body}
+                                                disabled={!formData.title || !formData.body || !formData.targetType}
                                                 onClick={() => setShowSendModal(true)}
                                             >
                                                 <FaPaperPlane className="me-2" /> Send Notification
@@ -214,41 +230,49 @@ const Notifications = () => {
                                                 <table className="table table-hover mb-0 align-middle">
                                                     <thead className="table-light">
                                                         <tr>
-                                                            <th className="px-4 py-3">No.</th>
+                                                            <th className="px-2 py-3">No.</th>
                                                             <th className="px-4 py-3">Target</th>
-                                                            <th className="px-4 py-3">Content</th>
-                                                            <th className="px-4 py-3">Date</th>
-                                                            <th className="px-4 py-3 text-center">Action</th>
+                                                            <th className="px-6 py-3">Content</th>
+                                                            <th className="px-2 py-3  text-center">Date</th>
+                                                            <th className="px-1 py-3 text-center">Action</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {recentNotifications.map((notif, idx) => (
-                                                            <tr key={notif.id}>
-                                                                <td className="px-4 fw-medium">{(currentPage - 1) * ITEMS_PER_PAGE + idx + 1}</td>
-                                                                <td className="px-4">
-                                                                    {/* <span className={`badge ${notif.targetType === "users" ? "bg-primary" : "bg-secondary"}`}>
+                                                        {recentNotifications.length > 0 ? (
+                                                            recentNotifications.map((notif, idx) => (
+                                                                <tr key={notif.id}>
+                                                                    <td className="px-4 fw-medium">{(currentPage - 1) * ITEMS_PER_PAGE + idx + 1}</td>
+                                                                    <td className="px-4">
+                                                                        {/* <span className={`badge ${notif.targetType === "users" ? "bg-primary" : "bg-secondary"}`}>
                                                                         {notif.targetType}
                                                                     </span> */}
 
-                                                                    <span className={`badge px-2 ${notif.targetType === "ALL_USERS" ? "bg-primary" :
-                                                                        notif.targetType === "ALL_SALONS" ? "bg-secondary" : "bg-dark"
-                                                                        }`}>
-                                                                        {notif.targetType === "ALL_USERS" ? "Users" :
-                                                                            notif.targetType === "ALL_SALONS" ? "Salons" : "All"}
-                                                                    </span>
-                                                                </td>
-                                                                <td className="px-4 text-truncate" style={{ maxWidth: "300px" }}>
-                                                                    <div className="fw-bold">{notif.title}</div>
-                                                                    <div className="small text-muted">{notif.body}</div>
-                                                                </td>
-                                                                <td className="px-4 text-muted small">{new Date(notif.createdAt).toLocaleDateString('en-GB')}</td>
-                                                                <td className="text-center">
-                                                                    <button className="btn btn-sm text-danger" onClick={() => setDeleteModal({ show: true, ids: [notif.id], loading: false })}>
-                                                                        <FaTrash />
-                                                                    </button>
+                                                                        <span className={`badge px-2 ${notif.targetType === "ALL_USERS" ? "bg-primary-subtle text-black" :
+                                                                            notif.targetType === "ALL_SALONS" ? "bg-secondary" : "bg-dark"
+                                                                            }`} style={{ fontSize: "16px" }}>
+                                                                            {notif.targetType === "ALL_USERS" ? "Users" :
+                                                                                notif.targetType === "ALL_SALONS" ? "Salons" : "All"}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td className="px-4 text-truncate" style={{ maxWidth: "300px" }}>
+                                                                        <div className="fw-bold text-capitalize">{notif.title}</div>
+                                                                        <div className="small text-muted text-capitalize">{notif.body}</div>
+                                                                    </td>
+                                                                    <td className="px-4 text-muted text-center small">{new Date(notif.createdAt).toLocaleDateString('en-GB')}</td>
+                                                                    <td className="text-center">
+                                                                        <button className="btn btn-sm text-danger" onClick={() => setDeleteModal({ show: true, ids: [notif.id], loading: false })}>
+                                                                            <FaTrash />
+                                                                        </button>
+                                                                    </td>
+                                                                </tr>
+                                                            ))
+                                                        ) : (
+                                                            <tr>
+                                                                <td colSpan="5" className="text-center py-4 text-muted" style={{ fontSize: "20px" }}>
+                                                                    No notifications found
                                                                 </td>
                                                             </tr>
-                                                        ))}
+                                                        )}
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -265,8 +289,11 @@ const Notifications = () => {
                                                                     <small className="text-muted fw-bold" style={{ fontSize: "14px" }}>
                                                                         {(currentPage - 1) * ITEMS_PER_PAGE + idx + 1}
                                                                     </small>
-                                                                    <span className={`badge px-2 py-1 ${notif.targetType === "users" ? "bg-primary" : "bg-secondary"}`} style={{ fontSize: "9px" }}>
-                                                                        {notif.targetType}
+                                                                    <span className={`badge px-2 py-1 ${notif.targetType === "ALL_USERS" ? "bg-primary-subtle text-black" :
+                                                                            notif.targetType === "ALL_SALONS" ? "bg-secondary" : "bg-dark"
+                                                                        }`} style={{ fontSize: "12px" }}>
+                                                                        {notif.targetType === "ALL_USERS" ? "Users" :
+                                                                            notif.targetType === "ALL_SALONS" ? "Salons" : "All"}
                                                                     </span>
 
                                                                 </div>
@@ -311,7 +338,7 @@ const Notifications = () => {
             <DeleteConfirmModal
                 show={deleteModal.show}
                 onHide={() => setDeleteModal({ show: false, ids: [], loading: false })}
-                onConfirm={() => { handleDelete }}
+                onConfirm={handleDelete}
                 count={deleteModal.ids.length}
             />
         </Layout>
