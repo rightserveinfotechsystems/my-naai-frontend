@@ -121,7 +121,7 @@ const Notifications = () => {
                                     <div className="row g-3">
                                         <div className="col-md-4">
                                             <label className="form-label fw-semibold">Target</label>
-                                            <p className="text-primary small">Debug: Sending {formData.targetType}</p>
+                                            {/* <p className="text-primary small">Debug: Sending {formData.targetType}</p> */}
                                             <select
                                                 className="form-select"
                                                 name="targetType"
