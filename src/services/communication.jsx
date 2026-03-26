@@ -1282,7 +1282,7 @@ export const notificationAPI = {
   sendNotification: async (data) => {
     try {
       const response = await api.post('/api/adminNotification/send-notification-by-admin', {
-        targetType: data.targetType === "ALL" ? "ALL_USERS" : "ALL_SALONS",
+        targetType: data.targetType,
         title: data.title,
         body: data.body,
         data: data.data || "{}"
@@ -1322,11 +1322,11 @@ export const notificationAPI = {
   },
 
   // Get notifications (same as before)
-  getNotifications: async (page = "1", searchString = "") => {
+  getNotifications: async (page = 1, searchString = "") => {
     try {
       const response = await api.post('/api/adminNotification/get-admin-notification-list', {
-        page: page.toString(),
-        serachString: searchString  
+        page: page,
+        searchString: searchString  
       });
       return {
         success: response.data?.status === "SUCCESS",
