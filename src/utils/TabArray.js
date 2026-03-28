@@ -14,11 +14,11 @@ export const TabArray = [
     label: "Salon Management",
     route: "/salons",
   },
-  {
-    key: "salonRequest",
-    label: "Salon Requests",
-    route: "/salonrequest",
-  },
+  // {
+  //   key: "salonRequest",
+  //   label: "Salon Requests",
+  //   route: "/salonrequest",
+  // },
   {
     key: "bookings",
     label: "Bookings",

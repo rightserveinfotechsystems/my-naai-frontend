@@ -34,7 +34,11 @@ const PublicRoute = ({ children }) => {
   const firstTab = TabArray?.find(tab =>
     accessTabs?.includes(tab.key)
   )
-  return (token & accessTabs) ? <Navigate to={firstTab.route} replace /> : children;
+  // return (token && accessTabs) ? <Navigate to={firstTab.route} replace /> : children;
+    if (token && accessTabs && firstTab) {
+    return <Navigate to={firstTab.route} replace />;
+  }
+  return children;
 };
 
 const router = createBrowserRouter(
