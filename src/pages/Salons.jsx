@@ -567,7 +567,7 @@ const Salons = () => {
 
                         <div className="d-flex justify-content-between align-items-center mb-2">
                           <p className="text-muted small mb-0 text-truncate">
-                            <i className="bi bi-geo-alt-fill me-1 text-primary"></i> {salon.city}
+                            <i className="bi bi-geo-alt-fill me-1 text-primary"></i> {salon.addressLine1}
                           </p>
                           <div
                             className="form-check form-switch mb-0"
