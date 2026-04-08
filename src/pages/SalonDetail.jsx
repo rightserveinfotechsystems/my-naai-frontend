@@ -154,12 +154,17 @@ const SalonDetail = () => {
               <div>
                 <h4 className="mb-0 fw-bold ">{salon.salonName}</h4>
                 <small className="text-muted">
-                  {salon.city}, {salon.state} {""}
+                  {/* {salon.city}, {salon.state} {""} */}
                   {/* • ★ {salon.ratingAverage || '5.0'}
                   {salon.totalReviews > 0 && ` (${salon.totalReviews} reviews)`} */}
-                  • Joined {new Date(salon.createdAt).toLocaleDateString('en-GB')}
+                  {salon.addressLine1}
+                  {/* • Joined {new Date(salon.createdAt).toLocaleDateString('en-GB')} */}
 
                 </small>
+                <div> <small className="text-muted">
+                  Joined {new Date(salon.createdAt).toLocaleDateString('en-GB')}
+                </small></div>
+
                 <div className="d-flex gap-2 mt-1">
                   {salon.ownerName && (
                     <small className="text-muted">Owner: {salon.ownerName}</small>
@@ -173,19 +178,35 @@ const SalonDetail = () => {
                 </div>
               </div>
             </div>
-            <div className="d-flex flex-row align-items-center gap-1 flex-wrap">
-              <StatusBadge status={salon.isActive ? "active" : "inactive"} />
-              <small className={`badge ${salon.isOpen ? 'bg-success' : 'bg-warning text-dark'}`}>
-                {salon.isOpen ? 'Open' : 'Closed'}
-              </small>
-              <small className="badge bg-secondary">
-                {salon.genderType || 'Unisex'}
-              </small>
-              {salon.queueLength > 0 && (
+            <div>
+              <div className=" d-flex flex-row align-items-center gap-1 flex-wrap">
+                <StatusBadge status={salon.isActive ? "active" : "inactive"} />
+                <small className={`badge ${salon.isOpen ? 'bg-success' : 'bg-warning text-dark'}`}>
+                  {salon.isOpen ? 'Open' : 'Closed'}
+                </small>
+                <small className="badge bg-secondary">
+                  {salon.genderType || ''}
+                </small>
+                {/* {salon.queueLength > 0 && (
                 <small className="badge bg-info">
                   {salon.queueLength} in queue
                 </small>
-              )}
+              )} */}
+
+              </div>
+              <div>
+                <div> <small className="text-muted">PlanActive: {salon.isPlanActive ? 'Yes' : 'No'}</small>
+                </div>
+                <div> <small className="text-muted">Plan Type: {salon?.planType}</small>
+                </div>
+                <div> <small className="text-muted"> Plan Start:
+                  {new Date(salon?.planStartDate).toLocaleDateString('en-GB')}</small>
+                </div>
+
+                <div> <small className="text-muted"> Plan End:
+                  {new Date(salon?.planEndDate).toLocaleDateString('en-GB')}</small>
+                </div>
+              </div>
             </div>
           </div>
         </div>
