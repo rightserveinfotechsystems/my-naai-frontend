@@ -113,8 +113,8 @@ const AgentSalons = () => {
                           size="sm"
                         />
                       </div>
-                      <button 
-                        className="btn btn-sm btn-outline-secondary px-3 text-nowrap" 
+                      <button
+                        className="btn btn-sm btn-outline-secondary px-3 text-nowrap"
                         onClick={() => navigate("/user")}
                       >
                         ← Back to Users
@@ -140,6 +140,10 @@ const AgentSalons = () => {
                         <th className="px-3 py-2 text-center">Owner Name</th>
                         {/* <th className="px-3 py-2">Location</th> */}
                         <th className="px-3 py-2">Phone</th>
+                        <th className="px-3 py-2">Plan Type</th>
+                        <th className="px-3 py-2">Plan Start</th>
+                        <th className="px-3 py-2">Plan End</th>
+                        <th className="px-3 py-2">Plan Active</th>
                         <th className="px-3 py-2 text-center">Status</th>
                         <th className="px-3 py-2 text-center">Created</th>
                       </tr>
@@ -162,10 +166,14 @@ const AgentSalons = () => {
                           <td className="px-3 py-2 text-center">
                             {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
                           </td>
-                          <td className="fw-semibold px-3 py-2">{salon?.salonName}</td>
-                          <td className="px-3 py-2 text-center">{salon?.ownerName || '—'}</td>
+                          <td className="fw-semibold px-3 py-2 text-capitalize">{salon?.salonName}</td>
+                          <td className="px-3 py-2 text-center text-capitalize">{salon?.ownerName || '—'}</td>
                           {/* <td className="px-3 py-2">{salon?.addressLine1 || '—'}</td> */}
                           <td className="px-3 py-2">{salon?.phoneNumber || '—'}</td>
+                          <td className="px-3 py-2 text-capitalize">{salon?.planType || '—'}</td>
+                          <td className="px-3 py-2">{formatDate(salon?.planStartDate) || '—'}</td>
+                          <td className="px-3 py-2">{formatDate(salon?.planEndDate) || '—'}</td>
+                          <td className="px-3 py-2">{salon?.isPlanActive ? 'Yes' : 'No' || '—'}</td>
                           <td className="px-3 py-2 text-center">
                             <StatusBadge status={salon.isActive ? "active" : "inactive"} />
                           </td>
@@ -191,12 +199,22 @@ const AgentSalons = () => {
                       {salons && salons.map((salon, index) => (
                         <div key={salon.id} className="card mb-2 shadow-sm">
                           <div className="card-body p-2 d-flex flex-column gap-1">
-                            <div className="fw-semibold">  {salon.salonName}</div>
-                            <div className="small text-muted">{salon?.ownerName || '—'}</div>
+                            <div className="fw-semibold text-capitalize">  {salon.salonName}</div>
+                            <div className="small text-muted text-capitalize">{salon?.ownerName || '—'}</div>
                             {/* <div className="small">
                               Location: {salon?.addressLine1 || '—'}
                             </div> */}
                             <div className="small">Phone: {salon?.phoneNumber || '—'}</div>
+                            <div className="small text-capitalize">Plan: {salon?.planType || '—'}</div>
+                            <div className="small">
+                              Plan Start: {formatDate(salon?.planStartDate) || '—'}
+                            </div>
+                            <div className="small">
+                              Plan End: {formatDate(salon?.planEndDate) || '—'}
+                            </div>
+                            <div className="small">
+                              Plan Active: {salon?.isPlanActive ? 'Yes' : 'No' || '—'}
+                            </div>
                             <div className="small text-muted">
                               Created: {formatDate(salon.createdAt)}
                             </div>
