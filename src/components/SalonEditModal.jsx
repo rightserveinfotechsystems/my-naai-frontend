@@ -41,8 +41,8 @@ const [showCamera, setShowCamera] = useState(false);
     // Address fields
     addressLine1: "",
     addressLine2: "",
-    city: "",
-    state: "",
+    // city: "",
+    // state: "",
     pincode: "",
 
     // Additional info
@@ -101,8 +101,8 @@ const [showCamera, setShowCamera] = useState(false);
                 email: salon.email || "",
                 addressLine1: salon.addressLine1 || salon.address || "",
                 addressLine2: salon.addressLine2 || "",
-                city: salon.city || "",
-                state: salon.state || "",
+                // city: salon.city || "",
+                // state: salon.state || "",
                 pincode: salon.pincode || "",
                 imageUrl: salon.imageUrl || salon.shopLogo || "",
                 gender: (salon.genderType || "").toLowerCase(),
@@ -189,8 +189,8 @@ const [showCamera, setShowCamera] = useState(false);
             // Address fields
             addressLine1: "",
             addressLine2: "",
-            city: "",
-            state: "",
+            // city: "",
+            // state: "",
             pincode: "",
 
             // Additional info
@@ -338,9 +338,9 @@ const [showCamera, setShowCamera] = useState(false);
     // }
 
     // City validation
-    if (!formData.city || formData.city.trim() === "") {
-      newErrors.city = "Please select a city";
-    }
+    // if (!formData.city || formData.city.trim() === "") {
+    //   newErrors.city = "Please select a city";
+    // }
 
     // State validation
     // if (!formData.state || formData.state.trim() === "") {
@@ -415,8 +415,8 @@ const [showCamera, setShowCamera] = useState(false);
       email: "",
       addressLine1: "",
       addressLine2: "",
-      city: "",
-      state: "",
+      // city: "",
+      // state: "",
       pincode: "",
       imageUrl: "",
       gender: "unisex",
@@ -462,8 +462,8 @@ const [showCamera, setShowCamera] = useState(false);
         email: formData.email,
         addressLine1: formData.addressLine1 || "",
         addressLine2: formData.addressLine2 || "",
-        city: formData.city,
-        state: formData.state || "",
+        // city: formData.city,
+        // state: formData.state || "",
         pincode: formData.pincode || "",
         imageUrl: formData.imageUrl || "",
         genderType: (formData.gender || "unisex").toUpperCase(),
@@ -605,8 +605,8 @@ const [showCamera, setShowCamera] = useState(false);
       phoneNumber: "Please enter phone number",
       // email: "Please enter email address",
       // addressLine1: "Please enter address",
-      city: "Please select a city",
-      state: "Please select a state",
+      // city: "Please select a city",
+      // state: "Please select a state",
       // pincode: "Please enter pincode",
       gender: "Please select salon type",
       // openingTime: "Please enter opening time",
@@ -818,7 +818,7 @@ const [showCamera, setShowCamera] = useState(false);
 
                 {/* 5. Address Line 1 */}
                 <div className="col-12 col-md-6">
-                  <label className="form-label fw-semibold required-field">Address Line 1</label>
+                  <label className="form-label fw-semibold required-field">Address</label>
                   <input
                     type="text"
                     className={`form-control ${errors.addressLine1 ? 'is-invalid' : ''}`}
@@ -848,8 +848,8 @@ const [showCamera, setShowCamera] = useState(false);
                 </div> */}
 
                 {/* 7. City */}
-                <div className="col-12 col-md-4">
-                  <label className="form-label fw-semibold required-field">City</label>
+                {/* <div className="col-12 col-md-4">
+                  <label className="form-label fw-semibold">City</label>
                   <select
                     className={`form-select ${errors.city ? 'is-invalid' : ''}`}
                     name="city"
@@ -865,10 +865,10 @@ const [showCamera, setShowCamera] = useState(false);
                     ))}
                   </select>
                   {errors.city && <div className="invalid-feedback">{errors.city}</div>}
-                </div>
+                </div> */}
 
                 {/* 8. State */}
-                <div className="col-12 col-md-4">
+                {/* <div className="col-12 col-md-4">
                   <label className="form-label fw-semibold required-field">State</label>
                   <select
                     className={`form-select ${errors.state ? 'is-invalid' : ''}`}
@@ -884,7 +884,7 @@ const [showCamera, setShowCamera] = useState(false);
 
                   </select>
                   {errors.state && <div className="invalid-feedback">{errors.state}</div>}
-                </div>
+                </div> */}
 
                 {/* 9. Pincode */}
                 <div className="col-12 col-md-4">
