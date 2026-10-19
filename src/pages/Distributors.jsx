@@ -25,6 +25,7 @@ const Distributors = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingDistributor, setEditingDistributor] = useState(null);
   const [activeFilter, setActiveFilter] = useState("ALL");
+  const [confirmModal, setConfirmModal] = useState({ show: false, target: null });
   const navigate = useNavigate();
 
   const fetchDistributors = useCallback(async () => {
@@ -63,7 +64,9 @@ const Distributors = () => {
     }
   }, []);
 
-  const handleToggleActive = async (distributor) => {
+  const handleConfirmToggle = async () => {
+    if (!confirmModal.target) return;
+    const distributor = confirmModal.target;
     try {
       const result = await distributorAPI.update({
         distributorId: distributor.distributorId,
@@ -77,6 +80,8 @@ const Distributors = () => {
       }
     } catch {
       toast.error("Update failed");
+    } finally {
+      setConfirmModal({ show: false, target: null });
     }
   };
 
@@ -93,8 +98,6 @@ const Distributors = () => {
       <div className="page-content d-flex flex-column p-2 p-md-3" style={{ height: "calc(100vh - 70px)", overflow: "hidden" }}>
         <div className="card shadow-sm mb-3 bg-white border-0 flex-shrink-0" style={{ borderRadius: "12px" }}>
           <div className="card-body p-3">
-            {/* Flex instead of row/col: the panel's CSS build does not carry
-                the Bootstrap grid utilities, so widths are inline. */}
             <div className="d-flex flex-wrap align-items-center gap-3">
               <div style={{ flex: "1 1 240px", minWidth: 0 }}>
                 <SearchInput value={search} onChange={setSearch} placeholder="Search by name, phone, area..." />
@@ -112,7 +115,7 @@ const Distributors = () => {
               </div>
               <div className="d-flex align-items-center gap-2" style={{ flex: "1 1 auto", minWidth: 180, justifyContent: "flex-end" }}>
                 <button className="button23" onClick={() => { setEditingDistributor(null); setShowModal(true); }}>
-                  <Plus size={15} className="me-1" /> Add Distributor
+                  <Plus size={15} className="me-1" /> Add
                 </button>
                 <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} size="sm" />
               </div>
@@ -160,18 +163,20 @@ const Distributors = () => {
                           : <span className="badge bg-secondary-subtle text-secondary">Disabled</span>}
                       </td>
                       <td className="text-end">
-                        <button className="button22 me-1" onClick={() => { setEditingDistributor(d); setShowModal(true); }}>Edit</button>
-                        <button
-                          className="btn btn-sm"
-                          style={{
-                            color: d.isActive ? "#7f8c8d" : "#1e7e34",
-                            border: `1px solid ${d.isActive ? "#dde5dd" : "#a3d9b1"}`,
-                            background: d.isActive ? "#f4f6f4" : "#eaf7ee"
-                          }}
-                          onClick={() => handleToggleActive(d)}
-                        >
-                          {d.isActive ? "Disable" : "Activate"}
-                        </button>
+                        <div className="d-flex align-items-center justify-content-end gap-2">
+                          <button className="button22 px-2 py-1" onClick={() => { setEditingDistributor(d); setShowModal(true); }}>Edit</button>
+                          <button
+                            className="btn btn-sm px-2 py-1"
+                            style={{
+                              color: d.isActive ? "#7f8c8d" : "#1e7e34",
+                              border: `1px solid ${d.isActive ? "#dde5dd" : "#a3d9b1"}`,
+                              background: d.isActive ? "#f4f6f4" : "#eaf7ee"
+                            }}
+                            onClick={() => setConfirmModal({ show: true, target: d })}
+                          >
+                            {d.isActive ? "Disable" : "Activate"}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -180,6 +185,46 @@ const Distributors = () => {
             </div>
           )}
         </div>
+
+        {/* Status Toggle Confirmation Modal */}
+        {confirmModal.show && (
+          <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content border-0 shadow" style={{ borderRadius: "12px" }}>
+                <div className="modal-header border-0 pb-0">
+                  <h5 className="modal-title fw-bold">
+                    {confirmModal.target?.isActive ? "Disable Distributor?" : "Activate Distributor?"}
+                  </h5>
+                  <button type="button" className="btn-close" onClick={() => setConfirmModal({ show: false, target: null })}></button>
+                </div>
+                <div className="modal-body py-3">
+                  <p className="text-muted mb-0">
+                    Are you sure you want to <strong>{confirmModal.target?.isActive ? "disable" : "activate"}</strong> <span className="text-dark fw-semibold">{confirmModal.target?.name}</span>? 
+                    {confirmModal.target?.isActive 
+                      ? " They will no longer be able to log in or fulfill salon orders." 
+                      : " They will regain access to log in and fulfill salon orders."}
+                  </p>
+                </div>
+                <div className="modal-footer border-0 pt-0">
+                  <button 
+                    type="button" 
+                    className="btn btn-light btn-sm px-3" 
+                    onClick={() => setConfirmModal({ show: false, target: null })}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="button" 
+                    className={`btn btn-sm px-3 ${confirmModal.target?.isActive ? "btn-danger" : "btn-success"}`}
+                    onClick={handleConfirmToggle}
+                  >
+                    {confirmModal.target?.isActive ? "Yes, Disable" : "Yes, Activate"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <DistributorModal
           showModal={showModal}

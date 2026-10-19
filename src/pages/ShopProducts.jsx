@@ -8,7 +8,7 @@ import DeleteConfirmModal from "../components/DeleteConfirmModal.jsx";
 import ShopProductModal from "../components/ShopProductModal.jsx";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import { Package, Plus } from "lucide-react";
+import { Package, Plus, Pencil, Trash2 } from "lucide-react";
 
 const GENDER_LABELS = { MALE: "Men", FEMALE: "Women", UNISEX: "Unisex" };
 
@@ -90,34 +90,38 @@ const ShopProducts = () => {
 
   return (
     <Layout>
-      <div className="page-content d-flex flex-column p-2 p-md-3" style={{ height: "calc(100vh - 70px)", overflow: "hidden" }}>
+      <div className="page-content d-flex flex-column p-2 p-md-3" style={{ minHeight: "calc(100vh - 70px)", overflowX: "hidden" }}>
+        {/* Top Control Bar */}
         <div className="card shadow-sm mb-3 bg-white border-0 flex-shrink-0" style={{ borderRadius: "12px" }}>
           <div className="card-body p-3">
             <div className="row g-3 align-items-center">
               <div className="col-12 col-md-6">
                 <SearchInput value={search} onChange={setSearch} placeholder="Search catalog products..." />
               </div>
-              <div className="col-12 col-md-6 d-flex justify-content-md-end gap-2">
-                <button className="button23" onClick={() => { setEditingProduct(null); setShowModal(true); }}>
+              <div className="col-12 col-md-6 d-flex flex-wrap justify-content-md-end gap-2 align-items-center">
+                <button className="button23 flex-fill flex-md-grow-0" onClick={() => { setEditingProduct(null); setShowModal(true); }}>
                   <Plus size={15} className="me-1" /> Add Product
                 </button>
-                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} size="sm" />
+                <div className="flex-fill flex-md-grow-0 d-flex justify-content-center justify-content-md-end">
+                  <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} size="sm" />
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="flex-grow-1 p-3 shadow-sm border-0" style={{ overflowY: "auto", backgroundColor: "#ffffff", borderRadius: "12px" }}>
+        {/* Content Body / Table Container */}
+        <div className="flex-grow-1 p-2 p-md-3 shadow-sm border-0 bg-white" style={{ borderRadius: "12px", overflowX: "auto" }}>
           {isLoading ? (
             <div className="text-center py-5"><Loader size="sm" /></div>
           ) : products.length === 0 ? (
-            <div className="text-center py-5 text-muted">
+            <div className="text-center py-5 text-muted px-2">
               <Package size={40} className="mx-auto mb-2 opacity-25" />
-              No catalog products yet. Add the first one so salons can buy from you.
+              <p className="mb-0">No catalog products yet. Add the first one so salons can buy from you.</p>
             </div>
           ) : (
             <div className="table-responsive">
-              <table className="table align-middle mb-0" style={{ fontSize: "0.9rem" }}>
+              <table className="table align-middle mb-0" style={{ fontSize: "0.9rem", minWidth: "750px" }}>
                 <thead>
                   <tr className="text-muted small" style={{ textTransform: "uppercase", letterSpacing: "0.4px" }}>
                     <th>Product</th>
@@ -146,7 +150,7 @@ const ShopProducts = () => {
                               )}
                             </div>
                             <div>
-                              <div className="fw-semibold">{p.productName}</div>
+                              <div className="fw-semibold text-break">{p.productName}</div>
                               <div className="text-muted small">Added {dateTime(p.createdAt)}</div>
                             </div>
                           </div>
@@ -154,10 +158,10 @@ const ShopProducts = () => {
                         <td className="text-end fw-semibold">{money(p.price)}</td>
                         <td className="text-end">
                           {mrp > price ? (
-                            <span>
-                              <span className="text-muted text-decoration-line-through small me-1">{money(p.mrp)}</span>
+                            <div className="d-flex flex-column flex-md-row justify-content-end align-items-md-center gap-1">
+                              <span className="text-muted text-decoration-line-through small">{money(p.mrp)}</span>
                               {discount > 0 && <span className="badge bg-success-subtle text-success">{discount}% off</span>}
-                            </span>
+                            </div>
                           ) : (
                             <span className="text-muted">—</span>
                           )}
@@ -170,10 +174,23 @@ const ShopProducts = () => {
                             : <span className="badge bg-secondary-subtle text-secondary">Hidden</span>}
                         </td>
                         <td className="text-end">
-                          <button className="button22 me-1" onClick={() => { setEditingProduct(p); setShowModal(true); }}>Edit</button>
-                          <button className="btn btn-sm btn-danger" onClick={() => { setDeleteModal({ show: true, target: p }); }}>
-                            <i className="bi bi-trash"></i>
-                          </button>
+                          {/* Added proper spacing/gap and responsive styling for action buttons */}
+                          <div className="d-flex align-items-center justify-content-end gap-2">
+                            <button 
+                              className="button22 btn-sm px-2 py-1" 
+                              onClick={() => { setEditingProduct(p); setShowModal(true); }}
+                              title="Edit Product"
+                            >
+                              <Pencil size={14} className="me-1 d-none d-sm-inline" />Edit
+                            </button>
+                            <button 
+                              className="btn btn-sm btn-danger px-2 py-1 d-flex align-items-center justify-content-center" 
+                              onClick={() => { setDeleteModal({ show: true, target: p }); }}
+                              title="Delete Product"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
