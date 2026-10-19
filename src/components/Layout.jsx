@@ -3,9 +3,9 @@ import { NavLink, Link, useNavigate } from "react-router-dom";
 import ProfileDropdown from "./ProfileDropdown.jsx";
 import ChangePasswordModal from "./ChangePasswordModal.jsx";
 import { useUser } from "../contexts/UserContext.jsx";
-import { ClipboardList, Store, CalendarCheck, User, Users } from "lucide-react";
+import { ClipboardList, Store, CalendarCheck, User, Users, Package, Truck, ShoppingBag, SlidersHorizontal, Menu, X } from "lucide-react";
 import { salonRequestAPI } from "../services/communication.jsx";
-// Icons definitions (SVG)
+
 const Icons = {
   Salon: () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"> <circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><path d="M20 4v16" /><path d="M15.11 14.48 20 20" /><path d="m15.11 9.52 4.89-5.48" /><circle cx="18" cy="12" r="2" /></svg>
@@ -38,46 +38,42 @@ const Icons = {
       <path d="M13.73 21a2 2 0 0 1-3.46 0" />
     </svg>
   ),
-
 };
 
 const navItems = [
-  { path: "/user", key: "user", label: "User Management", icon: <User size={20} /> },
-  { path: "/customer", key: "customer", label: "Customer Management", icon: <Users size={20} /> },
-  { path: "/salons", key: "salonManagement", label: "Salon Management", icon: <Store size={20} /> },
-  { path: "/bookings", key: "bookings", label: "Booking Management", icon: <CalendarCheck size={20} /> },
-  // { path: "/salonrequest", key: "salonRequest", label: "Salon Request", icon: <ClipboardList size={20} /> },
+  { path: "/user", key: "user", label: "User Management", icon: <User size={18} /> },
+  { path: "/customer", key: "customer", label: "Customer Management", icon: <Users size={18} /> },
+  { path: "/salons", key: "salonManagement", label: "Salon Management", icon: <Store size={18} /> },
+  { path: "/bookings", key: "bookings", label: "Booking Management", icon: <CalendarCheck size={18} /> },
   { path: "/advertisement", key: "advertisement", label: "Advertisement", icon: <Icons.Advertisement /> },
   { path: "/notifications", key: "notifications", label: "Push Notifications", icon: <Icons.Notification /> },
-
+  { path: "/shop-products", key: "shopProducts", label: "Shop Products", icon: <Package size={18} /> },
+  { path: "/distributors", key: "distributors", label: "Distributors", icon: <Truck size={18} /> },
+  { path: "/shop-orders", key: "shopOrders", label: "Shop Orders", icon: <ShoppingBag size={18} /> },
+  { path: "/shop-settings", key: "shopSettings", label: "Shop Settings", icon: <SlidersHorizontal size={18} /> },
 ];
 
 const Layout = ({ children }) => {
-  const [open, setOpen] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [isLogoutLoading, setIsLogoutLoading] = useState(false);
   const [salonRequestCount, setSalonRequestCount] = useState(0);
+  const [showMoreDrawer, setShowMoreDrawer] = useState(false);
+  
   const navigate = useNavigate();
-  const accessTab = JSON.parse(localStorage.getItem("accessTab"))
-  const [filteredTabs, setFilterTabs] = useState(navItems.filter((navDetails) => accessTab?.includes(navDetails.key)))
-  // const [filteredTabs, setFilterTabs] = useState(accessTab.map((ele) => {
-  //   const data = navItems.find((navDetails) => navDetails?.key === ele)
-  //   if (data) {
-  //     return data
-  //   }
-  // }).filter(Boolean))
+  const accessTab = JSON.parse(localStorage.getItem("accessTab")) || [];
+  
+  const hasAnyShopTab = ["shopProducts", "distributors", "shopOrders"].some((key) => accessTab?.includes(key));
+  const filteredTabs = navItems.filter((navDetails) =>
+    accessTab?.includes(navDetails.key) || (navDetails.key === "shopSettings" && hasAnyShopTab)
+  );
 
+  const primaryMobileTabs = filteredTabs.slice(0, 4);
+  const overflowMobileTabs = filteredTabs.slice(4);
 
   const { user, logout } = useUser();
 
-  // Profile dropdown close handler
-  const handleProfileClose = () => {
-    setShowProfileDropdown(false);
-  };
-
-  // Logout handlers
   const handleLogoutClick = () => {
     setShowLogoutModal(true);
   };
@@ -86,9 +82,9 @@ const Layout = ({ children }) => {
     setIsLogoutLoading(true);
     logout();
     setShowLogoutModal(false);
-    localStorage.removeItem("token")
-    localStorage.removeItem("accessTab")
-    localStorage.removeItem("userData")
+    localStorage.removeItem("token");
+    localStorage.removeItem("accessTab");
+    localStorage.removeItem("userData");
     setTimeout(() => {
       navigate("/login", { replace: true });
       setIsLogoutLoading(false);
@@ -103,74 +99,43 @@ const Layout = ({ children }) => {
     setShowChangePasswordModal(true);
   };
 
-  // Fallback user data if no user is loaded
   const displayUser = JSON.parse(localStorage.getItem("userData")) || user || {
     name: "",
     email: "",
     role: ""
   };
 
-  // Fetch salon request count for notifications
-  const fetchSalonRequestCount = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      const response = await salonRequestAPI.getSalonRequests({
-        page: 1,
-        salonNameFilter: "",
-        requestDate: "",
-        searchString: ""
-      });
-
-      if (response.success && response.pagination) {
-        setSalonRequestCount(response.pagination.total || 0);
-      }
-    } catch (error) {
-      console.error("Error fetching salon request count:", error);
-    }
-  };
-
-  // Fetch count on mount and every 30 seconds
-  // useEffect(() => {
-  //   fetchSalonRequestCount();
-  //   const interval = setInterval(fetchSalonRequestCount, 30000); // 30 seconds
-  //   return () => clearInterval(interval);
-  // }, []);
-
-
   return (
-    <div className="app-shell d-flex">
-      {/* Desktop Sidebar */}
-      <aside className="sidebar d-none d-md-flex flex-column p-3 gap-3 position-sticky top-0 vh-100">
-        <div className="d-flex flex-column align-items-center gap-2 mb-3">
-          {/* <Link
-            to="/"
-            className="d-flex justify-content-center align-items-center text-decoration-none"
-          > */}
+    <div className="app-shell d-flex" style={{ minHeight: "100vh", overflowX: "hidden" }}>
+      {/* Desktop Sidebar Fixed in Viewport Height with Shrinked Padding & Internal Scroll */}
+      <aside 
+        className="sidebar d-none d-md-flex flex-column p-2 gap-2 position-sticky top-0" 
+        style={{ height: "100vh", width: "250px", flexShrink: 0, overflowY: "auto" }}
+      >
+        <div className="d-flex flex-column align-items-center py-2 mb-1">
           <img
             src="/images/my_naai_logo.png"
             alt="Salon Logo"
             className="object-fit-contain"
-            style={{ maxHeight: "80px" }}
+            style={{ maxHeight: "60px" }}
           />
-          {/* </Link> */}
         </div>
 
-        <nav className="nav flex-column gap-1 sidebarmt">
+        {/* Scrollable nav items list inside sidebar */}
+        <nav className="nav flex-column gap-1 flex-grow-1" style={{ overflowY: "auto", minHeight: 0 }}>
           {filteredTabs?.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               end={item.path === "/"}
               className={({ isActive }) =>
-                `nav-link d-flex align-items-center gap-2 ${isActive ? "active" : ""}`
+                `nav-link d-flex align-items-center gap-2 py-2 px-3 small ${isActive ? "active" : ""}`
               }
             >
               {item.icon}
-              <span>{item.label}</span>
+              <span className="text-truncate">{item.label}</span>
               {item.path === "/salonrequest" && salonRequestCount > 0 && (
-                <span className="badge bg-danger ms-auto" style={{ fontSize: '0.7rem', padding: '0.2rem 0.4rem' }}>
+                <span className="badge bg-danger ms-auto" style={{ fontSize: '0.65rem', padding: '0.2rem 0.4rem' }}>
                   {salonRequestCount > 99 ? '99+' : salonRequestCount}
                 </span>
               )}
@@ -178,28 +143,28 @@ const Layout = ({ children }) => {
           ))}
         </nav>
 
-        <div className="mt-auto d-flex flex-column gap-2">
-          {/* Profile Section */}
+        {/* Pinned Bottom Profile & Logout Section */}
+        <div className="mt-auto d-flex flex-column gap-2 pt-2 border-top flex-shrink-0">
           <div
-            className="d-flex align-items-center gap-3 p-2 rounded sidebar-profile"
+            className="d-flex align-items-center gap-2 p-2 rounded sidebar-profile"
             style={{ cursor: 'pointer' }}
             onClick={() => setShowProfileDropdown(!showProfileDropdown)}
           >
             <div className="bg-white text-primary rounded-circle d-flex align-items-center justify-content-center"
-              style={{ width: '40px', height: '40px' }}>
-              <span style={{ fontSize: '1.2rem' }}>👤</span>
+              style={{ width: '34px', height: '34px', flexShrink: 0 }}>
+              <span style={{ fontSize: '1rem' }}>👤</span>
             </div>
-            <div className="flex-grow-1">
-              <div className="text-white fw-medium small">{displayUser.name}</div>
-              <div className="text-white-50 small">{displayUser.role}</div>
+            <div className="flex-grow-1 text-truncate">
+              <div className="text-white fw-medium small text-truncate" style={{ fontSize: "0.82rem" }}>{displayUser.name}</div>
+              <div className="text-white-50 small text-truncate" style={{ fontSize: "0.72rem" }}>{displayUser.role}</div>
             </div>
           </div>
 
-          {/* Logout Button WITH MODAL */}
-          <div className="p-3 border-top ">
+          <div>
             <button
-              className="logoutbutton btn-sm w-100"
+              className="logoutbutton btn-sm w-100 py-1"
               onClick={handleLogoutClick}
+              style={{ fontSize: "0.85rem" }}
             >
               <i className="bi bi-box-arrow-right me-2"></i>
               Logout
@@ -263,7 +228,7 @@ const Layout = ({ children }) => {
         onClose={() => setShowChangePasswordModal(false)}
       />
 
-      {/* Desktop Profile Dropdown - positioned outside sidebar */}
+      {/* Desktop Profile Dropdown */}
       <div className="d-none d-md-block">
         {showProfileDropdown && (
           <ProfileDropdown
@@ -276,32 +241,23 @@ const Layout = ({ children }) => {
       </div>
 
       {/* Mobile + Desktop Main Content */}
-      <div className="flex-grow-1 d-flex flex-column">
+      <div className="flex-grow-1 d-flex flex-column" style={{ minWidth: 0, paddingBottom: "70px" }}>
         {/* Mobile Topbar */}
         <div className="d-md-none position-relative">
           <header className="navbar bg-white shadow-sm sticky-top px-2 mobile-header-fixed">
             <div className="d-flex align-items-center justify-content-between w-100">
               <div className="d-flex align-items-center gap-2 min-w-0 flex-grow-1">
-                {/* <Link
-                  to="/"
-                  className="navbar-brand fw-semibold text-truncate m-0 d-flex align-items-center gap-2"
-                  style={{ maxWidth: "150px", fontSize: '1rem' }}
-                > */}
                 <img
                   src="/images/my_naai_logo.png"
                   alt="Salon Logo"
                   className="object-fit-contain"
                   style={{ maxHeight: "35px" }}
                 />
-                {/* </Link> */}
               </div>
 
               <button
                 className="btn btn-outline-secondary btn-sm flex-shrink-0 d-flex align-items-center justify-content-center profile-btn"
-                onClick={() => {
-                  const newState = !showProfileDropdown;
-                  setShowProfileDropdown(newState);
-                }}
+                onClick={() => setShowProfileDropdown(!showProfileDropdown)}
                 style={{
                   width: '36px',
                   height: '36px',
@@ -313,10 +269,8 @@ const Layout = ({ children }) => {
                 <span style={{ fontSize: '1.2rem' }}>👤</span>
               </button>
             </div>
-
           </header>
 
-          {/* Profile Dropdown */}
           <ProfileDropdown
             isOpen={showProfileDropdown}
             onClose={() => setShowProfileDropdown(false)}
@@ -327,14 +281,14 @@ const Layout = ({ children }) => {
 
         {/* Main Content Area */}
         <main className="flex-grow-1">
-          <div className="container-fluid">{children}</div>
+          <div className="container-fluid py-3">{children}</div>
         </main>
 
-        {/* Mobile Bottom Navigation (now uses filteredTabs for access control) */}
+        {/* Mobile Bottom Navigation */}
         <div className="d-md-none">
-          <nav className="navbar fixed-bottom bg-white border-top shadow-lg mobile-bottom-nav">
-            <div className="container-fluid d-flex justify-content-around align-items-center px-2">
-              {filteredTabs?.map((item) => (
+          <nav className="navbar fixed-bottom bg-white border-top shadow-lg mobile-bottom-nav py-1">
+            <div className="container-fluid d-flex justify-content-around align-items-center px-1">
+              {primaryMobileTabs.map((item) => (
                 <NavLink
                   key={item.path}
                   to={item.path}
@@ -343,19 +297,71 @@ const Layout = ({ children }) => {
                     `nav-link text-center p-2 mobile-nav-item ${isActive ? "active" : ""}`
                   }
                 >
-                  <div className={`d-flex flex-column align-items-center${item.path === "/salonrequest" ? " position-relative" : ""}`}>
+                  <div className="d-flex flex-column align-items-center">
                     {item.icon}
-                    <small className="mt-1 nav-text">{item.label.replace(" Management", "").replace("Customer", "Customer").replace("User", "Users").replace("Salon Request", "Salon Request").replace("Advertisement", "Ads")}</small>
-                    {item.path === "/salonrequest" && salonRequestCount > 0 && (
-                      <span className="badge bg-danger position-absolute top-0 end-0 translate-middle" style={{ fontSize: '0.6rem', padding: '0.15rem 0.25rem' }}>
-                        {salonRequestCount > 99 ? '99+' : salonRequestCount}
-                      </span>
-                    )}
+                    <small className="mt-1 nav-text" style={{ fontSize: "0.68rem" }}>
+                      {item.label.replace(" Management", "").replace("Customer", "Customers").replace("User", "Users")}
+                    </small>
                   </div>
                 </NavLink>
               ))}
+
+              {overflowMobileTabs.length > 0 && (
+                <button
+                  type="button"
+                  className={`btn nav-link text-center p-2 mobile-nav-item border-0 bg-transparent ${showMoreDrawer ? "active text-primary" : "text-secondary"}`}
+                  onClick={() => setShowMoreDrawer(true)}
+                >
+                  <div className="d-flex flex-column align-items-center">
+                    <Menu size={20} />
+                    <small className="mt-1 nav-text" style={{ fontSize: "0.68rem" }}>More</small>
+                  </div>
+                </button>
+              )}
             </div>
           </nav>
+
+          {/* Mobile Overflow Menu Drawer */}
+          {showMoreDrawer && (
+            <div 
+              className="position-fixed top-0 start-0 w-100 h-100 d-flex flex-column justify-content-end" 
+              style={{ backgroundColor: "rgba(0,0,0,0.4)", zIndex: 1055 }}
+              onClick={() => setShowMoreDrawer(false)}
+            >
+              <div 
+                className="bg-white rounded-top-4 p-4 shadow-lg animate-slide-up" 
+                style={{ maxHeight: "70vh", overflowY: "auto" }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                  <h6 className="fw-bold mb-0 text-dark">More Menu</h6>
+                  <button 
+                    type="button" 
+                    className="btn btn-sm btn-light rounded-circle p-1" 
+                    onClick={() => setShowMoreDrawer(false)}
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                <div className="d-flex flex-column gap-2">
+                  {overflowMobileTabs.map((item) => (
+                    <NavLink
+                      key={item.path}
+                      to={item.path}
+                      className={({ isActive }) =>
+                        `d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none ${isActive ? "bg-primary bg-opacity-10 text-primary fw-semibold" : "text-dark bg-light"}`
+                      }
+                      onClick={() => setShowMoreDrawer(false)}
+                    >
+                      <span className="text-primary">{item.icon}</span>
+                      <span>{item.label}</span>
+                    </NavLink>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

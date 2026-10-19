@@ -22,15 +22,34 @@ import RoleManagement from "./pages/RoleManagement.jsx";
 import { TabArray } from "./utils/TabArray.js";
 import AgentSalons from "./pages/AgentSalons.jsx";
 import Notifications from "./pages/PushNotifications.jsx";
+import ShopProducts from "./pages/ShopProducts.jsx";
+import Distributors from "./pages/Distributors.jsx";
+import ShopOrders from "./pages/ShopOrders.jsx";
+import ShopSettings from "./pages/ShopSettings.jsx";
+import DistributorPortal from "./pages/DistributorPortal.jsx";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
   return token ? children : <Navigate to="/login" replace />;
 };
 
+// Distributors log in with their own token (role: 'distributor'). They must
+// not see admin tabs, and admins must not land in the distributor portal.
+const DistributorOnlyRoute = ({ children }) => {
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
+  if (!token) return <Navigate to="/login" replace />;
+  if (role !== "distributor") return <Navigate to="/" replace />;
+  return children;
+};
+
 const PublicRoute = ({ children }) => {
   const token = localStorage.getItem("token");
   const accessTabs = localStorage.getItem("accessTabs");
+  // A logged-in distributor goes to their portal, not the login screen.
+  if (token && localStorage.getItem("role") === "distributor") {
+    return <Navigate to="/distributor" replace />;
+  }
   const firstTab = TabArray?.find(tab =>
     accessTabs?.includes(tab.key)
   )
@@ -139,6 +158,46 @@ const router = createBrowserRouter(
         <ProtectedRoute>
           <Notifications />
         </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/shop-products",
+      element: (
+        <ProtectedRoute>
+          <ShopProducts />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/distributors",
+      element: (
+        <ProtectedRoute>
+          <Distributors />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/shop-orders",
+      element: (
+        <ProtectedRoute>
+          <ShopOrders />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/shop-settings",
+      element: (
+        <ProtectedRoute>
+          <ShopSettings />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/distributor",
+      element: (
+        <DistributorOnlyRoute>
+          <DistributorPortal />
+        </DistributorOnlyRoute>
       ),
     },
     {

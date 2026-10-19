@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "https://backend.mynaai.in";
+export const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "https://backend.mynaai.in";
 // const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://192.168.1.18:5003";
 
 const api = axios.create({
@@ -48,6 +48,7 @@ api.interceptors.response.use(
       // Token expired or invalid
       console.warn('401 Unauthorized - clearing token and redirecting to login');
       localStorage.removeItem('token');
+      localStorage.removeItem('role');
       window.location.href = '/login';
     }
     return Promise.reject(error);
@@ -1326,7 +1327,7 @@ export const notificationAPI = {
     try {
       const response = await api.post('/api/adminNotification/get-admin-notification-list', {
         page: page,
-        searchString: searchString  
+        searchString: searchString
       });
       return {
         success: response.data?.status === "SUCCESS",
@@ -1346,3 +1347,190 @@ export const notificationAPI = {
 
 
 export default api;
+
+// ==================== NAAI SHOP (B2B) ====================
+// Two product worlds: the salons' customer-facing products (untouched) and
+// the company catalog salons BUY from (shop_products below). Orders carry
+// two status tracks: `status` = internal (admin/distributor),
+// `customerStatus` = what the salon sees. DECIMAL columns come back as
+// strings — parse with Number() before display.
+
+// Company catalog (admin product management tab)
+export const shopProductAPI = {
+  adminList: async ({ page = 1, searchString = "" } = {}) => {
+    try {
+      const response = await api.post('/api/shop-products/admin-list', { page, searchString });
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to fetch shop products", error: error.response?.data };
+    }
+  },
+  create: async (productData) => {
+    try {
+      const response = await api.post('/api/shop-products/admin-create', productData);
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to create product", error: error.response?.data };
+    }
+  },
+  update: async (productData) => {
+    try {
+      const response = await api.post('/api/shop-products/admin-update', productData);
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to update product", error: error.response?.data };
+    }
+  },
+  remove: async (productId) => {
+    try {
+      const response = await api.post('/api/shop-products/admin-delete', { productId });
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to delete product", error: error.response?.data };
+    }
+  },
+  uploadImage: async (uploadData) => {
+    try {
+      return await api.post(`/api/upload/upload-image`, uploadData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          "Authorization": `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+    } catch (error) {
+      throw error
+    }
+  }
+};
+
+// Delivery partners (distributors tab)
+export const distributorAPI = {
+  list: async ({ page = 1, searchString = "" } = {}) => {
+    try {
+      const response = await api.post('/api/distributors/list', { page, searchString });
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to fetch distributors", error: error.response?.data };
+    }
+  },
+  create: async (distributorData) => {
+    try {
+      const response = await api.post('/api/distributors/create', distributorData);
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to create distributor", error: error.response?.data };
+    }
+  },
+  update: async (distributorData) => {
+    try {
+      const response = await api.post('/api/distributors/update', distributorData);
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to update distributor", error: error.response?.data };
+    }
+  },
+  // Distributor portal login (phone or email + the password the admin set).
+  login: async ({ identifier, password }) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/distributors/login`, { identifier, password });
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Login failed", error: error.response?.data };
+    }
+  }
+};
+
+// Orders — admin dashboard + distributor portal
+export const shopOrderAPI = {
+  adminList: async ({ page = 1, status = "", customerStatus = "", searchString = "" } = {}) => {
+    try {
+      const response = await api.post('/api/shop-orders/admin-list', { page, status, customerStatus, searchString });
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to fetch orders", error: error.response?.data };
+    }
+  },
+  adminGetById: async (orderId) => {
+    try {
+      const response = await api.post('/api/shop-orders/admin-get-by-id', { orderId });
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to fetch order", error: error.response?.data };
+    }
+  },
+  assignDistributor: async ({ orderId, distributorId, notes = "" }) => {
+    try {
+      const response = await api.post('/api/shop-orders/admin-assign-distributor', { orderId, distributorId, notes });
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to assign distributor", error: error.response?.data };
+    }
+  },
+  updateStatus: async ({ orderId, status, notes = "" }) => {
+    try {
+      const response = await api.post('/api/shop-orders/admin-update-status', { orderId, status, notes });
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to update status", error: error.response?.data };
+    }
+  },
+  // Distributor portal (distributor token, or the admin's token when the
+  // admin records a decision taken over the phone)
+  distributorOrders: async ({ page = 1, status = "" } = {}) => {
+    try {
+      const response = await api.post('/api/shop-orders/distributor-orders', { page, status });
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to fetch orders", error: error.response?.data };
+    }
+  },
+  accept: async (orderId) => {
+    try {
+      const response = await api.post('/api/shop-orders/distributor-accept', { orderId });
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to accept order", error: error.response?.data };
+    }
+  },
+  reject: async ({ orderId, reason }) => {
+    try {
+      const response = await api.post('/api/shop-orders/distributor-reject', { orderId, reason });
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to reject order", error: error.response?.data };
+    }
+  },
+  // Distributor carries an accepted parcel forward (next step only — the
+  // server enforces ASSIGNED -> PICKED -> SHIPPED -> DELIVERED). The admin
+  // token is accepted too, for moves recorded over the phone.
+  distributorUpdateStatus: async ({ orderId, status }) => {
+    try {
+      const response = await api.post('/api/shop-orders/distributor-update-status', { orderId, status });
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to update order status", error: error.response?.data };
+    }
+  }
+};
+
+// Shop Settings — the admin-managed commerce rules (free-delivery threshold,
+// delivery charges, order discount %, COD limit + COD charges). One row on
+// the backend; the web shop bills from it.
+export const shopSettingsAPI = {
+  get: async () => {
+    try {
+      const response = await api.post('/api/shop-settings/get', {});
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to load shop settings", error: error.response?.data };
+    }
+  },
+  update: async (settingsData) => {
+    try {
+      const response = await api.post('/api/shop-settings/admin-update', settingsData);
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to save shop settings", error: error.response?.data };
+    }
+  }
+};

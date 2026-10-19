@@ -23,6 +23,12 @@ export const UserProvider = ({ children }) => {
       setUser(null);
       return;
     }
+    // Distributor tokens are not admin tokens — the admin profile endpoint
+    // would 401 and the axios interceptor would log them straight out.
+    if (localStorage.getItem('role') === 'distributor') {
+      setUser(JSON.parse(localStorage.getItem('userData') || 'null'));
+      return;
+    }
 
     setLoading(true);
     setError(null);

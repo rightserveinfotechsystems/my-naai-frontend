@@ -4,19 +4,43 @@ import { Eye, EyeOff } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useUser } from "../contexts/UserContext.jsx";
-import { adminAPI } from "../services/communication.jsx";
+import { adminAPI, distributorAPI } from "../services/communication.jsx";
 import { TabArray } from "../utils/TabArray.js";
 
 const Login = () => {
   const navigate = useNavigate();
   const { fetchUserProfile } = useUser();
+  const [mode, setMode] = useState("admin"); // "admin" | "distributor"
   const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (mode === "distributor") {
+      if (!identifier || !password) {
+        toast.error("Please enter phone/email and password");
+        return;
+      }
+      setLoading(true);
+      const distResult = await distributorAPI.login({ identifier, password });
+      if (distResult.success) {
+        localStorage.setItem("token", distResult.data.token);
+        localStorage.setItem("role", "distributor");
+        localStorage.removeItem("accessTab");
+        localStorage.setItem("userData", JSON.stringify(distResult?.data?.distributor));
+        toast.success("Login Successful!", { position: "top-right", autoClose: 3000 });
+        navigate("/distributor", { replace: true });
+      } else {
+        toast.error(distResult.message || "Login Failed");
+      }
+      setLoading(false);
+      return;
+    }
+
     if (!email || !password) {
       toast.error("Please enter email and password");
       return;
@@ -38,6 +62,7 @@ const Login = () => {
       const accessTabs = result?.data?.admin?.accessTab || [];
 
       localStorage.setItem("token", result.data.token);
+      localStorage.removeItem("role");
       localStorage.setItem("accessTab", JSON.stringify(accessTabs));
       localStorage.setItem("userData", JSON.stringify(result?.data?.admin));
 
@@ -75,18 +100,59 @@ const Login = () => {
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
             <h3 className="text-center">Login</h3>
-            <label className="form-label mt-4">Email Address</label>
-            <div className="input-wrapper">
-              <input
-                type="email"
-                className="form-input"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                required
+            <div className="d-flex gap-1 p-1 bg-light rounded" style={{ marginTop: "16px" }}>
+              <button
+                type="button"
+                className={`btn btn-sm flex-fill ${mode === "admin" ? "btn-primary" : "btn-outline-secondary"}`}
+                onClick={() => setMode("admin")}
                 disabled={loading}
-              />
+              >
+                Admin
+              </button>
+              <button
+                type="button"
+                className={`btn btn-sm flex-fill ${mode === "distributor" ? "btn-primary" : "btn-outline-secondary"}`}
+                onClick={() => setMode("distributor")}
+                disabled={loading}
+              >
+                Distributor
+              </button>
             </div>
+
+            {mode === "admin" ? (
+              <>
+                <label className="form-label mt-4">Email Address</label>
+                <div className="input-wrapper">
+                  <input
+                    type="email"
+                    className="form-input"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <label className="form-label mt-4">Phone or Email</label>
+                <div className="input-wrapper">
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                    placeholder="Enter your phone or email"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+                <small className="text-muted">
+                  Use the phone or email your MyNaai admin shared with you.
+                </small>
+              </>
+            )}
           </div>
 
           <div className="form-group">

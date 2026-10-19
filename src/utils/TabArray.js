@@ -34,4 +34,24 @@ export const TabArray = [
     label: "Push Notifications",
     route: "/notifications",
   },
+  {
+    key: "shopProducts",
+    label: "Shop Products",
+    route: "/shop-products",
+  },
+  {
+    key: "distributors",
+    label: "Distributors",
+    route: "/distributors",
+  },
+  {
+    key: "shopOrders",
+    label: "Shop Orders",
+    route: "/shop-orders",
+  },
+  {
+    key: "shopSettings",
+    label: "Shop Settings",
+    route: "/shop-settings",
+  },
 ];
