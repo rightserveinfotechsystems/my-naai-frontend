@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Modal, Form, Button } from "react-bootstrap";
 import { distributorAPI } from "../services/communication";
 import { toast } from "react-toastify";
+import LocationField from "./LocationField.jsx";
+import { toPoint } from "../utils/geo";
 
 const DistributorModal = ({ showModal, setShowModal, initialDistributor = null, onSuccess }) => {
   const isEdit = Boolean(initialDistributor);
@@ -13,7 +15,10 @@ const DistributorModal = ({ showModal, setShowModal, initialDistributor = null, 
     area: "",
     deliveryCapability: "",
     address: "",
-    password: ""
+    password: "",
+    // The dispatch pin. Kept as an object (not two loose strings) so "no
+    // location" is one null instead of two empty inputs.
+    location: null
   });
 
   useEffect(() => {
@@ -26,10 +31,11 @@ const DistributorModal = ({ showModal, setShowModal, initialDistributor = null, 
           area: initialDistributor.area || "",
           deliveryCapability: initialDistributor.deliveryCapability || "",
           address: initialDistributor.address || "",
-          password: ""
+          password: "",
+          location: toPoint({ latitude: initialDistributor.latitude, longitude: initialDistributor.longitude })
         });
       } else {
-        setFormData({ name: "", phone: "", email: "", area: "", deliveryCapability: "", address: "", password: "" });
+        setFormData({ name: "", phone: "", email: "", area: "", deliveryCapability: "", address: "", password: "", location: null });
       }
     }
   }, [showModal, initialDistributor]);
@@ -41,6 +47,17 @@ const DistributorModal = ({ showModal, setShowModal, initialDistributor = null, 
 
   const handleModalClose = () => setShowModal(false);
 
+  const handleLocationChange = (next) => {
+    setFormData((prev) => ({ ...prev, location: next }));
+  };
+
+  // Both halves or neither. The backend rejects a lone latitude, and a pin
+  // with one leg is worse than no pin: it silently drops out of every sort.
+  const locationPayload = () => {
+    if (!formData.location) return { latitude: null, longitude: null };
+    return { latitude: formData.location.latitude, longitude: formData.location.longitude };
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const payload = {
@@ -49,7 +66,8 @@ const DistributorModal = ({ showModal, setShowModal, initialDistributor = null, 
       email: formData.email.trim() || null,
       area: formData.area.trim() || null,
       deliveryCapability: formData.deliveryCapability.trim() || null,
-      address: formData.address.trim() || null
+      address: formData.address.trim() || null,
+      ...locationPayload()
     };
     if (!payload.name) { toast.error("Distributor name is required"); return; }
     if (!payload.phone) { toast.error("Phone number is required (distributors log in with it)"); return; }
@@ -132,7 +150,20 @@ const DistributorModal = ({ showModal, setShowModal, initialDistributor = null, 
               <Form.Label className="fw-semibold small">Address</Form.Label>
               <Form.Control as="textarea" rows={2} name="address" value={formData.address} onChange={handleChange} placeholder="Warehouse / pickup address" />
             </div>
-          
+
+            {/* Dispatch location. This is the point every "how far is the
+                delivery?" number is measured from, so it belongs in the same
+                form as the name and phone — not in a follow-up step nobody
+                completes. */}
+            <div style={{ flex: "1 1 100%", minWidth: 0 }}>
+              <LocationField
+                label="Distributor location"
+                helper="Pickup / base point on the map. The admin panel shows every delivery at this distance from it, nearest first."
+                value={formData.location}
+                onChange={handleLocationChange}
+                disabled={isLoading}
+              />
+            </div>
           </div>
         </Modal.Body>
         <Modal.Footer>

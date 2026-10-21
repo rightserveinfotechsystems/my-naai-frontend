@@ -7,7 +7,16 @@ import Loader from "../components/Loader.jsx";
 import DistributorModal from "../components/DistributorModal.jsx";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import { Truck, Plus } from "lucide-react";
+import { Truck, Plus, Crosshair, MapPin, X, Route } from "lucide-react";
+import LocationMap from "../components/LocationMap.jsx";
+import {
+  formatCoordinates,
+  formatKm,
+  mapsUrl,
+  requestBrowserLocation,
+  sortByDistance,
+  toPoint
+} from "../utils/geo";
 
 const money = (value) => {
   const num = Number(value);
@@ -26,12 +35,24 @@ const Distributors = () => {
   const [editingDistributor, setEditingDistributor] = useState(null);
   const [activeFilter, setActiveFilter] = useState("ALL");
   const [confirmModal, setConfirmModal] = useState({ show: false, target: null });
+  // The point distances are measured FROM. Left empty the tab stays A–Z; set
+  // it (GPS, or a pin on the mini map) and the list becomes a dispatch list:
+  // nearest distributor first, KM on every row.
+  const [reference, setReference] = useState(null);
+  const [showReferenceMap, setShowReferenceMap] = useState(false);
+  const [locating, setLocating] = useState(false);
   const navigate = useNavigate();
 
   const fetchDistributors = useCallback(async () => {
     try {
       setIsLoading(true);
-      const result = await distributorAPI.list({ page: currentPage, searchString: debouncedSearch });
+      const result = await distributorAPI.list({
+        page: currentPage,
+        searchString: debouncedSearch,
+        latitude: reference?.latitude,
+        longitude: reference?.longitude,
+        sortBy: reference ? "distance" : "name"
+      });
       if (result.success) {
         setDistributors(result.data?.distributors || []);
         setTotalPages(result.data?.pagination?.totalPages || 1);
@@ -43,7 +64,7 @@ const Distributors = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, debouncedSearch]);
+  }, [currentPage, debouncedSearch, reference]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -85,7 +106,28 @@ const Distributors = () => {
     }
   };
 
-  const visible = distributors.filter((d) => (activeFilter === "ALL" ? true : activeFilter === "ACTIVE" ? d.isActive : !d.isActive));
+  // The server already ordered the page nearest-first when a reference point
+  // is set; sorting again locally keeps the rows right even if an older API
+  // build ignores the new parameters (best of both, no wrong labels).
+  const ordered = reference ? sortByDistance(distributors, reference) : distributors;
+  const visible = ordered.filter((d) => (activeFilter === "ALL" ? true : activeFilter === "ACTIVE" ? d.isActive : !d.isActive));
+  const nearest = visible.find((d) => Number.isFinite(Number(d.distanceKm)));
+
+  const useMyLocation = async () => {
+    setLocating(true);
+    try {
+      const result = await requestBrowserLocation();
+      if (!result.ok) {
+        toast.error(result.message || "Could not read this device's location");
+        return;
+      }
+      setReference({ latitude: result.latitude, longitude: result.longitude });
+      setCurrentPage(1);
+      toast.success("Sorting by distance from your current location");
+    } finally {
+      setLocating(false);
+    }
+  };
 
   const FILTERS = [
     { key: "ALL", label: "All" },
@@ -123,6 +165,55 @@ const Distributors = () => {
           </div>
         </div>
 
+        {/* Distance reference — the point every KM on this page is measured
+            from. Optional: without it the tab keeps its A–Z order. */}
+        <div className="card shadow-sm mb-3 bg-white border-0 flex-shrink-0" style={{ borderRadius: "12px" }}>
+          <div className="card-body p-3">
+            <div className="d-flex flex-wrap align-items-center gap-2">
+              <div className="d-flex align-items-center gap-2 me-auto">
+                <span className="badge bg-light text-secondary border d-flex align-items-center gap-1">
+                  <Route size={13} />
+                  {reference ? "Sorted: nearest first" : "Sorted: A–Z"}
+                </span>
+                {reference ? (
+                  <span className="small text-muted">
+                    from <strong className="text-dark">{formatCoordinates(reference)}</strong>
+                    {nearest && Number.isFinite(Number(nearest.distanceKm)) ? (
+                      <> · nearest partner is <strong className="text-dark">{formatKm(nearest.distanceKm)}</strong> away</>
+                    ) : null}
+                  </span>
+                ) : (
+                  <span className="small text-muted">Set a reference point to show the delivery KM on every partner.</span>
+                )}
+              </div>
+              <div className="d-flex flex-wrap gap-2">
+                <button className="btn btn-sm btn-outline-success d-flex align-items-center gap-1" onClick={useMyLocation} disabled={locating}>
+                  <Crosshair size={14} /> {locating ? "Locating…" : "Use my location"}
+                </button>
+                <button className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" onClick={() => setShowReferenceMap((v) => !v)}>
+                  <MapPin size={14} /> {showReferenceMap ? "Hide map" : "Pick on map"}
+                </button>
+                {reference && (
+                  <button className="btn btn-sm btn-outline-danger d-flex align-items-center gap-1" onClick={() => { setReference(null); setCurrentPage(1); }}>
+                    <X size={14} /> Clear
+                  </button>
+                )}
+              </div>
+            </div>
+            {showReferenceMap && (
+              <div className="mt-3">
+                <LocationMap
+                  value={reference}
+                  onChange={(next) => { setReference(next); setCurrentPage(1); }}
+                  height={220}
+                  ariaLabel="Distance reference map"
+                />
+                <div className="small text-muted mt-1">Click the map (or drag the pin) to measure every partner from that point.</div>
+              </div>
+            )}
+          </div>
+        </div>
+
         <div className="flex-grow-1 p-3 shadow-sm border-0" style={{ overflowY: "auto", backgroundColor: "#ffffff", borderRadius: "12px" }}>
           {isLoading ? (
             <div className="text-center py-5"><Loader size="sm" /></div>
@@ -139,6 +230,7 @@ const Distributors = () => {
                     <th>Distributor</th>
                     <th>Contact</th>
                     <th>Area</th>
+                    <th className="text-nowrap">Distance</th>
                     <th>Delivery Capability</th>
                     <th>Status</th>
                     <th className="text-end">Actions</th>
@@ -155,7 +247,19 @@ const Distributors = () => {
                         <div>{d.phone}</div>
                         {d.email && <div className="text-muted small">{d.email}</div>}
                       </td>
-                      <td>{d.area || "—"}</td>
+                      <td>
+                        <div>{d.area || "—"}</div>
+                        <div className="text-muted" style={{ fontSize: "0.76rem" }}>
+                          {toPoint(d) ? `Pinned ${formatCoordinates(d, 3)}` : "No location set"}
+                        </div>
+                      </td>
+                      <td className="text-nowrap">
+                        {Number.isFinite(Number(d.distanceKm)) ? (
+                          <span className="badge bg-success-subtle text-success-emphasis">{formatKm(d.distanceKm)}</span>
+                        ) : (
+                          <span className="text-muted small">{reference ? (toPoint(d) ? "—" : "No pin") : "—"}</span>
+                        )}
+                      </td>
                       <td>{d.deliveryCapability || "—"}</td>
                       <td>
                         {d.isActive
@@ -164,6 +268,18 @@ const Distributors = () => {
                       </td>
                       <td className="text-end">
                         <div className="d-flex align-items-center justify-content-end gap-2">
+                          {mapsUrl(d) && (
+                            <a
+                              className="btn btn-sm px-2 py-1"
+                              href={mapsUrl(d)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Open this distributor's location in Maps"
+                              style={{ color: "#1e7e34", border: "1px solid #a3d9b1", background: "#eaf7ee" }}
+                            >
+                              Map
+                            </a>
+                          )}
                           <button className="button22 px-2 py-1" onClick={() => { setEditingDistributor(d); setShowModal(true); }}>Edit</button>
                           <button
                             className="btn btn-sm px-2 py-1"

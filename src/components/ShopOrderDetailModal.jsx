@@ -2,8 +2,18 @@ import { useState, useEffect } from "react";
 import { Modal, Button, Spinner } from "react-bootstrap";
 import { shopOrderAPI, distributorAPI, API_BASE_URL } from "../services/communication";
 import { toast } from "react-toastify";
-import { Plus, CreditCard, UserPlus, CheckCircle2, XCircle, Truck, Ban, Store, MessageSquare, Eye, Edit3 } from "lucide-react";
+import { Plus, CreditCard, UserPlus, CheckCircle2, XCircle, Truck, Ban, Store, MessageSquare, Eye, Edit3, MapPin, Route, Crosshair } from "lucide-react";
 import { INTERNAL_STATUS_META } from "../pages/ShopOrders.jsx";
+import LocationField from "./LocationField.jsx";
+import LocationMap from "./LocationMap.jsx";
+import {
+  formatCoordinates,
+  formatKm,
+  locationAgeLabel,
+  mapsUrl,
+  sortByDistance,
+  toPoint
+} from "../utils/geo";
 
 const money = (value) => {
   const num = Number(value);
@@ -24,6 +34,7 @@ const EVENT_META = {
   ACCEPTED: { icon: CheckCircle2, color: "#198754", label: "Distributor accepted" },
   REJECTED: { icon: XCircle, color: "#dc3545", label: "Distributor rejected" },
   STATUS_CHANGED: { icon: Truck, color: "#0d6efd", label: "Status changed" },
+  DELIVERY_LOCATION_SET: { icon: MapPin, color: "#0d6efd", label: "Delivery location set" },
   CANCELLED: { icon: Ban, color: "#dc3545", label: "Order cancelled" }
 };
 
@@ -40,7 +51,7 @@ const actorName = (ev) => {
   return name ? name : ACTOR_LABELS[ev.actorType] || "System";
 };
 
-const ShopOrderDetailModal = ({ order, onClose, onStatusChange, onAssign, onRecordDecision }) => {
+const ShopOrderDetailModal = ({ order, onClose, onStatusChange, onAssign, onRecordDecision, onRefresh }) => {
   const [showAssign, setShowAssign] = useState(false);
   const [distributors, setDistributors] = useState([]);
   const [distributorLoading, setDistributorLoading] = useState(false);
@@ -56,11 +67,19 @@ const ShopOrderDetailModal = ({ order, onClose, onStatusChange, onAssign, onReco
   // Direct Status Override State
   const [manualStatus, setManualStatus] = useState("");
 
+  // Delivery location: the pin the admin/dispatcher sees, and the origin of
+  // every "how far?" number on this screen.
+  const [showLocationEditor, setShowLocationEditor] = useState(false);
+  const [draftLocation, setDraftLocation] = useState(null);
+  const [savingLocation, setSavingLocation] = useState(false);
+
   useEffect(() => {
     setShowAssign(false);
     setShowReject(false);
     setRejectReason("");
     setSelectedDistributor("");
+    setShowLocationEditor(false);
+    setDraftLocation(null);
     if (order) setManualStatus(order.status || "");
   }, [order]);
 
@@ -70,10 +89,23 @@ const ShopOrderDetailModal = ({ order, onClose, onStatusChange, onAssign, onReco
   const items = order.items || [];
   const events = [...(order.events || [])].reverse();
 
+  // The order's delivery location — the point every partner's KM is measured
+  // from. `order.deliveryLocation` is computed server-side from the order's
+  // snapshot (falling back to the salon's coordinates).
+  const deliveryPoint = toPoint(order.deliveryLocation) || toPoint(order.address) || toPoint(order.salon);
+
   const loadDistributors = async () => {
     setDistributorLoading(true);
     try {
-      const first = await distributorAPI.list({ page: 1 });
+      // Sending the delivery point makes the server answer nearest-first with
+      // `distanceKm` on every row, so a partner 40 km away can never be shown
+      // above one 2 km away just because their name starts with "A".
+      const first = await distributorAPI.list({
+        page: 1,
+        latitude: deliveryPoint?.latitude,
+        longitude: deliveryPoint?.longitude,
+        sortBy: deliveryPoint ? "distance" : "name"
+      });
       if (!first.success) {
         toast.error(first.message || "Failed to load distributors");
         return;
@@ -83,11 +115,20 @@ const ShopOrderDetailModal = ({ order, onClose, onStatusChange, onAssign, onReco
       const extra = Math.min(totalPages, 5) - 1;
       if (extra > 0) {
         const pages = await Promise.all(
-          Array.from({ length: extra }, (_, i) => distributorAPI.list({ page: i + 2 }))
+          Array.from({ length: extra }, (_, i) =>
+            distributorAPI.list({
+              page: i + 2,
+              latitude: deliveryPoint?.latitude,
+              longitude: deliveryPoint?.longitude,
+              sortBy: deliveryPoint ? "distance" : "name"
+            })
+          )
         );
         rows = rows.concat(...pages.filter((p) => p.success).map((p) => p.data?.distributors || []));
       }
-      setDistributors(rows);
+      // Belt and braces: sort again locally so an older API build (or a page
+      // fetched without coordinates) still reads nearest-first.
+      setDistributors(deliveryPoint ? sortByDistance(rows, deliveryPoint) : rows);
     } catch {
       toast.error("Failed to load distributors");
     } finally {
@@ -107,6 +148,30 @@ const ShopOrderDetailModal = ({ order, onClose, onStatusChange, onAssign, onReco
       await onAssign(order.orderId, selectedDistributor);
     } finally {
       setAssigning(false);
+    }
+  };
+
+  const saveDeliveryLocation = async () => {
+    const point = toPoint(draftLocation);
+    if (!point) { toast.error("Pick a point on the map first"); return; }
+    setSavingLocation(true);
+    try {
+      const result = await shopOrderAPI.setDeliveryLocation({
+        orderId: order.orderId,
+        latitude: point.latitude,
+        longitude: point.longitude
+      });
+      if (result.success) {
+        toast.success("Delivery location saved — distances updated");
+        setShowLocationEditor(false);
+        // The parent re-fetches the order by id, so the panel (and the list
+        // behind it) never keeps a stale copy of the old pin or its KM.
+        await onRefresh?.(order.orderId);
+      } else {
+        toast.error(result.message || "Could not save the delivery location");
+      }
+    } finally {
+      setSavingLocation(false);
     }
   };
 
@@ -209,6 +274,93 @@ const ShopOrderDetailModal = ({ order, onClose, onStatusChange, onAssign, onReco
                     </div>
                   </div>
                 )}
+
+                {/* Delivery location on the map — the point the distributor
+                    drives to and every KM on this screen is measured from. */}
+                <div className="pt-3 mt-3 border-top">
+                  <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                    <div>
+                      <div className="small text-muted fw-semibold d-flex align-items-center gap-1">
+                        <MapPin size={13} /> DELIVERY LOCATION
+                      </div>
+                      <div className="small text-dark">
+                        {deliveryPoint ? formatCoordinates(deliveryPoint) : "No coordinates on file for this delivery"}
+                      </div>
+                      {order.deliveryLocation?.source === "SALON" && (
+                        <div className="text-muted" style={{ fontSize: "0.76rem" }}>Taken from the salon profile</div>
+                      )}
+                    </div>
+                    <div className="d-flex flex-wrap gap-2">
+                      {mapsUrl(deliveryPoint) && (
+                        <a className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" href={mapsUrl(deliveryPoint)} target="_blank" rel="noopener noreferrer">
+                          <MapPin size={13} /> Open in Maps
+                        </a>
+                      )}
+                      <Button
+                        variant="outline-secondary"
+                        size="sm"
+                        className="d-flex align-items-center gap-1"
+                        onClick={() => {
+                          setDraftLocation(deliveryPoint || null);
+                          setShowLocationEditor((v) => !v);
+                        }}
+                        disabled={busy || order.status === "DELIVERED" || order.status === "CANCELLED"}
+                      >
+                        <Crosshair size={13} /> {showLocationEditor ? "Close pin editor" : deliveryPoint ? "Adjust pin" : "Set pin"}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {showLocationEditor ? (
+                    <>
+                      <LocationField
+                        label="Pin the exact delivery point"
+                        helper="Drop the pin on the gate / building the parcel goes to. Every distributor's KM is measured from here."
+                        value={draftLocation}
+                        onChange={setDraftLocation}
+                        height={230}
+                        disabled={savingLocation}
+                      />
+                      <div className="d-flex gap-2 mt-2">
+                        <Button variant="success" size="sm" onClick={saveDeliveryLocation} disabled={savingLocation || !toPoint(draftLocation)}>
+                          {savingLocation ? "Saving…" : "Save delivery location"}
+                        </Button>
+                        <Button variant="outline-secondary" size="sm" onClick={() => setShowLocationEditor(false)} disabled={savingLocation}>Cancel</Button>
+                      </div>
+                    </>
+                  ) : (
+                    <LocationMap
+                      value={deliveryPoint}
+                      height={190}
+                      readOnly
+                      fit={Boolean(order.distributor)}
+                      markers={
+                        order.distributor && toPoint(order.distributor)
+                          ? [{
+                              latitude: order.distributor.latitude,
+                              longitude: order.distributor.longitude,
+                              color: "#6f42c1",
+                              label: `${order.distributor.name}${Number.isFinite(Number(order.distributor.distanceKm)) ? ` — ${formatKm(order.distributor.distanceKm)} away` : ""}`
+                            }]
+                          : []
+                      }
+                      ariaLabel="Delivery location map"
+                    />
+                  )}
+                  {order.distributor && (
+                    <div className="d-flex flex-wrap gap-3 mt-2 small text-muted">
+                      <span className="d-flex align-items-center gap-1">
+                        <span className="d-inline-block rounded-circle" style={{ width: 9, height: 9, background: "#0d6efd" }} /> Delivery point
+                      </span>
+                      <span className="d-flex align-items-center gap-1">
+                        <span className="d-inline-block rounded-circle" style={{ width: 9, height: 9, background: "#6f42c1" }} /> {order.distributor.name}
+                      </span>
+                      {Number.isFinite(Number(order.distributor.distanceKm)) && (
+                        <span className="fw-semibold text-dark">{formatKm(order.distributor.distanceKm)} apart</span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Items Table Card */}
@@ -351,6 +503,23 @@ const ShopOrderDetailModal = ({ order, onClose, onStatusChange, onAssign, onReco
                     <div className="fw-bold text-dark">{order.distributor.name}</div>
                     <div className="small text-muted">{order.distributor.phone}{order.distributor.area ? ` • ${order.distributor.area}` : ""}</div>
                     {order.distributor.deliveryCapability && <div className="small text-muted mt-1">Capability: {order.distributor.deliveryCapability}</div>}
+                    <div className="d-flex flex-wrap align-items-center gap-2 mt-2">
+                      {Number.isFinite(Number(order.distributor.distanceKm)) ? (
+                        <span className="badge bg-success-subtle text-success-emphasis d-inline-flex align-items-center gap-1">
+                          <Route size={12} /> {formatKm(order.distributor.distanceKm)} from delivery
+                        </span>
+                      ) : (
+                        <span className="badge bg-warning-subtle text-warning-emphasis">Location not shared</span>
+                      )}
+                      {order.distributor.locationUpdatedAt && (
+                        <span className="text-muted" style={{ fontSize: "0.76rem" }}>
+                          pin updated {locationAgeLabel(order.distributor.locationUpdatedAt)}
+                        </span>
+                      )}
+                      {mapsUrl(order.distributor) && (
+                        <a className="small" href={mapsUrl(order.distributor)} target="_blank" rel="noopener noreferrer">Map</a>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div className="text-muted small mb-3">Not assigned yet</div>
@@ -418,7 +587,14 @@ const ShopOrderDetailModal = ({ order, onClose, onStatusChange, onAssign, onReco
               {showAssign && (
                 <div style={{ background: "#ffffff", borderRadius: "12px", border: "1px solid #0d6efd", padding: "20px", boxShadow: "0 0.25rem 0.5rem rgba(13, 110, 253, 0.15)", boxSizing: "border-box" }}>
                   <div className="d-flex align-items-center justify-content-between mb-3">
-                    <div className="fw-bold text-dark">Choose a Distributor</div>
+                    <div>
+                      <div className="fw-bold text-dark">Choose a Distributor</div>
+                      <div className="text-muted" style={{ fontSize: "0.78rem" }}>
+                        {deliveryPoint
+                          ? `Nearest first — distance from the delivery location (${formatCoordinates(deliveryPoint, 4)})`
+                          : "No delivery pin yet: distances are unavailable. Set the pin above to sort nearest first."}
+                      </div>
+                    </div>
                     <Button variant="link" size="sm" className="p-0 text-decoration-none" onClick={() => setShowAssign(false)}>Close</Button>
                   </div>
                   {distributorLoading ? (
@@ -439,9 +615,19 @@ const ShopOrderDetailModal = ({ order, onClose, onStatusChange, onAssign, onReco
                           }}
                           onClick={() => setSelectedDistributor(d.distributorId)}
                         >
-                          <div className="fw-bold text-dark">{d.name}</div>
+                          <div className="d-flex justify-content-between align-items-start gap-2">
+                            <div className="fw-bold text-dark">{d.name}</div>
+                            {Number.isFinite(Number(d.distanceKm)) ? (
+                              <span className="badge bg-success-subtle text-success-emphasis text-nowrap">{formatKm(d.distanceKm)}</span>
+                            ) : (
+                              <span className="badge bg-light text-secondary border text-nowrap">No pin</span>
+                            )}
+                          </div>
                           <div className="text-muted small">{d.phone} • {d.area || "no area set"}</div>
                           {d.deliveryCapability && <div className="text-muted" style={{ fontSize: "0.78rem" }}>{d.deliveryCapability}</div>}
+                          {d.locationUpdatedAt && (
+                            <div className="text-muted" style={{ fontSize: "0.74rem" }}>Location updated {locationAgeLabel(d.locationUpdatedAt)}</div>
+                          )}
                           {!d.isActive && <div className="text-danger" style={{ fontSize: "0.78rem" }}>Disabled — cannot log in</div>}
                         </button>
                       ))}

@@ -1405,9 +1405,19 @@ export const shopProductAPI = {
 
 // Delivery partners (distributors tab)
 export const distributorAPI = {
-  list: async ({ page = 1, searchString = "" } = {}) => {
+  // `latitude`/`longitude` is the reference point the distances are measured
+  // from — the order's delivery location. Sending the pair switches the list
+  // to nearest-first with `distanceKm` on every row.
+  list: async ({ page = 1, searchString = "", latitude, longitude, sortBy } = {}) => {
     try {
-      const response = await api.post('/api/distributors/list', { page, searchString });
+      const response = await api.post('/api/distributors/list', {
+        page,
+        searchString,
+        ...(Number.isFinite(Number(latitude)) && Number.isFinite(Number(longitude))
+          ? { latitude: Number(latitude), longitude: Number(longitude) }
+          : {}),
+        ...(sortBy ? { sortBy } : {})
+      });
       return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
     } catch (error) {
       return { success: false, message: error.response?.data?.message || "Failed to fetch distributors", error: error.response?.data };
@@ -1427,6 +1437,23 @@ export const distributorAPI = {
       return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
     } catch (error) {
       return { success: false, message: error.response?.data?.message || "Failed to update distributor", error: error.response?.data };
+    }
+  },
+  /**
+   * Live location. The distributor portal calls this with its own token (no
+   * distributorId needed); the admin calls it with `distributorId` to correct
+   * a pin. Same endpoint, same columns — one source of truth for the KM math.
+   */
+  updateLocation: async ({ distributorId, latitude, longitude } = {}) => {
+    try {
+      const response = await api.post('/api/distributors/location', {
+        ...(distributorId ? { distributorId } : {}),
+        latitude,
+        longitude
+      });
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to save the location", error: error.response?.data };
     }
   },
   // Distributor portal login (phone or email + the password the admin set).
@@ -1456,6 +1483,17 @@ export const shopOrderAPI = {
       return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
     } catch (error) {
       return { success: false, message: error.response?.data?.message || "Failed to fetch order", error: error.response?.data };
+    }
+  },
+  // Admin: place or correct the delivery pin on an order. A salon without
+  // coordinates (or a delivery to a different gate) would otherwise have no
+  // map and no KM while assigning a distributor.
+  setDeliveryLocation: async ({ orderId, latitude, longitude }) => {
+    try {
+      const response = await api.post('/api/shop-orders/admin-set-delivery-location', { orderId, latitude, longitude });
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to save the delivery location", error: error.response?.data };
     }
   },
   assignDistributor: async ({ orderId, distributorId, notes = "" }) => {

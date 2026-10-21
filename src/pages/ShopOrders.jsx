@@ -91,6 +91,16 @@ const ShopOrders = () => {
     }
   }, []);
 
+  // Re-read ONE order (after a status move, an assignment or a delivery-pin
+  // correction) and put it back on screen with its fresh distances.
+  const handleRefreshOrder = async (orderId) => {
+    const result = await shopOrderAPI.adminGetById(orderId);
+    if (result.success && result.data) {
+      setSelectedOrder(result.data);
+      fetchOrders();
+    }
+  };
+
   const handleStatusChange = async (orderId, status) => {
     try {
       const result = await shopOrderAPI.updateStatus({ orderId, status });
@@ -235,6 +245,7 @@ const ShopOrders = () => {
           onStatusChange={handleStatusChange}
           onAssign={handleAssign}
           onRecordDecision={handleRecordDecision}
+          onRefresh={handleRefreshOrder}
         />
       </div>
     </Layout>

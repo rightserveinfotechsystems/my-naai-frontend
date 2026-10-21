@@ -1,11 +1,21 @@
 import { useState, useEffect, useCallback } from "react";
-import { shopOrderAPI } from "../services/communication";
+import { shopOrderAPI, distributorAPI } from "../services/communication";
 import Loader from "../components/Loader.jsx";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import { Truck, LogOut, Store, Package, Search, ChevronLeft, ChevronRight, Eye, CheckCircle2, XCircle, Ban, MessageSquare } from "lucide-react";
+import { Truck, LogOut, Store, Package, Search, ChevronLeft, ChevronRight, Eye, CheckCircle2, XCircle, Ban, MessageSquare, MapPin, Crosshair, Navigation, Route } from "lucide-react";
 import { Modal, Button, Spinner } from "react-bootstrap";
 import { INTERNAL_STATUS_META } from "../pages/ShopOrders.jsx";
+import LocationMap from "../components/LocationMap.jsx";
+import {
+  directionsUrl,
+  distanceKm,
+  formatCoordinates,
+  formatKm,
+  locationAgeLabel,
+  requestBrowserLocation,
+  toPoint
+} from "../utils/geo";
 
 const money = (value) => {
   const num = Number(value);
@@ -44,6 +54,7 @@ const EVENT_META = {
   ACCEPTED: { icon: CheckCircle2, color: "#198754", label: "Accepted" },
   REJECTED: { icon: XCircle, color: "#dc3545", label: "Rejected" },
   STATUS_CHANGED: { icon: Truck, color: "#0d6efd", label: "Status changed" },
+  DELIVERY_LOCATION_SET: { icon: MapPin, color: "#0d6efd", label: "Delivery location updated" },
   CANCELLED: { icon: Ban, color: "#dc3545", label: "Order cancelled" }
 };
 
@@ -60,8 +71,45 @@ const actorName = (ev) => {
   return name ? name : ACTOR_LABELS[ev.actorType] || "System";
 };
 
+/**
+ * The delivery point on a map, plus the distance from the distributor's own
+ * location. This is the "how far do I have to ride?" question every partner
+ * asks before accepting — answered before they tap Accept.
+ */
+const DeliveryLocationCard = ({ order, myLocation = null }) => {
+  const delivery = toPoint(order.deliveryLocation) || toPoint(order.salon) || toPoint(order.address);
+  const me = toPoint(myLocation);
+  const km = me && delivery ? distanceKm(me, delivery) : Number.isFinite(Number(order.distributor?.distanceKm)) ? Number(order.distributor.distanceKm) : null;
+  const navigateUrl = directionsUrl(me, delivery);
+
+  return (
+    <div className="pt-3 mt-3 border-top">
+      <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+        <div>
+          <div className="small text-muted fw-semibold d-flex align-items-center gap-1">
+            <MapPin size={13} /> DELIVERY LOCATION
+          </div>
+          <div className="small text-dark">{delivery ? formatCoordinates(delivery) : "The salon has not shared coordinates for this delivery."}</div>
+          {km !== null && (
+            <div className="small fw-semibold text-success d-flex align-items-center gap-1 mt-1">
+              <Route size={13} /> {formatKm(km)} from your location
+            </div>
+          )}
+          {!me && <div className="text-muted" style={{ fontSize: "0.76rem" }}>Tap <strong>My location</strong> at the top to see the distance from you.</div>}
+        </div>
+        {navigateUrl && (
+          <a className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" href={navigateUrl} target="_blank" rel="noopener noreferrer">
+            <Navigation size={13} /> Navigate
+          </a>
+        )}
+      </div>
+      <LocationMap value={delivery} height={210} readOnly ariaLabel="Delivery location map" />
+    </div>
+  );
+};
+
 // Distributor Order Detail Modal with Fixed Rejection Layout & Acceptance Gate
-const DistributorOrderDetailModal = ({ order, onClose, onAccept, onReject, onAdvance, busy }) => {
+const DistributorOrderDetailModal = ({ order, myLocation = null, onClose, onAccept, onReject, onAdvance, busy }) => {
   const [showReject, setShowReject] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [selectedNewStatus, setSelectedNewStatus] = useState("");
@@ -137,6 +185,9 @@ const DistributorOrderDetailModal = ({ order, onClose, onAccept, onReject, onAdv
                   </div>
                 </div>
               )}
+
+              {/* Where the parcel goes, and how far that is from you. */}
+              <DeliveryLocationCard order={order} myLocation={myLocation} />
             </div>
 
             {/* Items Summary Table */}
@@ -359,6 +410,41 @@ const DistributorPortal = () => {
 
   const navigate = useNavigate();
   const userData = localStorage.getItem("userData") ? JSON.parse(localStorage.getItem("userData")) : {};
+  // The distributor's own position — the origin of every distance shown in
+  // this portal. Refreshed from the browser's GPS; persisted on the server so
+  // the admin's nearest-first list uses the same point.
+  const [myLocation, setMyLocation] = useState(() => toPoint(userData));
+  const [locating, setLocating] = useState(false);
+
+  const shareMyLocation = async () => {
+    setLocating(true);
+    try {
+      const fix = await requestBrowserLocation();
+      if (!fix.ok) {
+        toast.error(fix.message || "Could not read this device's location");
+        return;
+      }
+      const result = await distributorAPI.updateLocation({ latitude: fix.latitude, longitude: fix.longitude });
+      if (!result.success) {
+        toast.error(result.message || "Could not save your location");
+        return;
+      }
+      const next = {
+        latitude: result.data?.latitude ?? fix.latitude,
+        longitude: result.data?.longitude ?? fix.longitude,
+        locationUpdatedAt: result.data?.locationUpdatedAt || new Date().toISOString()
+      };
+      setMyLocation({ latitude: next.latitude, longitude: next.longitude });
+      try {
+        localStorage.setItem("userData", JSON.stringify({ ...userData, ...next }));
+      } catch {
+        /* storage blocked — the in-memory copy still powers the distances */
+      }
+      toast.success("Location updated — the admin now sees you at this point");
+    } finally {
+      setLocating(false);
+    }
+  };
 
   useEffect(() => {
     if (localStorage.getItem("role") !== "distributor") {
@@ -498,9 +584,20 @@ const DistributorPortal = () => {
               <div className="text-muted small text-truncate">{userData?.name || "Authorized Partner"}</div>
             </div>
           </div>
-          <button className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2 fw-semibold px-3 py-2 rounded-3 flex-shrink-0" onClick={handleLogout}>
-            <LogOut size={16} /> <span className="d-none d-sm-inline">Logout</span>
-          </button>
+          <div className="d-flex align-items-center gap-2 flex-shrink-0">
+            <button
+              className={`btn btn-sm d-flex align-items-center gap-2 fw-semibold px-3 py-2 rounded-3 ${myLocation ? "btn-outline-success" : "btn-success"}`}
+              onClick={shareMyLocation}
+              disabled={locating}
+              title={myLocation ? `Location shared ${locationAgeLabel(userData.locationUpdatedAt) || "just now"}` : "Share your location so deliveries can be sorted by distance"}
+            >
+              <Crosshair size={16} />
+              <span className="d-none d-sm-inline">{locating ? "Locating…" : myLocation ? "Update location" : "My location"}</span>
+            </button>
+            <button className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2 fw-semibold px-3 py-2 rounded-3" onClick={handleLogout}>
+              <LogOut size={16} /> <span className="d-none d-sm-inline">Logout</span>
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -621,6 +718,15 @@ const DistributorPortal = () => {
                           </span>
                         </div>
                         <div className="text-muted small">Last Activity: {dateTime(lastActionDate)}</div>
+                        {(() => {
+                          const delivery = toPoint(o.deliveryLocation) || toPoint(o.salon) || toPoint(o.address);
+                          const km = myLocation && delivery ? distanceKm(myLocation, delivery) : (o.distributor?.distanceKm ?? null);
+                          return km !== null ? (
+                            <div className="small fw-semibold text-success d-flex align-items-center gap-1 mt-1">
+                              <Route size={13} /> {formatKm(km)} away
+                            </div>
+                          ) : null;
+                        })()}
                       </div>
 
                       <div className="col-12 col-md-3">
@@ -683,6 +789,7 @@ const DistributorPortal = () => {
       {selectedOrder && (
         <DistributorOrderDetailModal
           order={selectedOrder}
+          myLocation={myLocation}
           onClose={() => setSelectedOrder(null)}
           onAccept={handleAccept}
           onReject={handleReject}
