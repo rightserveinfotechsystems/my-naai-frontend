@@ -71,11 +71,6 @@ const actorName = (ev) => {
   return name ? name : ACTOR_LABELS[ev.actorType] || "System";
 };
 
-/**
- * The delivery point on a map, plus the distance from the distributor's own
- * location. This is the "how far do I have to ride?" question every partner
- * asks before accepting — answered before they tap Accept.
- */
 const DeliveryLocationCard = ({ order, myLocation = null }) => {
   const delivery = toPoint(order.deliveryLocation) || toPoint(order.salon) || toPoint(order.address);
   const me = toPoint(myLocation);
@@ -83,8 +78,8 @@ const DeliveryLocationCard = ({ order, myLocation = null }) => {
   const navigateUrl = directionsUrl(me, delivery);
 
   return (
-    <div className="pt-3 mt-3 border-top">
-      <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+    <div className="pt-3 mt-3 border-top w-100">
+      <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2 w-100">
         <div>
           <div className="small text-muted fw-semibold d-flex align-items-center gap-1">
             <MapPin size={13} /> DELIVERY LOCATION
@@ -103,12 +98,13 @@ const DeliveryLocationCard = ({ order, myLocation = null }) => {
           </a>
         )}
       </div>
-      <LocationMap value={delivery} height={210} readOnly ariaLabel="Delivery location map" />
+      <div className="w-100" style={{ width: "100%", display: "block" }}>
+        <LocationMap value={delivery} height={210} readOnly ariaLabel="Delivery location map" />
+      </div>
     </div>
   );
 };
 
-// Distributor Order Detail Modal with Fixed Rejection Layout & Acceptance Gate
 const DistributorOrderDetailModal = ({ order, myLocation = null, onClose, onAccept, onReject, onAdvance, busy }) => {
   const [showReject, setShowReject] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
@@ -156,14 +152,14 @@ const DistributorOrderDetailModal = ({ order, myLocation = null, onClose, onAcce
         </Modal.Title>
       </Modal.Header>
       
-      <Modal.Body className="p-3 p-md-4 bg-light">
-        <div className="row g-4">
+      <Modal.Body className="p-3 p-md-4 bg-light" style={{ overflowX: "hidden" }}>
+        <div className="row g-4 w-100 mx-0">
           
           {/* Left Column: Order details & Full Audit History */}
-          <div className="col-12 col-lg-7 d-flex flex-column gap-3">
+          <div className="col-12 col-lg-7 d-flex flex-column gap-3 px-0 px-md-2">
             
             {/* Salon & Address Card */}
-            <div className="bg-white rounded-3 border p-3 p-md-4 shadow-xs">
+            <div className="bg-white rounded-3 border p-3 p-md-4 shadow-xs w-100">
               <div className="row g-3 mb-3">
                 <div className="col-12 col-sm-6">
                   <div className="small text-muted mb-1 fw-semibold">ORDERED BY (SALON)</div>
@@ -190,11 +186,11 @@ const DistributorOrderDetailModal = ({ order, myLocation = null, onClose, onAcce
             </div>
 
             {/* Items Summary Table */}
-            <div className="bg-white rounded-3 border p-3 p-md-4 shadow-xs">
+            <div className="bg-white rounded-3 border p-3 p-md-4 shadow-xs w-100">
               <div className="small text-muted mb-3 fw-semibold text-uppercase" style={{ letterSpacing: "0.4px" }}>
                 Order Items ({items.length})
               </div>
-              <div className="table-responsive">
+              <div className="table-responsive w-100">
                 <table className="table table-sm mb-0 align-middle" style={{ fontSize: "0.87rem", minWidth: "400px" }}>
                   <thead>
                     <tr className="text-muted small border-bottom">
@@ -235,7 +231,7 @@ const DistributorOrderDetailModal = ({ order, myLocation = null, onClose, onAcce
             </div>
 
             {/* Detailed Full Order History */}
-            <div className="bg-white rounded-3 border p-3 p-md-4 shadow-xs">
+            <div className="bg-white rounded-3 border p-3 p-md-4 shadow-xs w-100">
               <div className="small text-muted mb-3 fw-semibold text-uppercase" style={{ letterSpacing: "0.4px" }}>Full Action History & Audit Log</div>
               <div className="d-flex flex-column w-100">
                 {events.map((ev, idx) => {
@@ -250,7 +246,7 @@ const DistributorOrderDetailModal = ({ order, myLocation = null, onClose, onAcce
                         </div>
                         {idx < events.length - 1 && <div className="bg-secondary-subtle my-1" style={{ width: "2px", flex: 1, minHeight: "20px" }} />}
                       </div>
-                      <div className="pb-3 flex-grow-1" style={{ width: "calc(100% - 40px)", overflow: "hidden" }}>
+                      <div className="pb-3 flex-grow-1 min-width-0" style={{ width: "calc(100% - 40px)" }}>
                         <div className="fw-semibold text-dark" style={{ fontSize: "0.9rem", wordBreak: "break-word" }}>{evMeta.label}</div>
                         <div className="text-muted small mb-2" style={{ fontSize: "0.8rem", wordBreak: "break-word" }}>
                           {actorName(ev)} • {dateTime(ev.createdAt)}
@@ -273,7 +269,7 @@ const DistributorOrderDetailModal = ({ order, myLocation = null, onClose, onAcce
                             }}
                           >
                             <MessageSquare size={14} className="mt-1 flex-shrink-0 opacity-50" />
-                            <span>{ev.note}</span>
+                            <span style={{ wordBreak: "break-word" }}>{ev.note}</span>
                           </div>
                         )}
                       </div>
@@ -287,14 +283,14 @@ const DistributorOrderDetailModal = ({ order, myLocation = null, onClose, onAcce
           </div>
 
           {/* Right Column: Fulfillment Actions & Status Change Control */}
-          <div className="col-12 col-lg-5 d-flex flex-column gap-3">
+          <div className="col-12 col-lg-5 d-flex flex-column gap-3 px-0 px-md-2">
             
-            <div className="bg-white rounded-3 border p-3 p-md-4 shadow-xs">
+            <div className="bg-white rounded-3 border p-3 p-md-4 shadow-xs w-100">
               <div className="small text-muted mb-3 fw-semibold text-uppercase" style={{ letterSpacing: "0.4px" }}>Fulfillment Actions</div>
               
               {awaiting ? (
                 <div className="d-flex flex-column gap-3 mb-3 w-100">
-                  <div className="d-flex flex-column flex-sm-row gap-2">
+                  <div className="d-flex flex-column flex-sm-row gap-2 w-100">
                     <Button variant="success" size="sm" onClick={() => onAccept(order.orderId)} disabled={busy} className="flex-grow-1 py-2 fw-semibold">
                       <CheckCircle2 size={16} className="me-1" /> Accept Order
                     </Button>
@@ -304,7 +300,7 @@ const DistributorOrderDetailModal = ({ order, myLocation = null, onClose, onAcce
                   </div>
 
                   {showReject && (
-                    <div className="border rounded-3 p-3 bg-danger-subtle w-100" style={{ borderColor: "#f1c1c6" }}>
+                    <div className="border rounded-3 p-3 bg-danger-subtle w-100" style={{ borderColor: "#f1c1c6", boxSizing: "border-box" }}>
                       <div className="small fw-semibold mb-2 text-danger-emphasis">Reason for Rejection</div>
                       <textarea
                         className="form-control form-control-sm mb-2 w-100"
@@ -312,6 +308,7 @@ const DistributorOrderDetailModal = ({ order, myLocation = null, onClose, onAcce
                         value={rejectReason}
                         onChange={(e) => setRejectReason(e.target.value)}
                         placeholder="e.g. Out of stock, cannot service this area..."
+                        style={{ boxSizing: "border-box" }}
                       />
                       <div className="d-flex gap-2">
                         <Button variant="danger" size="sm" onClick={submitReject} disabled={busy}>{busy ? "Submitting..." : "Confirm Rejection"}</Button>
@@ -321,7 +318,7 @@ const DistributorOrderDetailModal = ({ order, myLocation = null, onClose, onAcce
                   )}
                 </div>
               ) : (
-                <div className="mb-3">
+                <div className="mb-3 w-100">
                   {order.status === "ASSIGNED" && (
                     <Button variant="primary" size="sm" onClick={() => onAdvance(order.orderId, "PICKED")} disabled={busy} className="w-100 py-2 fw-semibold mb-2">
                       <Truck size={16} className="me-1" /> Mark Picked Up
@@ -341,9 +338,9 @@ const DistributorOrderDetailModal = ({ order, myLocation = null, onClose, onAcce
                   )}
 
                   {/* Manual Direct Status Switcher for Distributor */}
-                  <div className="pt-3 border-top mt-3">
+                  <div className="pt-3 border-top mt-3 w-100">
                     <div className="small text-muted mb-2 fw-semibold">Change Order Status Manually</div>
-                    <div className="input-group input-group-sm">
+                    <div className="input-group input-group-sm w-100">
                       <select
                         className="form-select form-select-sm"
                         value={selectedNewStatus}
