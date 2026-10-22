@@ -1469,9 +1469,11 @@ export const distributorAPI = {
 
 // Orders — admin dashboard + distributor portal
 export const shopOrderAPI = {
-  adminList: async ({ page = 1, status = "", customerStatus = "", searchString = "" } = {}) => {
+  // `buyerType` ('SALON' | 'CUSTOMER') is the Buyer type filter; an empty
+  // string asks the backend for both kinds of buyer.
+  adminList: async ({ page = 1, status = "", customerStatus = "", buyerType = "", searchString = "" } = {}) => {
     try {
-      const response = await api.post('/api/shop-orders/admin-list', { page, status, customerStatus, searchString });
+      const response = await api.post('/api/shop-orders/admin-list', { page, status, customerStatus, buyerType, searchString });
       return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
     } catch (error) {
       return { success: false, message: error.response?.data?.message || "Failed to fetch orders", error: error.response?.data };

@@ -3,7 +3,7 @@ import { Modal, Button, Spinner } from "react-bootstrap";
 import { shopOrderAPI, distributorAPI, API_BASE_URL } from "../services/communication";
 import { toast } from "react-toastify";
 import { Plus, CreditCard, UserPlus, CheckCircle2, XCircle, Truck, Ban, Store, MessageSquare, Eye, Edit3, MapPin, Route, Crosshair } from "lucide-react";
-import { INTERNAL_STATUS_META } from "../pages/ShopOrders.jsx";
+import { INTERNAL_STATUS_META, buyerOf } from "../pages/ShopOrders.jsx";
 import LocationField from "./LocationField.jsx";
 import LocationMap from "./LocationMap.jsx";
 import {
@@ -42,6 +42,7 @@ const ACTOR_LABELS = {
   ADMIN: "MyNaai Admin",
   DISTRIBUTOR: "Distributor",
   SALON: "Salon",
+  CUSTOMER: "Customer",
   SYSTEM: "System"
 };
 
@@ -86,6 +87,8 @@ const ShopOrderDetailModal = ({ order, onClose, onStatusChange, onAssign, onReco
   if (!order) return null;
 
   const meta = INTERNAL_STATUS_META[order.status] || { label: order.status, badge: "bg-secondary-subtle text-secondary" };
+  // Who bought it — a salon or a customer; every label below reads from here.
+  const buyer = buyerOf(order);
   const items = order.items || [];
   const events = [...(order.events || [])].reverse();
 
@@ -255,9 +258,18 @@ const ShopOrderDetailModal = ({ order, onClose, onStatusChange, onAssign, onReco
               <div style={{ background: "#ffffff", borderRadius: "12px", border: "1px solid #e2e8f0", padding: "20px", boxSizing: "border-box" }}>
                 <div className="row g-3 mb-3">
                   <div className="col-sm-6">
-                    <div className="small text-muted mb-1 fw-semibold">ORDERED BY (SALON)</div>
-                    <div className="fw-bold text-dark">{order.salon?.salonName || "—"}</div>
-                    <div className="text-muted small">{order.salon?.phoneNumber || ""}</div>
+                    {/* A salon order shows its salon; a customer order has no
+                        salon at all, so the same block shows the person. */}
+                    <div className="small text-muted mb-1 fw-semibold">
+                      {buyer.isCustomer ? "ORDERED BY (CUSTOMER)" : "ORDERED BY (SALON)"}
+                    </div>
+                    <div className="d-flex align-items-center gap-2">
+                      <span className="fw-bold text-dark">{buyer.name}</span>
+                      {buyer.isCustomer && (
+                        <span className="badge bg-info-subtle text-info-emphasis" style={{ fontSize: "0.7rem" }}>Customer</span>
+                      )}
+                    </div>
+                    <div className="text-muted small">{buyer.phone}</div>
                   </div>
                   <div className="col-sm-6">
                     <div className="small text-muted mb-1 fw-semibold">DELIVERY CONTACT</div>
@@ -418,7 +430,7 @@ const ShopOrderDetailModal = ({ order, onClose, onStatusChange, onAssign, onReco
                   <div><span className="text-muted">Delivery:</span> <strong className="text-dark">{Number(order.amounts?.deliveryFee) === 0 ? "Free" : money(order.amounts?.deliveryFee)}</strong></div>
                   <div><span className="text-muted">Total:</span> <strong className="text-dark">{money(order.amounts?.total)}</strong></div>
                   {Number(order.amounts?.savings) > 0 && (
-                    <div><span className="text-muted">Salon saved:</span> <strong className="text-success">{money(order.amounts?.savings)}</strong></div>
+                    <div><span className="text-muted">{buyer.isCustomer ? "Customer saved:" : "Salon saved:"}</span> <strong className="text-success">{money(order.amounts?.savings)}</strong></div>
                   )}
                   <div>
                     <span className="text-muted">Payment: </span>

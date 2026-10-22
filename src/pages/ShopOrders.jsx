@@ -21,6 +21,27 @@ const dateTime = (value) => {
   return d.toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 };
 
+// Shop orders come from two kinds of buyer: a SALON buying stock and a
+// CUSTOMER buying for themselves (the app / website USER role). A customer
+// order has `salon: null` and a `customer` object, so every place that used
+// to read `order.salon.salonName` goes through here instead. Rows created
+// before the column existed have no `buyerType` — no salon object means
+// customer, anything else is a salon order, which is what they all were.
+export const buyerOf = (order) => {
+  if (!order) return { isCustomer: false, name: "—", phone: "", subtitle: "Salon order" };
+  const hasSalon = Boolean(order.salon && (order.salon.salonName || order.salon.salonId));
+  const isCustomer = order.buyerType
+    ? String(order.buyerType).toUpperCase() === "CUSTOMER"
+    : !hasSalon && Boolean(order.customer);
+  const source = isCustomer ? (order.customer || {}) : (order.salon || {});
+  return {
+    isCustomer,
+    name: (isCustomer ? source.fullName : source.salonName) || (isCustomer ? "Customer" : "—"),
+    phone: source.phoneNumber || "",
+    subtitle: isCustomer ? "Customer order · no salon account" : "Salon order"
+  };
+};
+
 export const INTERNAL_STATUS_META = {
   PENDING_ASSIGNMENT: { label: "Pending Assignment", badge: "bg-warning-subtle text-warning-emphasis" },
   AWAITING_ACCEPTANCE: { label: "Awaiting Distributor", badge: "bg-info-subtle text-info-emphasis" },
@@ -46,6 +67,8 @@ const ShopOrders = () => {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  // Buyer type filter: "" (all), "SALON" or "CUSTOMER".
+  const [buyerFilter, setBuyerFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [orders, setOrders] = useState([]);
@@ -58,6 +81,7 @@ const ShopOrders = () => {
       setIsLoading(true);
       const params = { page: currentPage, searchString: debouncedSearch };
       if (statusFilter !== "ALL") params.status = statusFilter;
+      if (buyerFilter) params.buyerType = buyerFilter;
       const result = await shopOrderAPI.adminList(params);
       if (result.success) {
         setOrders(result.data?.orders || []);
@@ -70,7 +94,7 @@ const ShopOrders = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, debouncedSearch, statusFilter]);
+  }, [currentPage, debouncedSearch, statusFilter, buyerFilter]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -160,7 +184,7 @@ const ShopOrders = () => {
                 the Bootstrap grid utilities, so widths are inline. */}
             <div className="d-flex flex-column gap-2">
               <div style={{ flex: "0 0 auto", width: "100%", maxWidth: 420 }}>
-                <SearchInput value={search} onChange={setSearch} placeholder="Search by order ID..." />
+                <SearchInput value={search} onChange={setSearch} placeholder="Search order ID, salon or customer..." />
               </div>
               <div className="d-flex flex-wrap gap-2 align-items-center">
                 {STATUS_FILTERS.map((f) => (
@@ -172,6 +196,19 @@ const ShopOrders = () => {
                     {f.label}
                   </button>
                 ))}
+                {/* Who bought it: a salon (partner stock order) or a customer
+                    (app / website personal order). */}
+                <select
+                  className="form-select form-select-sm"
+                  style={{ width: 160 }}
+                  value={buyerFilter}
+                  onChange={(e) => { setBuyerFilter(e.target.value); setCurrentPage(1); }}
+                  aria-label="Buyer type"
+                >
+                  <option value="">All buyers</option>
+                  <option value="SALON">Salons</option>
+                  <option value="CUSTOMER">Customers</option>
+                </select>
                 <div style={{ marginLeft: "auto" }}><Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} size="sm" /></div>
               </div>
             </div>
@@ -192,7 +229,7 @@ const ShopOrders = () => {
                 <thead>
                   <tr className="text-muted small" style={{ textTransform: "uppercase", letterSpacing: "0.4px" }}>
                     <th>Order</th>
-                    <th>Salon (Customer)</th>
+                    <th>Buyer</th>
                     <th className="text-end">Items</th>
                     <th className="text-end">Total</th>
                     <th>Payment</th>
@@ -216,8 +253,20 @@ const ShopOrders = () => {
                       >
                         <td className="fw-semibold">#{o.orderId}</td>
                         <td>
-                          <div>{o.salon?.salonName || "—"}</div>
-                          <div className="text-muted small">{o.salon?.phoneNumber || ""}</div>
+                          {(() => {
+                            const buyer = buyerOf(o);
+                            return (
+                              <>
+                                <div className="d-flex align-items-center gap-2">
+                                  <span>{buyer.name}</span>
+                                  {buyer.isCustomer && (
+                                    <span className="badge bg-info-subtle text-info-emphasis" style={{ fontSize: "0.68rem" }}>Customer</span>
+                                  )}
+                                </div>
+                                <div className="text-muted small">{buyer.phone}</div>
+                              </>
+                            );
+                          })()}
                         </td>
                         <td className="text-end">{o.amounts?.itemCount ?? (o.items || []).length}</td>
                         <td className="text-end fw-semibold">{money(o.amounts?.total)}</td>
