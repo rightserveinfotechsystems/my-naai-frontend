@@ -13,18 +13,6 @@ import {
   toPoint
 } from "../utils/geo";
 
-/**
- * LocationField — the "where is this?" control used by Add/Edit Distributor
- * and by the delivery-pin correction on an order.
- *
- * Four ways in, because a dispatcher is not always standing at the point:
- *   1. a map click (or dragging the pin);
- *   2. "Use my current location" (browser GPS — the phone in their hand);
- *   3. a place search (OpenStreetMap Nominatim, no key);
- *   4. typing the coordinates (read off another device or a paper sheet).
- *
- * `onChange({ latitude, longitude } | null)` — null clears the pin.
- */
 const LocationField = ({
   value = null,
   onChange,
@@ -42,8 +30,6 @@ const LocationField = ({
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState([]);
 
-  // Keep the text inputs in step with the pin (map click, GPS, or a parent
-  // that loaded a saved distributor), without fighting the user while typing.
   useEffect(() => {
     if (!point) {
       setLatText("");
@@ -100,8 +86,6 @@ const LocationField = ({
     }
     setSearching(true);
     try {
-      // Free & key-less. `countrycodes=in` because every partner so far is in
-      // India; drop it if the platform ever delivers elsewhere.
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&countrycodes=in&q=${encodeURIComponent(query)}`,
         { headers: { Accept: "application/json" } }
@@ -129,15 +113,16 @@ const LocationField = ({
   };
 
   return (
-    <div className="border rounded-3 p-3" style={{ background: "#fff" }}>
-      <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+    <div className="border rounded-3 p-3 w-100" style={{ background: "#fff", width: "100%", boxSizing: "border-box" }}>
+      {/* Top Header Row */}
+      <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2 w-100">
         <div>
           <div className="fw-semibold small text-dark d-flex align-items-center gap-1">
             <MapPin size={14} /> {label} {required && <span className="text-danger">*</span>}
           </div>
           <div className="text-muted" style={{ fontSize: "0.78rem" }}>{helper}</div>
         </div>
-        <div className="d-flex gap-2">
+        <div className="d-flex flex-wrap gap-2">
           <Button
             type="button"
             variant="outline-secondary"
@@ -162,22 +147,26 @@ const LocationField = ({
         </div>
       </div>
 
-      <LocationMap
-        value={point}
-        onChange={commit}
-        readOnly={disabled}
-        height={height}
-        ariaLabel={`${label} map`}
-      />
+      {/* Map Container */}
+      <div className="w-100 my-2" style={{ width: "100%", display: "block" }}>
+        <LocationMap
+          value={point}
+          onChange={commit}
+          readOnly={disabled}
+          height={height}
+          ariaLabel={`${label} map`}
+        />
+      </div>
 
+      {/* Inputs Form Row - Fixed with proper stacking for mobile */}
       <Form
-        className="d-flex flex-wrap gap-2 align-items-end mt-2"
+        className="row g-2 align-items-end mt-2 w-100 mx-0"
         onSubmit={(event) => {
           event.preventDefault();
           applyTypedCoordinates();
         }}
       >
-        <div style={{ flex: "1 1 130px", minWidth: 0 }}>
+        <div className="col-12 col-sm-4 px-1">
           <Form.Label className="small text-muted mb-1" style={{ fontSize: "0.75rem" }}>Latitude</Form.Label>
           <Form.Control
             size="sm"
@@ -189,7 +178,7 @@ const LocationField = ({
             disabled={disabled}
           />
         </div>
-        <div style={{ flex: "1 1 130px", minWidth: 0 }}>
+        <div className="col-12 col-sm-4 px-1">
           <Form.Label className="small text-muted mb-1" style={{ fontSize: "0.75rem" }}>Longitude</Form.Label>
           <Form.Control
             size="sm"
@@ -201,7 +190,7 @@ const LocationField = ({
             disabled={disabled}
           />
         </div>
-        <div style={{ flex: "1 1 200px", minWidth: 0 }}>
+        <div className="col-12 col-sm-4 px-1">
           <Form.Label className="small text-muted mb-1" style={{ fontSize: "0.75rem" }}>Search a place</Form.Label>
           <div className="d-flex gap-1">
             <Form.Control
@@ -219,7 +208,7 @@ const LocationField = ({
       </Form>
 
       {results.length > 0 && (
-        <div className="list-group mt-2" style={{ maxHeight: "150px", overflowY: "auto" }}>
+        <div className="list-group mt-2 w-100" style={{ maxHeight: "150px", overflowY: "auto" }}>
           {results.map((row) => (
             <button
               key={`${row.place_id}`}
@@ -234,7 +223,7 @@ const LocationField = ({
         </div>
       )}
 
-      <div className="mt-2 small text-muted">
+      <div className="mt-2 small text-muted w-100">
         {point ? (
           <span>
             <strong className="text-dark">Saved point:</strong> {formatCoordinates(point)}

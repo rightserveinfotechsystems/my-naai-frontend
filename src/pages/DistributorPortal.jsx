@@ -146,31 +146,31 @@ const DistributorOrderDetailModal = ({ order, myLocation = null, onClose, onAcce
 
   return (
     <Modal show={Boolean(order)} onHide={onClose} centered size="xl" backdrop="static">
-      <Modal.Header closeButton style={{ borderBottom: "1px solid #e2e8f0", padding: "20px 24px" }}>
-        <Modal.Title className="fw-bold d-flex align-items-center gap-2 text-dark" style={{ fontSize: "1.15rem" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(13, 110, 253, 0.1)", color: "#0d6efd", borderRadius: "8px", width: "36px", height: "36px" }}>
+      <Modal.Header closeButton className="border-bottom px-3 px-md-4 py-3">
+        <Modal.Title className="fw-bold d-flex align-items-center gap-2 text-dark fs-6 fs-md-5 text-truncate">
+          <div className="d-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-3 flex-shrink-0" style={{ width: "36px", height: "36px" }}>
             <Store size={18} />
           </div>
-          Order #{order.orderId?.slice(0, 8)}
-          <span className={`badge ${meta.badge}`} style={{ fontSize: "0.8rem", padding: "6px 10px" }}>{meta.label}</span>
+          <span className="text-truncate">Order #{order.orderId?.slice(0, 8)}</span>
+          <span className={`badge ${meta.badge} text-nowrap`} style={{ fontSize: "0.75rem", padding: "6px 10px" }}>{meta.label}</span>
         </Modal.Title>
       </Modal.Header>
       
-      <Modal.Body style={{ padding: "24px", background: "#f8f9fa" }}>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "24px", alignItems: "flex-start" }}>
+      <Modal.Body className="p-3 p-md-4 bg-light">
+        <div className="row g-4">
           
           {/* Left Column: Order details & Full Audit History */}
-          <div style={{ flex: "1 1 480px", minWidth: 0, display: "flex", flexDirection: "column", gap: "20px", boxSizing: "border-box" }}>
+          <div className="col-12 col-lg-7 d-flex flex-column gap-3">
             
             {/* Salon & Address Card */}
-            <div style={{ background: "#ffffff", borderRadius: "12px", border: "1px solid #e2e8f0", padding: "20px", boxSizing: "border-box" }}>
+            <div className="bg-white rounded-3 border p-3 p-md-4 shadow-xs">
               <div className="row g-3 mb-3">
-                <div className="col-sm-6">
+                <div className="col-12 col-sm-6">
                   <div className="small text-muted mb-1 fw-semibold">ORDERED BY (SALON)</div>
                   <div className="fw-bold text-dark">{order.salon?.salonName || "—"}</div>
                   <div className="text-muted small">{order.salon?.phoneNumber || ""}</div>
                 </div>
-                <div className="col-sm-6">
+                <div className="col-12 col-sm-6">
                   <div className="small text-muted mb-1 fw-semibold">DELIVERY CONTACT</div>
                   <div className="fw-bold text-dark">{order.address?.name || "—"}</div>
                   <div className="text-muted small">{order.address?.phone || ""}</div>
@@ -186,17 +186,16 @@ const DistributorOrderDetailModal = ({ order, myLocation = null, onClose, onAcce
                 </div>
               )}
 
-              {/* Where the parcel goes, and how far that is from you. */}
               <DeliveryLocationCard order={order} myLocation={myLocation} />
             </div>
 
             {/* Items Summary Table */}
-            <div style={{ background: "#ffffff", borderRadius: "12px", border: "1px solid #e2e8f0", padding: "20px", boxSizing: "border-box" }}>
+            <div className="bg-white rounded-3 border p-3 p-md-4 shadow-xs">
               <div className="small text-muted mb-3 fw-semibold text-uppercase" style={{ letterSpacing: "0.4px" }}>
                 Order Items ({items.length})
               </div>
               <div className="table-responsive">
-                <table className="table table-sm mb-0 align-middle" style={{ fontSize: "0.87rem" }}>
+                <table className="table table-sm mb-0 align-middle" style={{ fontSize: "0.87rem", minWidth: "400px" }}>
                   <thead>
                     <tr className="text-muted small border-bottom">
                       <th style={{ paddingBottom: "10px" }}>Item</th>
@@ -236,22 +235,22 @@ const DistributorOrderDetailModal = ({ order, myLocation = null, onClose, onAcce
             </div>
 
             {/* Detailed Full Order History */}
-            <div style={{ background: "#ffffff", borderRadius: "12px", border: "1px solid #e2e8f0", padding: "20px", boxSizing: "border-box" }}>
+            <div className="bg-white rounded-3 border p-3 p-md-4 shadow-xs">
               <div className="small text-muted mb-3 fw-semibold text-uppercase" style={{ letterSpacing: "0.4px" }}>Full Action History & Audit Log</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "0", width: "100%" }}>
+              <div className="d-flex flex-column w-100">
                 {events.map((ev, idx) => {
                   const evMeta = EVENT_META[ev.action] || { icon: Truck, color: "#6c757d", label: ev.action };
                   const Icon = evMeta.icon;
                   const isRejected = ev.action === "REJECTED";
                   return (
-                    <div key={ev.id || idx} style={{ display: "flex", gap: "14px", position: "relative", width: "100%" }}>
-                      <div style={{ display: "flex", flexDirection: "column", alignSelf: "stretch", alignItems: "center", flexShrink: 0 }}>
-                        <div style={{ width: "28px", height: "28px", borderRadius: "50%", backgroundColor: `${evMeta.color}1a`, color: evMeta.color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <div key={ev.id || idx} className="d-flex gap-3 position-relative w-100">
+                      <div className="d-flex flex-column align-self-stretch align-items-center flex-shrink-0">
+                        <div className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: "28px", height: "28px", backgroundColor: `${evMeta.color}1a`, color: evMeta.color }}>
                           <Icon size={14} />
                         </div>
-                        {idx < events.length - 1 && <div style={{ width: "2px", flex: 1, minHeight: "20px", backgroundColor: "#e2e8f0", margin: "4px 0" }} />}
+                        {idx < events.length - 1 && <div className="bg-secondary-subtle my-1" style={{ width: "2px", flex: 1, minHeight: "20px" }} />}
                       </div>
-                      <div style={{ paddingBottom: "20px", flex: "1 1 auto", width: "calc(100% - 42px)", boxSizing: "border-box", overflow: "hidden" }}>
+                      <div className="pb-3 flex-grow-1" style={{ width: "calc(100% - 40px)", overflow: "hidden" }}>
                         <div className="fw-semibold text-dark" style={{ fontSize: "0.9rem", wordBreak: "break-word" }}>{evMeta.label}</div>
                         <div className="text-muted small mb-2" style={{ fontSize: "0.8rem", wordBreak: "break-word" }}>
                           {actorName(ev)} • {dateTime(ev.createdAt)}
@@ -262,26 +261,18 @@ const DistributorOrderDetailModal = ({ order, myLocation = null, onClose, onAcce
                         
                         {ev.note && (
                           <div 
+                            className="p-2 rounded-end small text-secondary d-flex align-items-start gap-2 w-100"
                             style={{ 
                               background: isRejected ? "#fdf2f2" : "#f8f9fa",
                               borderLeft: `3px solid ${isRejected ? "#dc3545" : "#0d6efd"}`,
                               borderTop: "1px solid #e9ecef",
                               borderRight: "1px solid #e9ecef",
                               borderBottom: "1px solid #e9ecef",
-                              borderRadius: "0 8px 8px 0",
-                              padding: "10px 14px",
-                              fontSize: "0.85rem",
-                              color: isRejected ? "#842029" : "#495057",
-                              width: "100%",
                               wordBreak: "break-word",
-                              overflowWrap: "anywhere",
-                              boxSizing: "border-box",
-                              display: "flex",
-                              alignItems: "flex-start",
-                              gap: "8px"
+                              overflowWrap: "anywhere"
                             }}
                           >
-                            <MessageSquare size={14} style={{ marginTop: "3px", flexShrink: 0, opacity: 0.6 }} />
+                            <MessageSquare size={14} className="mt-1 flex-shrink-0 opacity-50" />
                             <span>{ev.note}</span>
                           </div>
                         )}
@@ -296,14 +287,14 @@ const DistributorOrderDetailModal = ({ order, myLocation = null, onClose, onAcce
           </div>
 
           {/* Right Column: Fulfillment Actions & Status Change Control */}
-          <div style={{ flex: "1 1 320px", minWidth: 0, display: "flex", flexDirection: "column", gap: "20px", boxSizing: "border-box" }}>
+          <div className="col-12 col-lg-5 d-flex flex-column gap-3">
             
-            <div style={{ background: "#ffffff", borderRadius: "12px", border: "1px solid #e2e8f0", padding: "20px", boxSizing: "border-box" }}>
+            <div className="bg-white rounded-3 border p-3 p-md-4 shadow-xs">
               <div className="small text-muted mb-3 fw-semibold text-uppercase" style={{ letterSpacing: "0.4px" }}>Fulfillment Actions</div>
               
               {awaiting ? (
-                <div className="d-flex flex-column gap-3 mb-3" style={{ width: "100%", boxSizing: "border-box" }}>
-                  <div className="d-flex gap-2">
+                <div className="d-flex flex-column gap-3 mb-3 w-100">
+                  <div className="d-flex flex-column flex-sm-row gap-2">
                     <Button variant="success" size="sm" onClick={() => onAccept(order.orderId)} disabled={busy} className="flex-grow-1 py-2 fw-semibold">
                       <CheckCircle2 size={16} className="me-1" /> Accept Order
                     </Button>
@@ -313,7 +304,7 @@ const DistributorOrderDetailModal = ({ order, myLocation = null, onClose, onAcce
                   </div>
 
                   {showReject && (
-                    <div className="border rounded-3 p-3 bg-danger-subtle w-100" style={{ borderColor: "#f1c1c6", boxSizing: "border-box" }}>
+                    <div className="border rounded-3 p-3 bg-danger-subtle w-100" style={{ borderColor: "#f1c1c6" }}>
                       <div className="small fw-semibold mb-2 text-danger-emphasis">Reason for Rejection</div>
                       <textarea
                         className="form-control form-control-sm mb-2 w-100"
@@ -321,7 +312,6 @@ const DistributorOrderDetailModal = ({ order, myLocation = null, onClose, onAcce
                         value={rejectReason}
                         onChange={(e) => setRejectReason(e.target.value)}
                         placeholder="e.g. Out of stock, cannot service this area..."
-                        style={{ boxSizing: "border-box" }}
                       />
                       <div className="d-flex gap-2">
                         <Button variant="danger" size="sm" onClick={submitReject} disabled={busy}>{busy ? "Submitting..." : "Confirm Rejection"}</Button>
@@ -350,7 +340,7 @@ const DistributorOrderDetailModal = ({ order, myLocation = null, onClose, onAcce
                     </Button>
                   )}
 
-                  {/* Manual Direct Status Switcher for Distributor (Only available after acceptance) */}
+                  {/* Manual Direct Status Switcher for Distributor */}
                   <div className="pt-3 border-top mt-3">
                     <div className="small text-muted mb-2 fw-semibold">Change Order Status Manually</div>
                     <div className="input-group input-group-sm">
@@ -410,9 +400,6 @@ const DistributorPortal = () => {
 
   const navigate = useNavigate();
   const userData = localStorage.getItem("userData") ? JSON.parse(localStorage.getItem("userData")) : {};
-  // The distributor's own position — the origin of every distance shown in
-  // this portal. Refreshed from the browser's GPS; persisted on the server so
-  // the admin's nearest-first list uses the same point.
   const [myLocation, setMyLocation] = useState(() => toPoint(userData));
   const [locating, setLocating] = useState(false);
 
@@ -438,7 +425,7 @@ const DistributorPortal = () => {
       try {
         localStorage.setItem("userData", JSON.stringify({ ...userData, ...next }));
       } catch {
-        /* storage blocked — the in-memory copy still powers the distances */
+        /* storage blocked */
       }
       toast.success("Location updated — the admin now sees you at this point");
     } finally {
@@ -570,23 +557,23 @@ const DistributorPortal = () => {
   };
 
   return (
-    <div className="min-vh-100" style={{ backgroundColor: "#f8f9fa" }}>
+    <div className="min-vh-100 bg-light">
       
       {/* Top Navbar */}
       <nav className="navbar border-bottom px-3 px-md-4 py-3 bg-white shadow-xs sticky-top">
-        <div className="container-fluid max-w-1400 px-0 d-flex justify-content-between align-items-center">
-          <div className="d-flex align-items-center gap-3">
-            <div className="d-flex align-items-center justify-content-center rounded-3 bg-success text-white shadow-sm" style={{ width: 42, height: 42, flexShrink: 0 }}>
+        <div className="container-fluid px-0 d-flex justify-content-between align-items-center" style={{ maxWidth: "1300px" }}>
+          <div className="d-flex align-items-center gap-3 min-width-0">
+            <div className="d-flex align-items-center justify-content-center rounded-3 bg-success text-white shadow-sm flex-shrink-0" style={{ width: 42, height: 42 }}>
               <Truck size={22} />
             </div>
-            <div>
-              <h5 className="mb-0 fw-bold text-dark text-truncate">Distributor Portal</h5>
+            <div className="min-width-0">
+              <h5 className="mb-0 fw-bold text-dark text-truncate fs-6 fs-md-5">Distributor Portal</h5>
               <div className="text-muted small text-truncate">{userData?.name || "Authorized Partner"}</div>
             </div>
           </div>
           <div className="d-flex align-items-center gap-2 flex-shrink-0">
             <button
-              className={`btn btn-sm d-flex align-items-center gap-2 fw-semibold px-3 py-2 rounded-3 ${myLocation ? "btn-outline-success" : "btn-success"}`}
+              className={`btn btn-sm d-flex align-items-center gap-2 fw-semibold px-2 px-md-3 py-2 rounded-3 ${myLocation ? "btn-outline-success" : "btn-success"}`}
               onClick={shareMyLocation}
               disabled={locating}
               title={myLocation ? `Location shared ${locationAgeLabel(userData.locationUpdatedAt) || "just now"}` : "Share your location so deliveries can be sorted by distance"}
@@ -594,7 +581,7 @@ const DistributorPortal = () => {
               <Crosshair size={16} />
               <span className="d-none d-sm-inline">{locating ? "Locating…" : myLocation ? "Update location" : "My location"}</span>
             </button>
-            <button className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2 fw-semibold px-3 py-2 rounded-3" onClick={handleLogout}>
+            <button className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2 fw-semibold px-2 px-md-3 py-2 rounded-3" onClick={handleLogout}>
               <LogOut size={16} /> <span className="d-none d-sm-inline">Logout</span>
             </button>
           </div>
@@ -741,9 +728,10 @@ const DistributorPortal = () => {
                         <div className="text-muted small">{itemCount} item(s)</div>
                       </div>
 
-                      <div className="col-6 col-md-4 text-end">
+                      {/* Action Button Section with Mobile Full-Width Support */}
+                      <div className="col-12 col-md-4 text-end">
                         <button 
-                          className="btn btn-sm btn-outline-primary px-3 py-2 d-inline-flex align-items-center gap-2 fw-semibold rounded-3 text-nowrap"
+                          className="btn btn-sm btn-outline-primary px-3 py-2 d-flex align-items-center justify-content-center gap-2 fw-semibold rounded-3 text-nowrap w-100 w-md-auto ms-auto"
                           onClick={(e) => { e.stopPropagation(); setSelectedOrder(o); }}
                         >
                           <Eye size={15} /> Preview & Take Action

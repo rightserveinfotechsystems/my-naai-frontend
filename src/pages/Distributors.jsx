@@ -165,43 +165,50 @@ const Distributors = () => {
           </div>
         </div>
 
-        {/* Distance reference — the point every KM on this page is measured
-            from. Optional: without it the tab keeps its A–Z order. */}
-        <div className="card shadow-sm mb-3 bg-white border-0 flex-shrink-0" style={{ borderRadius: "12px" }}>
+      
+        {/* Distance reference card */}
+        <div className="card shadow-sm mb-3 bg-white border-0 flex-shrink-0 w-100" style={{ borderRadius: "12px" }}>
           <div className="card-body p-3">
-            <div className="d-flex flex-wrap align-items-center gap-2">
-              <div className="d-flex align-items-center gap-2 me-auto">
+            <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+
+              {/* Status / Description Section */}
+              <div className="d-flex flex-wrap align-items-center gap-2">
                 <span className="badge bg-light text-secondary border d-flex align-items-center gap-1">
                   <Route size={13} />
                   {reference ? "Sorted: nearest first" : "Sorted: A–Z"}
                 </span>
                 {reference ? (
-                  <span className="small text-muted">
+                  <span className="small text-muted text-break">
                     from <strong className="text-dark">{formatCoordinates(reference)}</strong>
                     {nearest && Number.isFinite(Number(nearest.distanceKm)) ? (
                       <> · nearest partner is <strong className="text-dark">{formatKm(nearest.distanceKm)}</strong> away</>
                     ) : null}
                   </span>
                 ) : (
-                  <span className="small text-muted">Set a reference point to show the delivery KM on every partner.</span>
+                  <span className="small text-muted">Set a reference point to show delivery KM.</span>
                 )}
               </div>
-              <div className="d-flex flex-wrap gap-2">
-                <button className="btn btn-sm btn-outline-success d-flex align-items-center gap-1" onClick={useMyLocation} disabled={locating}>
+
+              {/* Action Buttons Section */}
+              <div className="d-flex flex-wrap gap-2 align-items-center">
+                <button className="btn btn-sm btn-outline-success d-flex align-items-center gap-1 flex-fill flex-md-grow-0 justify-content-center" onClick={useMyLocation} disabled={locating}>
                   <Crosshair size={14} /> {locating ? "Locating…" : "Use my location"}
                 </button>
-                <button className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" onClick={() => setShowReferenceMap((v) => !v)}>
+                <button className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 flex-fill flex-md-grow-0 justify-content-center" onClick={() => setShowReferenceMap((v) => !v)}>
                   <MapPin size={14} /> {showReferenceMap ? "Hide map" : "Pick on map"}
                 </button>
                 {reference && (
-                  <button className="btn btn-sm btn-outline-danger d-flex align-items-center gap-1" onClick={() => { setReference(null); setCurrentPage(1); }}>
+                  <button className="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 justify-content-center" onClick={() => { setReference(null); setCurrentPage(1); }}>
                     <X size={14} /> Clear
                   </button>
                 )}
               </div>
+
             </div>
+
+            {/* Collapsible Reference Map */}
             {showReferenceMap && (
-              <div className="mt-3">
+              <div className="mt-3 w-100">
                 <LocationMap
                   value={reference}
                   onChange={(next) => { setReference(next); setCurrentPage(1); }}
@@ -315,22 +322,22 @@ const Distributors = () => {
                 </div>
                 <div className="modal-body py-3">
                   <p className="text-muted mb-0">
-                    Are you sure you want to <strong>{confirmModal.target?.isActive ? "disable" : "activate"}</strong> <span className="text-dark fw-semibold">{confirmModal.target?.name}</span>? 
-                    {confirmModal.target?.isActive 
-                      ? " They will no longer be able to log in or fulfill salon orders." 
+                    Are you sure you want to <strong>{confirmModal.target?.isActive ? "disable" : "activate"}</strong> <span className="text-dark fw-semibold">{confirmModal.target?.name}</span>?
+                    {confirmModal.target?.isActive
+                      ? " They will no longer be able to log in or fulfill salon orders."
                       : " They will regain access to log in and fulfill salon orders."}
                   </p>
                 </div>
                 <div className="modal-footer border-0 pt-0">
-                  <button 
-                    type="button" 
-                    className="btn btn-light btn-sm px-3" 
+                  <button
+                    type="button"
+                    className="btn btn-light btn-sm px-3"
                     onClick={() => setConfirmModal({ show: false, target: null })}
                   >
                     Cancel
                   </button>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className={`btn btn-sm px-3 ${confirmModal.target?.isActive ? "btn-danger" : "btn-success"}`}
                     onClick={handleConfirmToggle}
                   >
