@@ -1679,3 +1679,77 @@ export const bookingRequestAPI = {
     }
   }
 };
+
+
+// Partner plans — the ONE price list (admin panel → website → app).
+// Admin endpoints require an admin token.
+export const partnerPlanAPI = {
+  list: async () => {
+    try {
+      const response = await api.post('/api/salons/admin/plans/list', {});
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data,
+        message: response.data?.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to load the plans",
+        error: error.response?.data
+      };
+    }
+  },
+
+  create: async (payload) => {
+    try {
+      const response = await api.post('/api/salons/admin/plans/create', payload);
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data,
+        message: response.data?.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to create the plan",
+        error: error.response?.data
+      };
+    }
+  },
+
+  update: async (payload) => {
+    try {
+      const response = await api.post('/api/salons/admin/plans/update', payload);
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data,
+        message: response.data?.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to update the plan",
+        error: error.response?.data
+      };
+    }
+  },
+
+  // Deactivation preserves existing salon subscriptions.
+  remove: async (payload) => {
+    try {
+      const response = await api.post('/api/salons/admin/plans/delete', payload);
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data,
+        message: response.data?.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to remove the plan",
+        error: error.response?.data
+      };
+    }
+  },
+};

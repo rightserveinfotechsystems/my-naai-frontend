@@ -3,7 +3,7 @@ import { NavLink, Link, useNavigate } from "react-router-dom";
 import ProfileDropdown from "./ProfileDropdown.jsx";
 import ChangePasswordModal from "./ChangePasswordModal.jsx";
 import { useUser } from "../contexts/UserContext.jsx";
-import { ClipboardList, Store, CalendarCheck, User, Users, Package, Truck, ShoppingBag, SlidersHorizontal, Menu, X } from "lucide-react";
+import { ClipboardList, Store, CalendarCheck, User, Users, Package, Truck, ShoppingBag, SlidersHorizontal, Menu, X, Sparkles } from "lucide-react";
 import { salonRequestAPI } from "../services/communication.jsx";
 
 const Icons = {
@@ -51,6 +51,7 @@ const navItems = [
   { path: "/distributors", key: "distributors", label: "Distributors", icon: <Truck size={18} /> },
   { path: "/shop-orders", key: "shopOrders", label: "Shop Orders", icon: <ShoppingBag size={18} /> },
   { path: "/shop-settings", key: "shopSettings", label: "Shop Settings", icon: <SlidersHorizontal size={18} /> },
+  { path: "/plans", key: "plans", label: "Plans & Trials", icon: <Sparkles size={18} /> },
 ];
 
 const Layout = ({ children }) => {
@@ -65,8 +66,14 @@ const Layout = ({ children }) => {
   const accessTab = JSON.parse(localStorage.getItem("accessTab")) || [];
   
   const hasAnyShopTab = ["shopProducts", "distributors", "shopOrders"].some((key) => accessTab?.includes(key));
-  const filteredTabs = navItems.filter((navDetails) =>
-    accessTab?.includes(navDetails.key) || (navDetails.key === "shopSettings" && hasAnyShopTab)
+  const filteredTabs = navItems.filter(
+    (navDetails) =>
+      accessTab?.includes(navDetails.key) ||
+      // Shop Settings rides along with any shop tab; Plans & Trials with the
+      // role-management tab, so the super admin can set prices without first
+      // granting themselves the new tab.
+      (navDetails.key === "shopSettings" && hasAnyShopTab) ||
+      (navDetails.key === "plans" && accessTab?.includes("user"))
   );
 
   const primaryMobileTabs = filteredTabs.slice(0, 4);

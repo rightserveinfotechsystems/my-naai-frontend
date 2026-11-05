@@ -27,6 +27,7 @@ import ShopProducts from "./pages/ShopProducts.jsx";
 import Distributors from "./pages/Distributors.jsx";
 import ShopOrders from "./pages/ShopOrders.jsx";
 import ShopSettings from "./pages/ShopSettings.jsx";
+import PlansAndTrials from "./pages/PlansAndTrials.jsx";
 import DistributorPortal from "./pages/DistributorPortal.jsx";
 
 const ProtectedRoute = ({ children }) => {
@@ -199,6 +200,14 @@ const router = createBrowserRouter(
       element: (
         <ProtectedRoute>
           <ShopSettings />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/plans",
+      element: (
+        <ProtectedRoute>
+          <PlansAndTrials />
         </ProtectedRoute>
       ),
     },

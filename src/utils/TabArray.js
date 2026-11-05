@@ -61,4 +61,9 @@ export const TabArray = [
     label: "Shop Settings",
     route: "/shop-settings",
   },
+  {
+    key: "plans",
+    label: "Plans & Trials",
+    route: "/plans",
+  },
 ];
