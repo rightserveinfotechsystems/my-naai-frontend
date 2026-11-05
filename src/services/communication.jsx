@@ -1574,3 +1574,32 @@ export const shopSettingsAPI = {
     }
   }
 };
+
+// Booking REQUESTS — the leads a customer sent, and what the salon did with
+// them. NOT bookings: a booking (`booking_list`) exists only after a salon
+// accepts, and a request carries `bookingId` as a pointer to it. The admin tab
+// reads requests only, which is what makes "accepted + rejected + missed +
+// awaiting + withdrawn = received" hold.
+export const bookingRequestAPI = {
+  adminList: async ({ salonId = "", status = "ALL", search = "", page = 1, limit = 25, fromDate = "", toDate = "" } = {}) => {
+    try {
+      const response = await api.post('/api/bookingRequest/admin/list', {
+        salonId, status, search, page, limit, fromDate, toDate
+      });
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to fetch booking requests", error: error.response?.data };
+    }
+  },
+  // Counters + the per-salon report (`bySalon`). `range` is TODAY | WEEK |
+  // MONTH | ALL; `autoCancelled` is its own number and is never folded into
+  // `rejected`.
+  adminSummary: async ({ range = "ALL", salonId = "", fromDate = "", toDate = "" } = {}) => {
+    try {
+      const response = await api.post('/api/bookingRequest/admin/summary', { range, salonId, fromDate, toDate });
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to fetch the booking request summary", error: error.response?.data };
+    }
+  }
+};

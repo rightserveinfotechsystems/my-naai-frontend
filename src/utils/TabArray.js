@@ -25,6 +25,13 @@ export const TabArray = [
     route: "/bookings",
   },
   {
+    // The leads a customer sent: requests, NOT bookings. Its own tab because the
+    // two lists answer different questions (see docs/ADMIN-PANEL-BOOKING-REQUESTS.md).
+    key: "bookingRequests",
+    label: "Booking Requests",
+    route: "/booking-requests",
+  },
+  {
     key: "advertisement",
     label: "Advertisement",
     route: "/advertisement",

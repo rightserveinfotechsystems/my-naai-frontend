@@ -10,6 +10,7 @@ import Users from "./pages/Users.jsx";
 import Salons from "./pages/Salons.jsx";
 import SalonDetail from "./pages/SalonDetail.jsx";
 import Bookings from "./pages/Bookings.jsx";
+import BookingRequests from "./pages/BookingRequests.jsx";
 import SalonRequest from "./pages/SalonRequest.jsx";
 import Advertisement from "./pages/Advertisement.jsx";
 import NotFound from "./pages/NotFound.jsx";
@@ -144,6 +145,15 @@ const router = createBrowserRouter(
     //     </ProtectedRoute>
     //   ),
     // },
+    {
+      // Requests are leads; /bookings above is the bookings those leads become.
+      path: "/booking-requests",
+      element: (
+        <ProtectedRoute>
+          <BookingRequests />
+        </ProtectedRoute>
+      ),
+    },
     {
       path: "/advertisement",
       element: (
