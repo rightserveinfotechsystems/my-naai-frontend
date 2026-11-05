@@ -1657,11 +1657,9 @@ export const shopSettingsAPI = {
 // reads requests only, which is what makes "accepted + rejected + missed +
 // awaiting + withdrawn = received" hold.
 export const bookingRequestAPI = {
-  adminList: async ({ salonId = "", status = "ALL", search = "", page = 1, limit = 25, fromDate = "", toDate = "" } = {}) => {
+  adminList: async (dataToSend) => {
     try {
-      const response = await api.post('/api/bookingRequest/admin/list', {
-        salonId, status, search, page, limit, fromDate, toDate
-      });
+      const response = await api.post('/api/bookingRequest/admin/list', dataToSend);
       return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
     } catch (error) {
       return { success: false, message: error.response?.data?.message || "Failed to fetch booking requests", error: error.response?.data };
@@ -1670,9 +1668,9 @@ export const bookingRequestAPI = {
   // Counters + the per-salon report (`bySalon`). `range` is TODAY | WEEK |
   // MONTH | ALL; `autoCancelled` is its own number and is never folded into
   // `rejected`.
-  adminSummary: async ({ range = "ALL", salonId = "", fromDate = "", toDate = "" } = {}) => {
+  adminSummary: async (dataToSend) => {
     try {
-      const response = await api.post('/api/bookingRequest/admin/summary', { range, salonId, fromDate, toDate });
+      const response = await api.post('/api/bookingRequest/admin/summary', dataToSend);
       return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
     } catch (error) {
       return { success: false, message: error.response?.data?.message || "Failed to fetch the booking request summary", error: error.response?.data };

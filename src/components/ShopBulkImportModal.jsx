@@ -4,26 +4,6 @@ import { toast } from "react-toastify";
 import { FileSpreadsheet, Download, UploadCloud, CheckCircle2, AlertTriangle, Undo2, FileText, X } from "lucide-react";
 import { shopProductAPI } from "../services/communication.jsx";
 
-/**
- * Bulk add products: download the sample → fill it → upload it → read the
- * per-row report → import → (if it was a mistake) undo.
- *
- * The rules this dialog exists to honour, because breaking any of them turns a
- * feature into a support queue:
- *
- *   · NEVER import straight from the drop. "Check file" always runs the import
- *     with `dryRun: true` first, which writes nothing and answers the report; the
- *     button that actually writes names the exact number ("Import 112").
- *   · SHOW THE SHEET'S ROW NUMBER, not an array index — that is the number the
- *     admin can find in Excel.
- *   · NAME THE FIELD AND THE FIX. "Invalid value" is not a message.
- *   · ONE FILE AT A TIME. Two concurrent imports are two reports nobody can tell
- *     apart.
- *   · A BIG IMPORT DOES NOT BLOCK THE PANEL: the dialog stays dismissable, and a
- *     toast reports the outcome when it finishes.
- *   · OFFER THE REPORT AS A FILE, so the bad rows can be fixed in Excel.
- */
-
 const MAX_MB = 5;
 
 const sizeLabel = (bytes) => {
@@ -41,16 +21,14 @@ const resultTone = {
 };
 
 const ShopBulkImportModal = ({ show, onHide, onImported }) => {
-  const [step, setStep] = useState("pick"); // pick | report | done
+  const [step, setStep] = useState("pick");
   const [file, setFile] = useState(null);
   const [mode, setMode] = useState("CREATE_ONLY");
   const [dragging, setDragging] = useState(false);
-  const [busy, setBusy] = useState(""); // '' | 'check' | 'import' | 'undo' | 'template'
+  const [busy, setBusy] = useState("");
   const [report, setReport] = useState(null);
   const [importResult, setImportResult] = useState(null);
   const inputRef = useRef(null);
-  // The dialog may be closed while the import runs; the request keeps going and
-  // the toast still tells the admin what happened.
   const alive = useRef(true);
 
   useEffect(() => () => { alive.current = false; }, []);
@@ -59,8 +37,6 @@ const ShopBulkImportModal = ({ show, onHide, onImported }) => {
     if (show) {
       setStep("pick");
       setFile(null);
-      // Pre-fill from the last import so the admin does not have to remember
-      // which choice they made.
       try {
         setMode(localStorage.getItem("shopBulkImportMode") || "CREATE_ONLY");
       } catch {
@@ -74,7 +50,7 @@ const ShopBulkImportModal = ({ show, onHide, onImported }) => {
 
   const rememberMode = (next) => {
     setMode(next);
-    try { localStorage.setItem("shopBulkImportMode", next); } catch { /* storage blocked */ }
+    try { localStorage.setItem("shopBulkImportMode", next); } catch {}
   };
 
   const acceptFile = (picked) => {
@@ -189,7 +165,6 @@ const ShopBulkImportModal = ({ show, onHide, onImported }) => {
     }
   };
 
-  /** The report as a CSV the admin can open in Excel, fix and re-upload. */
   const downloadReport = () => {
     const source = step === "done" ? importResult : report;
     if (!source) return;
@@ -226,7 +201,6 @@ const ShopBulkImportModal = ({ show, onHide, onImported }) => {
       <Modal.Body className="pt-3">
         {step === "pick" && (
           <>
-            {/* 1 — the sample */}
             <div className="mb-3">
               <div className="fw-semibold small mb-1">1 · Download the sample</div>
               <div className="d-flex flex-wrap gap-2">
@@ -243,35 +217,83 @@ const ShopBulkImportModal = ({ show, onHide, onImported }) => {
               </div>
             </div>
 
-            {/* 2 — the file */}
-            <div className="mb-3">
-              <div className="fw-semibold small mb-1">2 · Fill it in, then drop it here</div>
+            <div className="mb-3 w-100" style={{ minWidth: 0 }}>
+              <div className="fw-semibold small mb-2">2 · Fill it in, then drop it here</div>
               <div
                 onDragOver={(event) => { event.preventDefault(); setDragging(true); }}
-                onDragLeave={() => setDragging(false)}
+                onDragLeave={(event) => {
+                  if (!event.currentTarget.contains(event.relatedTarget)) setDragging(false);
+                }}
                 onDrop={handleDrop}
                 onClick={() => inputRef.current?.click()}
                 role="button"
                 tabIndex={0}
-                onKeyDown={(event) => { if (event.key === "Enter") inputRef.current?.click(); }}
-                className={`border border-2 border-dashed rounded-3 p-3 text-center ${dragging ? "bg-light" : ""}`}
-                style={{ borderStyle: "dashed", cursor: "pointer", borderColor: dragging ? "#0d6efd" : "#ced4da" }}
+                aria-label="Upload an Excel or CSV product sheet"
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    inputRef.current?.click();
+                  }
+                }}
+                className={`bulk-import-dropzone w-100 d-flex flex-column align-items-center justify-content-center rounded-3 p-4 text-center ${dragging ? "is-dragging" : ""} ${file ? "has-file" : ""}`}
+                style={{
+                  display: "flex",
+                  width: "100%",
+                  maxWidth: "100%",
+                  minWidth: 0,
+                  minHeight: "160px",
+                  boxSizing: "border-box",
+                  flex: "0 0 100%",
+                  alignSelf: "stretch",
+                  border: `2px dashed ${dragging ? "#0d6efd" : file ? "#198754" : "#cbd5e1"}`,
+                  background: dragging ? "#eff6ff" : file ? "#f0fdf4" : "#f8fafc",
+                  cursor: "pointer",
+                  transition: "background-color .15s ease, border-color .15s ease",
+                  overflow: "hidden"
+                }}
               >
-                <UploadCloud size={26} className="text-muted mb-1" />
+                <span
+                  className="d-flex align-items-center justify-content-center rounded-circle mb-2"
+                  style={{
+                    width: 48,
+                    height: 48,
+                    flex: "0 0 48px",
+                    color: file ? "#198754" : "#64748b",
+                    background: file ? "#dcfce7" : "#e2e8f0"
+                  }}
+                >
+                  {file ? <CheckCircle2 size={24} /> : <UploadCloud size={24} />}
+                </span>
+
                 {file ? (
-                  <div className="small">
-                    <span className="fw-semibold">{file.name}</span> · {sizeLabel(file.size)}
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-link p-0 ms-2 align-baseline"
-                      onClick={(event) => { event.stopPropagation(); setFile(null); setReport(null); }}
-                    >
-                      <X size={13} /> remove
-                    </button>
+                  <div className="w-100 small" style={{ minWidth: 0, overflowWrap: "anywhere" }}>
+                    <div className="fw-semibold text-success">{file.name}</div>
+                    <div className="text-muted mt-1">
+                      {sizeLabel(file.size)} · Ready to check
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-link p-0 ms-2 align-baseline"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setFile(null);
+                          setReport(null);
+                          if (inputRef.current) inputRef.current.value = "";
+                        }}
+                      >
+                        <X size={13} /> Remove
+                      </button>
+                    </div>
                   </div>
                 ) : (
-                  <div className="small text-muted">Drop an .xlsx or .csv here, or click to browse (max {MAX_MB} MB · 1000 rows)</div>
+                  <div className="w-100" style={{ minWidth: 0 }}>
+                    <div className="fw-semibold text-dark">Drop your product sheet here</div>
+                    <div className="small text-muted mt-1">
+                      or <span className="text-primary fw-semibold">browse files</span> · .xlsx or .csv
+                    </div>
+                    <div className="small text-muted mt-2">Maximum {MAX_MB} MB · Up to 1,000 rows</div>
+                  </div>
                 )}
+
                 <input
                   ref={inputRef}
                   type="file"
@@ -282,7 +304,6 @@ const ShopBulkImportModal = ({ show, onHide, onImported }) => {
               </div>
             </div>
 
-            {/* 3 — what happens to names that already exist */}
             <div className="mb-1">
               <div className="fw-semibold small mb-1">3 · Names that already exist</div>
               <Form.Check

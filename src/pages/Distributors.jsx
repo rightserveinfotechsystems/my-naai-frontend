@@ -172,7 +172,7 @@ const Distributors = () => {
             <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
 
               {/* Status / Description Section */}
-              <div className="d-flex flex-wrap align-items-center gap-2">
+              {/* <div className="d-flex flex-wrap align-items-center gap-2">
                 <span className="badge bg-light text-secondary border d-flex align-items-center gap-1">
                   <Route size={13} />
                   {reference ? "Sorted: nearest first" : "Sorted: A–Z"}
@@ -187,7 +187,7 @@ const Distributors = () => {
                 ) : (
                   <span className="small text-muted">Set a reference point to show delivery KM.</span>
                 )}
-              </div>
+              </div> */}
 
               {/* Action Buttons Section */}
               <div className="d-flex flex-wrap gap-2 align-items-center">

@@ -4,25 +4,6 @@ import { toast } from "react-toastify";
 import { Plus, Pencil, Trash2, ArrowUp, ArrowDown, Eye, EyeOff, Tags, AlertTriangle } from "lucide-react";
 import { shopCategoryAPI } from "../services/communication.jsx";
 
-/**
- * The shop's category list — the one the website and the app read.
- *
- * Everything here writes to `shop_categories` through `/api/shop-categories/admin/*`,
- * so a category added in this dialog appears in the customer's filter on the next
- * load, with this label and this position, and with no deploy.
- *
- * Three rules the dialog makes visible instead of surprising:
- *
- *   · ORDER IS THE CUSTOMER'S ORDER. The arrows write `sortOrder`; there is no
- *     separate "display order" to keep in step.
- *   · RENAMING CHANGES ONLY THE LABEL. The id is a slug fixed at creation and the
- *     products store it, so the dialog says so rather than implying the web
- *     address moved.
- *   · DELETING A CATEGORY IN USE IS REFUSED. The API answers with the count; the
- *     dialog then asks where to move those products and retries with `reassignTo`.
- *     A category deleted out from under a product is exactly the "wrong shelf"
- *     complaint this whole feature exists to fix.
- */
 const ShopCategoriesModal = ({ show, onHide, onChanged }) => {
   const [categories, setCategories] = useState([]);
   const [unmatched, setUnmatched] = useState([]);
@@ -30,8 +11,8 @@ const ShopCategoriesModal = ({ show, onHide, onChanged }) => {
   const [saving, setSaving] = useState(false);
 
   const [newLabel, setNewLabel] = useState("");
-  const [editing, setEditing] = useState(null); // { id, label }
-  const [deleteTarget, setDeleteTarget] = useState(null); // category awaiting a decision
+  const [editing, setEditing] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [moveTo, setMoveTo] = useState("");
 
   const load = useCallback(async () => {
@@ -61,8 +42,6 @@ const ShopCategoriesModal = ({ show, onHide, onChanged }) => {
 
   const afterChange = () => {
     load();
-    // The product list shows the label, and the product editor's select is fed
-    // from this list — refresh both.
     onChanged?.();
   };
 
@@ -127,11 +106,6 @@ const ShopCategoriesModal = ({ show, onHide, onChanged }) => {
     }
   };
 
-  /**
-   * Move a category up or down one place. The two rows swap `sortOrder`; when
-   * two rows already share a position the list is renumbered first so a swap
-   * always changes something.
-   */
   const handleMove = async (index, direction) => {
     const target = index + direction;
     if (target < 0 || target >= categories.length) return;
@@ -165,7 +139,6 @@ const ShopCategoriesModal = ({ show, onHide, onChanged }) => {
         setMoveTo("");
         afterChange();
       } else {
-        // The refusal names the count; keep the dialog open offering the move.
         toast.error(result.message || "Could not delete the category");
       }
     } finally {
@@ -176,186 +149,316 @@ const ShopCategoriesModal = ({ show, onHide, onChanged }) => {
   const otherCategories = categories.filter((item) => item.id !== deleteTarget?.id);
 
   return (
-    <Modal show={show} onHide={onHide} centered size="lg" backdrop="static">
-      <Modal.Header closeButton className="border-0 pb-0">
-        <div>
-          <Modal.Title className="h5 mb-1 d-flex align-items-center gap-2">
-            <Tags size={18} /> Categories
-          </Modal.Title>
-          <div className="text-muted small">
-            This list <strong>is</strong> the shop's filter — the website and the app read it, in this order.
-          </div>
-        </div>
-      </Modal.Header>
-
-      <Modal.Body className="pt-3">
-        {loading ? (
-          <div className="text-center py-4"><Spinner animation="border" size="sm" /></div>
-        ) : (
-          <>
-            <div className="table-responsive">
-              <table className="table align-middle mb-2" style={{ fontSize: "0.9rem" }}>
-                <thead>
-                  <tr className="text-muted small" style={{ textTransform: "uppercase", letterSpacing: "0.4px" }}>
-                    <th style={{ width: 76 }}>Order</th>
-                    <th>Category</th>
-                    <th className="text-end">Products</th>
-                    <th className="text-end">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {categories.map((category, index) => (
-                    <tr key={category.id} className={category.isActive ? "" : "opacity-75"}>
-                      <td>
-                        <div className="d-flex gap-1">
-                          <button
-                            className="btn btn-sm btn-light border"
-                            title="Move up"
-                            disabled={saving || index === 0}
-                            onClick={() => handleMove(index, -1)}
-                          >
-                            <ArrowUp size={13} />
-                          </button>
-                          <button
-                            className="btn btn-sm btn-light border"
-                            title="Move down"
-                            disabled={saving || index === categories.length - 1}
-                            onClick={() => handleMove(index, 1)}
-                          >
-                            <ArrowDown size={13} />
-                          </button>
-                        </div>
-                      </td>
-                      <td>
-                        {editing?.id === category.id ? (
-                          <div className="d-flex gap-2">
-                            <Form.Control
-                              size="sm"
-                              autoFocus
-                              value={editing.label}
-                              onChange={(event) => setEditing({ ...editing, label: event.target.value })}
-                              onKeyDown={(event) => {
-                                if (event.key === "Enter") handleRename();
-                                if (event.key === "Escape") setEditing(null);
-                              }}
-                            />
-                            <Button size="sm" variant="dark" onClick={handleRename} disabled={saving}>Save</Button>
-                            <Button size="sm" variant="outline-secondary" onClick={() => setEditing(null)} disabled={saving}>Cancel</Button>
-                          </div>
-                        ) : (
-                          <div>
-                            <div className="fw-semibold d-flex align-items-center gap-2">
-                              {category.label}
-                              {!category.isActive && <span className="badge bg-secondary-subtle text-secondary-emphasis">Hidden</span>}
-                            </div>
-                            {/* The id is what products store — say it once, here. */}
-                            <div className="text-muted small">
-                              stays <code>{category.id}</code> if you rename it
-                            </div>
-                          </div>
-                        )}
-                      </td>
-                      <td className="text-end">
-                        {category.productCount > 0
-                          ? category.productCount
-                          : <span className="text-muted">0</span>}
-                      </td>
-                      <td className="text-end">
-                        <div className="d-flex justify-content-end gap-1">
-                          <button
-                            className="btn btn-sm btn-light border"
-                            title={category.isActive ? "Hide from the shop filter" : "Show in the shop filter"}
-                            disabled={saving}
-                            onClick={() => handleToggleActive(category)}
-                          >
-                            {category.isActive ? <EyeOff size={13} /> : <Eye size={13} />}
-                          </button>
-                          <button
-                            className="btn btn-sm btn-light border"
-                            title="Rename"
-                            disabled={saving}
-                            onClick={() => setEditing({ id: category.id, label: category.label })}
-                          >
-                            <Pencil size={13} />
-                          </button>
-                          <button
-                            className="btn btn-sm btn-outline-danger"
-                            title="Delete"
-                            disabled={saving}
-                            onClick={() => { setDeleteTarget(category); setMoveTo(""); }}
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+    <>
+      <Modal show={show} onHide={onHide} centered size="lg" backdrop="static" scrollable>
+        <Modal.Header closeButton className="border-0 pb-0">
+          <div className="pe-3">
+            <Modal.Title className="d-flex align-items-center gap-2 fs-5">
+              <span
+                className="d-inline-flex align-items-center justify-content-center rounded-3"
+                style={{ width: 36, height: 36, background: "#eef2ff", color: "#4f46e5" }}
+              >
+                <Tags size={18} />
+              </span>
+              Manage categories
+            </Modal.Title>
+            <div className="text-muted small mt-2">
+              Organise the categories customers see in your shop.
             </div>
+          </div>
+        </Modal.Header>
 
-            {/* Products filed under free text that no category owns — the list an
-                admin works through to finish the tidy-up. */}
-            {unmatched.length > 0 && (
-              <div className="alert alert-warning py-2 px-3 small mb-3">
-                <div className="fw-semibold mb-1 d-flex align-items-center gap-1">
-                  <AlertTriangle size={14} /> {unmatched.length} product value{unmatched.length === 1 ? "" : "s"} not in this list
+        <Modal.Body className="pt-3">
+          <section
+            className="rounded-3 p-3 mb-3"
+            style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}
+          >
+            <div className="fw-semibold mb-2">Add a category</div>
+            <Form onSubmit={handleCreate}>
+              <div className="d-flex flex-column flex-sm-row gap-2">
+                <Form.Control
+                  value={newLabel}
+                  maxLength={120}
+                  placeholder="Enter category name (e.g. Nail care)"
+                  aria-label="New category name"
+                  onChange={(event) => setNewLabel(event.target.value)}
+                  disabled={saving}
+                />
+                <Button
+                  type="submit"
+                  variant="dark"
+                  className="d-flex align-items-center justify-content-center gap-1 px-3"
+                  disabled={saving || newLabel.trim().length < 2}
+                >
+                  <Plus size={16} />
+                  Add category
+                </Button>
+              </div>
+              <div className="text-muted mt-2" style={{ fontSize: "0.78rem" }}>
+                Category names must contain at least 2 characters.
+              </div>
+            </Form>
+          </section>
+
+          <div className="d-flex align-items-center justify-content-between gap-2 mb-2">
+            <div>
+              <div className="fw-semibold">Your categories</div>
+              <div className="text-muted small">
+                {categories.length} {categories.length === 1 ? "category" : "categories"} · Use arrows to change display order.
+              </div>
+            </div>
+            {categories.length > 0 && (
+              <span className="badge rounded-pill text-bg-light border fw-normal">
+                {categories.filter((item) => item.isActive).length} visible
+              </span>
+            )}
+          </div>
+
+          {loading ? (
+            <div className="d-flex flex-column align-items-center justify-content-center py-5 text-muted">
+              <Spinner animation="border" size="sm" className="mb-2" />
+              <span className="small">Loading categories…</span>
+            </div>
+          ) : categories.length === 0 ? (
+            <div className="text-center rounded-3 py-5 px-3" style={{ border: "1px dashed #cbd5e1" }}>
+              <div
+                className="d-inline-flex align-items-center justify-content-center rounded-circle mb-2"
+                style={{ width: 48, height: 48, background: "#f1f5f9", color: "#64748b" }}
+              >
+                <Tags size={22} />
+              </div>
+              <div className="fw-semibold">No categories yet</div>
+              <div className="text-muted small mt-1">Add your first category using the form above.</div>
+            </div>
+          ) : (
+            <div className="d-flex flex-column gap-2">
+              {categories.map((category, index) => (
+                <div
+                  key={category.id}
+                  className="rounded-3 p-3"
+                  style={{
+                    border: "1px solid #e2e8f0",
+                    background: category.isActive ? "#fff" : "#f8fafc",
+                    opacity: category.isActive ? 1 : 0.8
+                  }}
+                >
+                  <div className="d-flex align-items-start gap-2">
+                    <div className="d-flex flex-column gap-1 flex-shrink-0">
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-light border d-flex align-items-center justify-content-center"
+                        style={{ width: 30, height: 28, padding: 0 }}
+                        title="Move up"
+                        aria-label={`Move ${category.label} up`}
+                        disabled={saving || index === 0}
+                        onClick={() => handleMove(index, -1)}
+                      >
+                        <ArrowUp size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-light border d-flex align-items-center justify-content-center"
+                        style={{ width: 30, height: 28, padding: 0 }}
+                        title="Move down"
+                        aria-label={`Move ${category.label} down`}
+                        disabled={saving || index === categories.length - 1}
+                        onClick={() => handleMove(index, 1)}
+                      >
+                        <ArrowDown size={14} />
+                      </button>
+                    </div>
+
+                    <div className="flex-grow-1" style={{ minWidth: 0 }}>
+                      {editing?.id === category.id ? (
+                        <div className="d-flex flex-column flex-sm-row gap-2">
+                          <Form.Control
+                            size="sm"
+                            autoFocus
+                            value={editing.label}
+                            aria-label="Category name"
+                            onChange={(event) => setEditing({ ...editing, label: event.target.value })}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") handleRename();
+                              if (event.key === "Escape") setEditing(null);
+                            }}
+                          />
+                          <div className="d-flex gap-2">
+                            <Button size="sm" variant="dark" onClick={handleRename} disabled={saving}>
+                              Save
+                            </Button>
+                            <Button size="sm" variant="outline-secondary" onClick={() => setEditing(null)} disabled={saving}>
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="d-flex flex-wrap align-items-center gap-2">
+                            <span className="fw-semibold text-break">{category.label}</span>
+                            <span className={`badge rounded-pill ${category.isActive ? "text-bg-success" : "text-bg-secondary"}`}>
+                              {category.isActive ? "Visible" : "Hidden"}
+                            </span>
+                          </div>
+                          <div className="d-flex flex-wrap align-items-center gap-2 mt-1 text-muted small">
+                            <span>{category.productCount || 0} {(category.productCount || 0) === 1 ? "product" : "products"}</span>
+                            <span aria-hidden="true">·</span>
+                            <span>Category ID: <code>{category.id}</code></span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {editing?.id !== category.id && (
+                      <div className="d-flex align-items-center gap-1 flex-shrink-0">
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-light border d-flex align-items-center justify-content-center"
+                          style={{ width: 34, height: 34, padding: 0 }}
+                          title={category.isActive ? "Hide category" : "Show category"}
+                          aria-label={category.isActive ? `Hide ${category.label}` : `Show ${category.label}`}
+                          disabled={saving}
+                          onClick={() => handleToggleActive(category)}
+                        >
+                          {category.isActive ? <EyeOff size={15} /> : <Eye size={15} />}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-light border d-flex align-items-center justify-content-center"
+                          style={{ width: 34, height: 34, padding: 0 }}
+                          title="Rename category"
+                          aria-label={`Rename ${category.label}`}
+                          disabled={saving}
+                          onClick={() => setEditing({ id: category.id, label: category.label })}
+                        >
+                          <Pencil size={15} />
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center"
+                          style={{ width: 34, height: 34, padding: 0 }}
+                          title="Delete category"
+                          aria-label={`Delete ${category.label}`}
+                          disabled={saving}
+                          onClick={() => { setDeleteTarget(category); setMoveTo(""); }}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                {unmatched.map((item) => (
-                  <div key={item.value}>
-                    <code>{item.value}</code> — {item.productCount} product{item.productCount === 1 ? "" : "s"}
+              ))}
+            </div>
+          )}
+
+          {!loading && unmatched.length > 0 && (
+            <div
+              className="mt-3 rounded-3 p-3"
+              style={{
+                background: "#fffbeb",
+                border: "1px solid #fcd34d",
+                width: "100%",
+                minWidth: 0,
+                boxSizing: "border-box"
+              }}
+            >
+              <div className="d-flex align-items-start gap-2 mb-3">
+                <AlertTriangle size={18} color="#d97706" className="flex-shrink-0 mt-1" />
+
+                <div style={{ minWidth: 0 }}>
+                  <div className="fw-semibold text-dark">
+                    Unmatched product categories
+                  </div>
+                  <div className="text-muted small">
+                    {unmatched.length} category value{unmatched.length !== 1 ? "s" : ""} need attention.
+                  </div>
+                </div>
+              </div>
+
+              <div className="d-flex flex-column gap-2">
+                {unmatched.map((item, index) => (
+                  <div
+                    key={`${item.value}-${index}`}
+                    className="d-flex align-items-center justify-content-between gap-3 rounded-2 px-3 py-2"
+                    style={{
+                      background: "#ffffff",
+                      border: "1px solid #f3e8c8",
+                      minWidth: 0,
+                      width: "100%",
+                      boxSizing: "border-box"
+                    }}
+                  >
+                    <div
+                      className="fw-medium text-dark"
+                      style={{
+                        minWidth: 0,
+                        flex: "1 1 auto",
+                        overflowWrap: "anywhere",
+                        fontSize: "0.875rem"
+                      }}
+                    >
+                      {item.value}
+                    </div>
+
+                    <div className="flex-shrink-0">
+                      <span
+                        className="rounded-pill px-2 py-1"
+                        style={{
+                          background: "#f1f5f9",
+                          color: "#475569",
+                          fontSize: "0.75rem",
+                          whiteSpace: "nowrap"
+                        }}
+                      >
+                        {item.productCount} {item.productCount === 1 ? "product" : "products"}
+                      </span>
+                    </div>
                   </div>
                 ))}
-                <div className="mt-1">Open those products and pick a category; the extra filter chip disappears with them.</div>
               </div>
-            )}
 
-            <Form onSubmit={handleCreate} className="d-flex gap-2">
-              <Form.Control
-                size="sm"
-                placeholder="New category — e.g. Nail care"
-                value={newLabel}
-                maxLength={120}
-                onChange={(event) => setNewLabel(event.target.value)}
-              />
-              <Button type="submit" size="sm" variant="dark" disabled={saving || newLabel.trim().length < 2}>
-                <Plus size={14} className="me-1" /> Add
-              </Button>
-            </Form>
-          </>
-        )}
-      </Modal.Body>
+              <div className="text-muted small mt-3">
+                Edit these products and assign them to an existing category.
+                This will remove the unmatched values from this list.
+              </div>
+            </div>
+          )}
+        </Modal.Body>
 
-      <Modal.Footer className="border-0">
-        <Button variant="secondary" onClick={onHide}>Done</Button>
-      </Modal.Footer>
+        <Modal.Footer className="border-0 pt-0">
+          <Button variant="outline-secondary" onClick={onHide}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
-      {/* Deleting a category with products: the API refuses, so the dialog asks
-          where they should go and only then deletes. */}
       <Modal show={Boolean(deleteTarget)} onHide={() => setDeleteTarget(null)} centered backdrop="static">
         <Modal.Header closeButton className="border-0 pb-0">
-          <Modal.Title className="h6 mb-0">Delete "{deleteTarget?.label}"?</Modal.Title>
+          <Modal.Title className="fs-6">Delete category?</Modal.Title>
         </Modal.Header>
-        <Modal.Body className="pt-2">
+        <Modal.Body className="pt-3">
+          <div className="fw-semibold mb-2">{deleteTarget?.label}</div>
           {deleteTarget?.productCount > 0 ? (
             <>
-              <p className="small mb-2">
-                <strong>{deleteTarget.productCount} product{deleteTarget.productCount === 1 ? "" : "s"}</strong> use
-                this category. Choose where to move them — a product left on a category that no longer exists
-                disappears from the shelf.
-              </p>
-              <Form.Select size="sm" value={moveTo} onChange={(event) => setMoveTo(event.target.value)}>
-                <option value="">Move them to…</option>
+              <div className="small text-muted mb-3">
+                {deleteTarget.productCount} {deleteTarget.productCount === 1 ? "product is" : "products are"} assigned to this category. Choose another category before deleting.
+              </div>
+              <Form.Select
+                value={moveTo}
+                onChange={(event) => setMoveTo(event.target.value)}
+                aria-label="Move products to category"
+              >
+                <option value="">Select destination category</option>
                 {otherCategories.map((item) => (
                   <option key={item.id} value={item.id}>{item.label}</option>
                 ))}
               </Form.Select>
             </>
           ) : (
-            <p className="small mb-0">Nothing uses this category, so it can be removed safely.</p>
+            <div className="small text-muted">This category has no products and can be safely deleted.</div>
           )}
         </Modal.Body>
-        <Modal.Footer className="border-0">
+        <Modal.Footer className="border-0 pt-0">
           <Button variant="outline-secondary" size="sm" onClick={() => setDeleteTarget(null)} disabled={saving}>
             Cancel
           </Button>
@@ -365,11 +468,12 @@ const ShopCategoriesModal = ({ show, onHide, onChanged }) => {
             disabled={saving || (deleteTarget?.productCount > 0 && !moveTo)}
             onClick={() => handleDelete(moveTo)}
           >
-            {deleteTarget?.productCount > 0 && moveTo ? "Move products and delete" : "Delete category"}
+            {saving ? <Spinner animation="border" size="sm" className="me-1" /> : null}
+            {deleteTarget?.productCount > 0 && moveTo ? "Move products & delete" : "Delete category"}
           </Button>
         </Modal.Footer>
       </Modal>
-    </Modal>
+    </>
   );
 };
 

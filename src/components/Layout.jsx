@@ -45,6 +45,7 @@ const navItems = [
   { path: "/customer", key: "customer", label: "Customer Management", icon: <Users size={18} /> },
   { path: "/salons", key: "salonManagement", label: "Salon Management", icon: <Store size={18} /> },
   { path: "/bookings", key: "bookings", label: "Booking Management", icon: <CalendarCheck size={18} /> },
+  { path: "/booking-requests", key: "bookingRequests", label: "Booking Requests", icon: <CalendarCheck size={18} /> },
   { path: "/advertisement", key: "advertisement", label: "Advertisement", icon: <Icons.Advertisement /> },
   { path: "/notifications", key: "notifications", label: "Push Notifications", icon: <Icons.Notification /> },
   { path: "/shop-products", key: "shopProducts", label: "Shop Products", icon: <Package size={18} /> },
