@@ -1,14 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
-import { API_BASE_URL, shopProductAPI } from "../services/communication";
+import { API_BASE_URL, shopProductAPI, shopCategoryAPI } from "../services/communication";
 import Layout from "../components/Layout.jsx";
 import SearchInput from "../components/SearchInput.jsx";
 import Pagination from "../components/Pagination.jsx";
 import Loader from "../components/Loader.jsx";
 import DeleteConfirmModal from "../components/DeleteConfirmModal.jsx";
 import ShopProductModal from "../components/ShopProductModal.jsx";
+import ShopCategoriesModal from "../components/ShopCategoriesModal.jsx";
+import ShopBulkImportModal from "../components/ShopBulkImportModal.jsx";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import { Package, Plus, Pencil, Trash2 } from "lucide-react";
+import { Package, Plus, Pencil, Trash2, Tags, Upload } from "lucide-react";
 
 const GENDER_LABELS = { MALE: "Men", FEMALE: "Women", UNISEX: "Unisex" };
 
@@ -34,7 +36,17 @@ const ShopProducts = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [deleteModal, setDeleteModal] = useState({ show: false, target: null });
+  // The shared category list, only to PRINT the label under a product: the row
+  // stores the id (`hair-care`), the admin reads "Hair care".
+  const [categories, setCategories] = useState([]);
+  const [showCategories, setShowCategories] = useState(false);
+  const [showBulk, setShowBulk] = useState(false);
   const navigate = useNavigate();
+
+  const loadCategories = useCallback(async () => {
+    const result = await shopCategoryAPI.list();
+    if (result.success) setCategories(result.data?.categories || []);
+  }, []);
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -64,6 +76,17 @@ const ShopProducts = () => {
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
+
+  useEffect(() => {
+    loadCategories();
+  }, [loadCategories]);
+
+  // The label an admin recognises; a value that is not in the list (an old
+  // free-text shelf) is shown as it is rather than as a blank cell.
+  const categoryLabel = (id) => {
+    if (!id) return "—";
+    return categories.find((item) => item.id === id)?.label || id;
+  };
 
   useEffect(() => {
     const tab = localStorage.getItem("accessTab") ? JSON.parse(localStorage.getItem("accessTab")) : null;
@@ -99,6 +122,12 @@ const ShopProducts = () => {
                 <SearchInput value={search} onChange={setSearch} placeholder="Search catalog products..." />
               </div>
               <div className="col-12 col-md-6 d-flex flex-wrap justify-content-md-end gap-2 align-items-center">
+                <button className="button22 flex-fill flex-md-grow-0" onClick={() => setShowBulk(true)} title="Add products from a spreadsheet">
+                  <Upload size={15} className="me-1" /> Bulk add
+                </button>
+                <button className="button22 flex-fill flex-md-grow-0" onClick={() => setShowCategories(true)} title="Manage the category list every surface reads">
+                  <Tags size={15} className="me-1" /> Categories
+                </button>
                 <button className="button23 flex-fill flex-md-grow-0" onClick={() => { setEditingProduct(null); setShowModal(true); }}>
                   <Plus size={15} className="me-1" /> Add Product
                 </button>
@@ -166,7 +195,7 @@ const ShopProducts = () => {
                             <span className="text-muted">—</span>
                           )}
                         </td>
-                        <td>{p.category || "—"}</td>
+                        <td>{categoryLabel(p.category)}</td>
                         <td>{GENDER_LABELS[p.gender] || "Any"}</td>
                         <td>
                           {p.isAvailable
@@ -206,6 +235,21 @@ const ShopProducts = () => {
           setShowModal={setShowModal}
           initialProduct={editingProduct}
           onSuccess={() => { fetchProducts(); setShowModal(false); setEditingProduct(null); }}
+        />
+
+        {/* The list everyone reads: adding a category here changes the website's
+            and the app's shop filter on the next load, with no deploy. */}
+        <ShopCategoriesModal
+          show={showCategories}
+          onHide={() => setShowCategories(false)}
+          onChanged={() => { loadCategories(); fetchProducts(); }}
+        />
+
+        {/* Bulk add: sample sheet in, per-row report out, undo if it was a mistake. */}
+        <ShopBulkImportModal
+          show={showBulk}
+          onHide={() => setShowBulk(false)}
+          onImported={() => { fetchProducts(); loadCategories(); }}
         />
 
         <DeleteConfirmModal

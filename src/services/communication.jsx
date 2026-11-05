@@ -1355,6 +1355,49 @@ export default api;
 // `customerStatus` = what the salon sees. DECIMAL columns come back as
 // strings — parse with Number() before display.
 
+// The shop's category list — the SAME one the website and the app read
+// (`shop_categories`). Adding a category here makes it appear in the customer's
+// shop filter on the next load, in this order, with no deploy.
+export const shopCategoryAPI = {
+  // Every row (hidden ones included, so they can be un-hidden) with how many
+  // products use it, plus `unmatched`: free-text values no category owns.
+  list: async ({ includeInactive = true } = {}) => {
+    try {
+      const response = await api.post('/api/shop-categories/admin/list', { includeInactive });
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to load the categories", error: error.response?.data };
+    }
+  },
+  create: async ({ label, sortOrder } = {}) => {
+    try {
+      const response = await api.post('/api/shop-categories/admin/create', { label, sortOrder });
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to add the category", error: error.response?.data };
+    }
+  },
+  // `id` identifies the row and never changes — products store it. Send `label`
+  // to rename, `sortOrder` to re-order the customer's filter, `isActive` to hide.
+  update: async ({ id, label, sortOrder, isActive } = {}) => {
+    try {
+      const response = await api.post('/api/shop-categories/admin/update', { id, label, sortOrder, isActive });
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to update the category", error: error.response?.data };
+    }
+  },
+  // Refused while products use it — send `reassignTo` to move them first.
+  remove: async ({ id, reassignTo } = {}) => {
+    try {
+      const response = await api.post('/api/shop-categories/admin/delete', { id, reassignTo });
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to delete the category", error: error.response?.data };
+    }
+  }
+};
+
 // Company catalog (admin product management tab)
 export const shopProductAPI = {
   adminList: async ({ page = 1, searchString = "" } = {}) => {
@@ -1387,6 +1430,39 @@ export const shopProductAPI = {
       return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
     } catch (error) {
       return { success: false, message: error.response?.data?.message || "Failed to delete product", error: error.response?.data };
+    }
+  },
+  // Bulk add. The sample file is generated from the importer's own column list,
+  // so its header row and what the import accepts are the same fact.
+  bulkTemplate: async (format = "xlsx") => {
+    return await api.get(`/api/shop-products/bulk/template?format=${format}`, { responseType: "blob" });
+  },
+  // ONE file at a time. `dryRun: true` validates and writes nothing — the dialog
+  // always runs that first and only then offers "Import N".
+  bulkImport: async ({ file, mode = "CREATE_ONLY", dryRun = true } = {}) => {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("mode", mode);
+    form.append("dryRun", String(dryRun));
+    try {
+      const response = await api.post('/api/shop-products/bulk/import', form, {
+        headers: { "Content-Type": "multipart/form-data" },
+        // 1000 rows is a lot of per-row transactions; a 30s default would time
+        // out on a slow database and look like a failure that did happen.
+        timeout: 180000
+      });
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "The import failed", error: error.response?.data };
+    }
+  },
+  // Soft-deletes exactly what one import CREATED (never a product it updated).
+  bulkUndo: async ({ importId } = {}) => {
+    try {
+      const response = await api.post('/api/shop-products/bulk/undo', { importId });
+      return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Could not undo the import", error: error.response?.data };
     }
   },
   uploadImage: async (uploadData) => {

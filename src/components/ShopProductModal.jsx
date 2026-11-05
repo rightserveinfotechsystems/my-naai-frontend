@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { Modal, Form, Button } from "react-bootstrap";
-import { API_BASE_URL, shopProductAPI } from "../services/communication";
+import { API_BASE_URL, shopProductAPI, shopCategoryAPI } from "../services/communication";
 import { toast } from "react-toastify";
 import { FaPlus, FaTimes } from "react-icons/fa";
-import { productCategory } from "../utils/productCategory";
+
 
 const ShopProductModal = ({ showModal, setShowModal, initialProduct = null, onSuccess }) => {
   const isEdit = Boolean(initialProduct);
@@ -19,6 +19,34 @@ const ShopProductModal = ({ showModal, setShowModal, initialProduct = null, onSu
     isAvailable: true,
     description: ""
   });
+
+  // The select is fed by the server, not by a hard-coded array: this is the one
+  // list the admin panel, the website and the app share.
+  const [categoryOptions, setCategoryOptions] = useState([]);
+
+  useEffect(() => {
+    if (!showModal) return;
+    let cancelled = false;
+    (async () => {
+      const result = await shopCategoryAPI.list({ includeInactive: true });
+      if (cancelled) return;
+      if (result.success) {
+        setCategoryOptions(result.data?.categories || []);
+      } else {
+        // A failed list must not stop the admin editing a product — the field
+        // simply falls back to what the product already carries.
+        setCategoryOptions([]);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [showModal]);
+
+  // The row's stored value only counts as "legacy" when the list came back and
+  // does not contain it (an old free-text shelf, or an id from a deleted one).
+  const legacyCategory = formData.category && categoryOptions.length
+    && !categoryOptions.some((item) => item.id === formData.category)
+    ? formData.category
+    : "";
 
   useEffect(() => {
     if (showModal) {
@@ -150,17 +178,27 @@ const ShopProductModal = ({ showModal, setShowModal, initialProduct = null, onSu
             </div>
             <div className="col-md-4 col-6">
               <Form.Label className="fw-semibold small">Category</Form.Label>
+              {/* The SAME list the website's and the app's shop filter reads
+                  (`shop_categories`), so a category added in Shop Products →
+                  Categories is selectable here immediately and a product filed
+                  here is findable there. The value is the category ID, not a
+                  label: a label can be renamed, the id cannot. */}
               <Form.Select
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
               >
                 <option value="">Select Category</option>
-                {productCategory.map((category, index) => (
-                  <option key={index} value={category}>
-                    {category}
+                {categoryOptions.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.label}{category.isActive === false ? " (hidden)" : ""}
                   </option>
                 ))}
+                {legacyCategory && (
+                  // A product filed under an old free-text shelf still shows
+                  // what it was, so saving it does not silently blank the field.
+                  <option value={legacyCategory}>{legacyCategory} (not in the list)</option>
+                )}
               </Form.Select>
             </div>
             <div className="col-md-4 col-6">
