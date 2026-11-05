@@ -287,9 +287,13 @@ const Layout = ({ children }) => {
           />
         </div>
 
-        {/* Main Content Area */}
-        <main className="flex-grow-1">
-          <div className="container-fluid py-3">{children}</div>
+        {/* Main Content Area.
+            `minWidth: 0` is what keeps a wide child inside the content column:
+            a flex item's default `min-width:auto` lets a long table (or one
+            unbreakable string) push the item wider than the space next to the
+            sidebar, which is what made page content overflow past the nav. */}
+        <main className="flex-grow-1" style={{ minWidth: 0 }}>
+          <div className="container-fluid py-3" style={{ minWidth: 0 }}>{children}</div>
         </main>
 
         {/* Mobile Bottom Navigation */}

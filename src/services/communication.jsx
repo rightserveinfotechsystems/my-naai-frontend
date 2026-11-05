@@ -1675,6 +1675,30 @@ export const bookingRequestAPI = {
     } catch (error) {
       return { success: false, message: error.response?.data?.message || "Failed to fetch the booking request summary", error: error.response?.data };
     }
+  },
+  // Answer a request on the salon's behalf. The backend runs this through the
+  // SAME accept/reject path the salon uses, so a request can only ever become
+  // one booking — if the salon answered a second earlier the API says so
+  // ("already actioned") and nothing is created twice.
+  //
+  // A FAILED status is NOT a thrown error: "already actioned" and "this request
+  // has expired" are answers, and the panel needs their text. So the caller
+  // reads `success` instead of a catch block.
+  adminAction: async (bookingRequestId, payload) => {
+    try {
+      const response = await api.post(`/api/bookingRequest/admin/action/${bookingRequestId}`, payload);
+      return {
+        success: response.data?.status === "SUCCESS",
+        data: response.data?.data,
+        message: response.data?.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Could not answer this request",
+        error: error.response?.data
+      };
+    }
   }
 };
 

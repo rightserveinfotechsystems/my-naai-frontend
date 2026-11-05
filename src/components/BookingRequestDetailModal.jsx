@@ -1,4 +1,5 @@
 
+import { useEffect, useState } from "react";
 import { Modal, Button } from "react-bootstrap";
 import {
   CheckCircle2,
@@ -15,6 +16,8 @@ import {
   UserRound,
   Receipt,
   Timer,
+  ShieldCheck,
+  AlertTriangle,
 } from "lucide-react";
 
 // ==========================================
@@ -126,7 +129,23 @@ export const LIFECYCLE = {
 // COMPONENT
 // ==========================================
 
-const BookingRequestDetailModal = ({ show, request, onHide }) => {
+const BookingRequestDetailModal = ({ show, request, onHide, onAnswer }) => {
+  // The confirm step lives INSIDE this sheet rather than in a second modal on
+  // top of it: a stacked dialog on a phone hides the request being confirmed.
+  const [pendingAction, setPendingAction] = useState(null);
+  const [reason, setReason] = useState("");
+  const [answering, setAnswering] = useState(false);
+  const [answerError, setAnswerError] = useState("");
+
+  // A different request (or a refresh of this one) starts clean.
+  const requestKey = request ? `${request.bookingRequestId}:${request.status}` : "none";
+  useEffect(() => {
+    setPendingAction(null);
+    setReason("");
+    setAnswerError("");
+    setAnswering(false);
+  }, [requestKey]);
+
   if (!request) return null;
 
   const meta = LIFECYCLE[request.status] || LIFECYCLE.PENDING;
@@ -143,6 +162,28 @@ const BookingRequestDetailModal = ({ show, request, onHide }) => {
       0
     )
   );
+
+  // An admin may answer a request that is still open — inside its 60 second
+  // window and with no answer and no booking. Anything else is read-only, and
+  // the footer says which, so nobody taps a button that cannot work.
+  const expiresAt = request.expiresAt ? new Date(request.expiresAt).getTime() : null;
+  const windowOpen = !expiresAt || expiresAt > Date.now();
+  const canAnswer = Boolean(onAnswer) && request.status === "PENDING" && windowOpen && !request.bookingId;
+
+  const submitAnswer = async () => {
+    if (!pendingAction || answering) return;
+    if (pendingAction === "REJECT" && !reason.trim()) {
+      setAnswerError("Say why the request is being declined — the salon is told.");
+      return;
+    }
+    setAnswering(true);
+    setAnswerError("");
+    const result = await onAnswer(pendingAction, { reason: reason.trim() });
+    setAnswering(false);
+    if (!result?.success) {
+      setAnswerError(result?.message || "Could not answer this request");
+    }
+  };
 
   // Build lifecycle timeline
   const events = [
@@ -178,9 +219,11 @@ const BookingRequestDetailModal = ({ show, request, onHide }) => {
 
   if (request.status === "REJECTED") {
     events.push({
-      title: "Rejected by salon",
-      description: "The salon declined this booking request",
-      date: request.respondedAt,
+      title: request.onBehalfOfSalon ? "Rejected by My Naai" : "Rejected by salon",
+      description: request.onBehalfOfSalon
+        ? `My Naai declined this request on the salon's behalf${request.adminNote ? `: ${request.adminNote}` : ""}`
+        : "The salon declined this booking request",
+      date: request.actedAt || request.respondedAt,
       Icon: XCircle,
       tone: "danger",
     });
@@ -198,10 +241,12 @@ const BookingRequestDetailModal = ({ show, request, onHide }) => {
 
   if (request.status === "ACCEPTED") {
     events.push({
-      title: "Accepted by salon",
-      description: "The salon accepted this booking request",
-      date: request.respondedAt,
-      Icon: CheckCircle2,
+      title: request.onBehalfOfSalon ? "Accepted by My Naai" : "Accepted by salon",
+      description: request.onBehalfOfSalon
+        ? "My Naai accepted this request on the salon's behalf, and the booking is confirmed"
+        : "The salon accepted this booking request",
+      date: request.actedAt || request.respondedAt,
+      Icon: request.onBehalfOfSalon ? ShieldCheck : CheckCircle2,
       tone: "success",
     });
   }
@@ -734,6 +779,38 @@ const BookingRequestDetailModal = ({ show, request, onHide }) => {
           font-weight: 600;
         }
 
+        /* ANSWERING ON THE SALON'S BEHALF */
+
+        .booking-answer-confirm {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          width: 100%;
+          min-width: 0;
+        }
+
+        .booking-answer-heading {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          color: #7a4b00;
+          font-size: 13px;
+          font-weight: 700;
+        }
+
+        .booking-answer-note {
+          color: #788397;
+          font-size: 11px;
+          line-height: 1.55;
+        }
+
+        .booking-answer-confirm textarea {
+          width: 100%;
+          min-width: 0;
+          resize: vertical;
+          font-size: 13px;
+        }
+
         /* ===================================
            RESPONSIVE
         =================================== */
@@ -1103,20 +1180,107 @@ const BookingRequestDetailModal = ({ show, request, onHide }) => {
 
         </Modal.Body>
 
-        {/* FOOTER */}
-        <Modal.Footer className="booking-detail-footer">
-          <div className="booking-readonly-note">
-            <Ban size={14} />
-            Read-only · Managed by the salon
-          </div>
+        {/* FOOTER
 
-          <Button
-            variant="dark"
-            className="booking-close-btn"
-            onClick={onHide}
-          >
-            Close
-          </Button>
+            An admin may answer for the salon. The prompt is inline instead of a
+            second dialog so the request being confirmed stays visible behind
+            it — and the confirm button names the salon, because "accept" on a
+            support screen is too easy to press on the wrong row. */}
+        <Modal.Footer className="booking-detail-footer" style={{ display: "block" }}>
+          {pendingAction ? (
+            <div className="booking-answer-confirm">
+              <div className="booking-answer-heading">
+                <AlertTriangle size={15} />
+                {pendingAction === "ACCEPT"
+                  ? `Accept for ${request.salonName || "this salon"}?`
+                  : `Decline for ${request.salonName || "this salon"}?`}
+              </div>
+
+              <div className="booking-answer-note">
+                My Naai is answering on the salon's behalf. The salon is notified, and the
+                request is stamped with your admin account — the same request can still
+                only ever become one booking.
+              </div>
+
+              <textarea
+                className="form-control form-control-sm"
+                rows={2}
+                maxLength={500}
+                value={reason}
+                onChange={(event) => { setReason(event.target.value); setAnswerError(""); }}
+                placeholder={pendingAction === "REJECT"
+                  ? "Why is it being declined? (required — the salon is told)"
+                  : "Anything the salon should know (optional)"}
+                aria-label={pendingAction === "REJECT" ? "Reason for declining" : "Note for the salon"}
+              />
+
+              {answerError && <div className="text-danger small">{answerError}</div>}
+
+              <div className="d-flex flex-wrap justify-content-end gap-2">
+                <Button
+                  size="sm"
+                  variant="outline-secondary"
+                  onClick={() => { setPendingAction(null); setReason(""); setAnswerError(""); }}
+                  disabled={answering}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  variant={pendingAction === "ACCEPT" ? "dark" : "danger"}
+                  onClick={submitAnswer}
+                  disabled={answering}
+                >
+                  {answering
+                    ? "Saving…"
+                    : pendingAction === "ACCEPT" ? "Yes, accept booking" : "Yes, decline request"}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="d-flex flex-wrap align-items-center justify-content-between gap-2">
+              {canAnswer ? (
+                <>
+                  <div className="booking-readonly-note">
+                    <ShieldCheck size={14} />
+                    Answering as My Naai, for this salon
+                  </div>
+
+                  <div className="d-flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline-danger"
+                      className="booking-close-btn"
+                      onClick={() => setPendingAction("REJECT")}
+                    >
+                      Decline for salon
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="dark"
+                      className="booking-close-btn"
+                      onClick={() => setPendingAction("ACCEPT")}
+                    >
+                      Accept for salon
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="booking-readonly-note">
+                    <Ban size={14} />
+                    {request.status === "PENDING" && !windowOpen
+                      ? "The 60 second answer window has closed"
+                      : "Read-only · already answered"}
+                  </div>
+
+                  <Button variant="dark" className="booking-close-btn" onClick={onHide}>
+                    Close
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
         </Modal.Footer>
 
       </Modal>
