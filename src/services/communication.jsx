@@ -1400,9 +1400,12 @@ export const shopCategoryAPI = {
 
 // Company catalog (admin product management tab)
 export const shopProductAPI = {
-  adminList: async ({ page = 1, searchString = "" } = {}) => {
+  // `category` is the SHOP's own facet — the panel filters the catalogue the way
+  // the storefront does (same service, same live category list), so "6 products
+  // in this category" and "the shop shows 6" are the same statement.
+  adminList: async ({ page = 1, searchString = "", category = "", gender = "" } = {}) => {
     try {
-      const response = await api.post('/api/shop-products/admin-list', { page, searchString });
+      const response = await api.post('/api/shop-products/admin-list', { page, searchString, category, gender });
       return { success: response.data?.status === "SUCCESS", data: response.data?.data, message: response.data?.message };
     } catch (error) {
       return { success: false, message: error.response?.data?.message || "Failed to fetch shop products", error: error.response?.data };

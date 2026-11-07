@@ -29,8 +29,15 @@ const dateTime = (value) => {
 const ShopProducts = () => {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  // The category filter is the SHOP's own facet: the server resolves a product's
+  // category exactly as the storefront does (live `shop_categories` ids and
+  // labels), so what the panel shows under a category is what the website shows
+  // for it. That is the point — "6 products in this category, none on the web"
+  // becomes visible here instead of being found by a customer.
+  const [category, setCategory] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -51,10 +58,15 @@ const ShopProducts = () => {
   const fetchProducts = useCallback(async () => {
     try {
       setIsLoading(true);
-      const result = await shopProductAPI.adminList({ page: currentPage, searchString: debouncedSearch });
+      const result = await shopProductAPI.adminList({
+        page: currentPage,
+        searchString: debouncedSearch,
+        category
+      });
       if (result.success) {
         setProducts(result.data?.products || []);
         setTotalPages(result.data?.pagination?.totalPages || 1);
+        setTotalProducts(result.data?.pagination?.totalProducts || 0);
       } else {
         toast.error(result.message || "Failed to load shop products");
       }
@@ -63,7 +75,7 @@ const ShopProducts = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, debouncedSearch]);
+  }, [currentPage, debouncedSearch, category]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -72,6 +84,12 @@ const ShopProducts = () => {
     }, 500);
     return () => clearTimeout(timer);
   }, [search]);
+
+  // A narrower question starts at page 1: filtering from page 3 of a one-page
+  // result asks for page 3 and shows nothing.
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, category]);
 
   useEffect(() => {
     fetchProducts();
@@ -118,10 +136,27 @@ const ShopProducts = () => {
         <div className="card shadow-sm mb-3 bg-white border-0 flex-shrink-0" style={{ borderRadius: "12px" }}>
           <div className="card-body p-3">
             <div className="row g-3 align-items-center">
-              <div className="col-12 col-md-6">
+              <div className="col-12 col-md-4">
                 <SearchInput value={search} onChange={setSearch} placeholder="Search catalog products..." />
               </div>
-              <div className="col-12 col-md-6 d-flex flex-wrap justify-content-md-end gap-2 align-items-center">
+              <div className="col-12 col-sm-6 col-md-3">
+                <label className="visually-hidden" htmlFor="shop-product-category">Category</label>
+                <select
+                  id="shop-product-category"
+                  className="form-select form-select-sm"
+                  value={category}
+                  onChange={(event) => setCategory(event.target.value)}
+                  title="Filter by category — the same categories the shop shows"
+                >
+                  <option value="">All categories</option>
+                  {categories.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.label}{(item.productCount ?? 0) > 0 ? ` (${item.productCount})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-12 col-sm-6 col-md-5 d-flex flex-wrap justify-content-md-end gap-2 align-items-center">
                 <button className="button22 flex-fill flex-md-grow-0" onClick={() => setShowBulk(true)} title="Add products from a spreadsheet">
                   <Upload size={15} className="me-1" /> Bulk add
                 </button>
@@ -146,9 +181,37 @@ const ShopProducts = () => {
           ) : products.length === 0 ? (
             <div className="text-center py-5 text-muted px-2">
               <Package size={40} className="mx-auto mb-2 opacity-25" />
-              <p className="mb-0">No catalog products yet. Add the first one so salons can buy from you.</p>
+              {category ? (
+                <>
+                  <p className="mb-1 fw-semibold text-body">No products in {categoryLabel(category)}</p>
+                  {/* The admin panel and the shop resolve a category the same
+                      way, so an empty shelf here is an empty shelf on the
+                      website too — not a filter that quietly stops working. */}
+                  <p className="mb-3 small">The shop shows nothing for this category either. Move products into it, or pick another category.</p>
+                  <button className="btn btn-sm btn-outline-secondary" type="button" onClick={() => setCategory("")}>Show all products</button>
+                </>
+              ) : (
+                <p className="mb-0">No catalog products yet. Add the first one so salons can buy from you.</p>
+              )}
             </div>
           ) : (
+            <>
+            <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+              <div className="text-muted small">
+                {Number(totalProducts || products.length).toLocaleString("en-IN")} {totalProducts === 1 ? "product" : "products"}
+                {category ? <> in <span className="fw-semibold text-body">{categoryLabel(category)}</span></> : null}
+                {debouncedSearch ? <> matching “{debouncedSearch}”</> : null}
+              </div>
+              {(category || search) && (
+                <button
+                  className="btn btn-sm btn-outline-secondary"
+                  type="button"
+                  onClick={() => { setCategory(""); setSearch(""); setCurrentPage(1); }}
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
             <div className="table-responsive">
               <table className="table align-middle mb-0" style={{ fontSize: "0.9rem", minWidth: "750px" }}>
                 <thead>
@@ -227,6 +290,7 @@ const ShopProducts = () => {
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </div>
 
