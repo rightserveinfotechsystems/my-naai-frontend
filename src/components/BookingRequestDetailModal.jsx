@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   AlertTriangle,
 } from "lucide-react";
+import { bookingWindowClosedCopy, bookingWindowMissedCopy } from "../utils/bookingWindow.js";
 
 // ==========================================
 // DATE & FORMAT HELPERS
@@ -163,8 +164,8 @@ const BookingRequestDetailModal = ({ show, request, onHide, onAnswer }) => {
     )
   );
 
-  // An admin may answer a request that is still open — inside its 60 second
-  // window and with no answer and no booking. Anything else is read-only, and
+  // An admin may answer a request that is still open — inside its answer window
+  // and with no answer and no booking. Anything else is read-only, and
   // the footer says which, so nobody taps a button that cannot work.
   const expiresAt = request.expiresAt ? new Date(request.expiresAt).getTime() : null;
   const windowOpen = !expiresAt || expiresAt > Date.now();
@@ -209,8 +210,7 @@ const BookingRequestDetailModal = ({ show, request, onHide, onAnswer }) => {
   if (request.status === "AUTO_CANCELLED") {
     events.push({
       title: "Automatically cancelled",
-      description:
-        "No answer within 60 seconds. The requested slot was released automatically.",
+      description: bookingWindowMissedCopy,
       date: request.respondedAt || request.expiresAt,
       Icon: Clock3,
       tone: "secondary",
@@ -1270,7 +1270,7 @@ const BookingRequestDetailModal = ({ show, request, onHide, onAnswer }) => {
                   <div className="booking-readonly-note">
                     <Ban size={14} />
                     {request.status === "PENDING" && !windowOpen
-                      ? "The 60 second answer window has closed"
+                      ? bookingWindowClosedCopy
                       : "Read-only · already answered"}
                   </div>
 

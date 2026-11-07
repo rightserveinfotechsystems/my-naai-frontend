@@ -19,6 +19,7 @@ import Pagination from "../components/Pagination.jsx";
 import Loader from "../components/Loader.jsx";
 import BookingRequestDetailModal, { LIFECYCLE } from "../components/BookingRequestDetailModal.jsx";
 import { bookingRequestAPI } from "../services/communication.jsx";
+import { bookingWindowShort } from "../utils/bookingWindow.js";
 
 /**
  * The admin panel's Booking requests tab.
@@ -608,7 +609,7 @@ const BookingRequests = () => {
                               {renderStatus(state)}
                               {row.onBehalfOfSalon && <div className="small text-muted mt-1 d-flex align-items-center gap-1" title="Answered by My Naai on behalf of the salon"><ShieldCheck size={12} />by My Naai</div>}
                             </td>
-                            <td className="small">{state === "AUTO_CANCELLED" ? <span className="text-muted">No answer in 60s</span> : shortSeconds(row.responseSeconds)}</td>
+                            <td className="small">{state === "AUTO_CANCELLED" ? <span className="text-muted">No answer in {bookingWindowShort}</span> : shortSeconds(row.responseSeconds)}</td>
                             <td className="text-muted small br-ellipsis">{istDateTime(row.createdAt)}</td>
                           </tr>
                         );
