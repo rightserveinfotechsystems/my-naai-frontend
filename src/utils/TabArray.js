@@ -36,9 +36,13 @@ export const TabArray = [
     label: "Advertisement",
     route: "/advertisement",
   },
-    {
+  {
+    // The panel's notification inbox: the API's own event rows (new order, salon
+    // registration, renewal, delivery-partner action, booking request) plus every
+    // push an admin has sent. This key is also the role-access checkbox, so a
+    // role can be granted the inbox without any other tab.
     key: "notifications",
-    label: "Push Notifications",
+    label: "Notifications",
     route: "/notifications",
   },
   {

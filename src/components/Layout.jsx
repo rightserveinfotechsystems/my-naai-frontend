@@ -4,7 +4,7 @@ import ProfileDropdown from "./ProfileDropdown.jsx";
 import ChangePasswordModal from "./ChangePasswordModal.jsx";
 import { useUser } from "../contexts/UserContext.jsx";
 import { ClipboardList, Store, CalendarCheck, User, Users, Package, Truck, ShoppingBag, SlidersHorizontal, Menu, X, Sparkles } from "lucide-react";
-import { salonRequestAPI } from "../services/communication.jsx";
+import { notificationAPI } from "../services/communication.jsx";
 
 const Icons = {
   Salon: () => (
@@ -47,7 +47,7 @@ const navItems = [
   { path: "/bookings", key: "bookings", label: "Booking Management", icon: <CalendarCheck size={18} /> },
   { path: "/booking-requests", key: "bookingRequests", label: "Booking Requests", icon: <CalendarCheck size={18} /> },
   { path: "/advertisement", key: "advertisement", label: "Advertisement", icon: <Icons.Advertisement /> },
-  { path: "/notifications", key: "notifications", label: "Push Notifications", icon: <Icons.Notification /> },
+  { path: "/notifications", key: "notifications", label: "Notifications", icon: <Icons.Notification /> },
   { path: "/shop-products", key: "shopProducts", label: "Shop Products", icon: <Package size={18} /> },
   { path: "/distributors", key: "distributors", label: "Distributors", icon: <Truck size={18} /> },
   { path: "/shop-orders", key: "shopOrders", label: "Shop Orders", icon: <ShoppingBag size={18} /> },
@@ -60,22 +60,50 @@ const Layout = ({ children }) => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [isLogoutLoading, setIsLogoutLoading] = useState(false);
-  const [salonRequestCount, setSalonRequestCount] = useState(0);
+  const [notificationCount, setNotificationCount] = useState(0);
   const [showMoreDrawer, setShowMoreDrawer] = useState(false);
   
   const navigate = useNavigate();
   const accessTab = JSON.parse(localStorage.getItem("accessTab")) || [];
   
   const hasAnyShopTab = ["shopProducts", "distributors", "shopOrders"].some((key) => accessTab?.includes(key));
-  const filteredTabs = navItems.filter(
-    (navDetails) =>
-      accessTab?.includes(navDetails.key) ||
+  // The Notifications tab is the panel's inbox for the API's own event rows (a
+  // new order, a salon registration, a renewal, a delivery-partner action, a new
+  // booking request) plus the pushes an admin has sent. It is granted by its own
+  // role-access key, and it rides along with role management (`user`) — the
+  // super admin's stored access list predates this tab, so without the ride-along
+  // the owner's own panel had no way to open it.
+  const canSeeNotifications = Boolean(accessTab?.includes("notifications") || accessTab?.includes("user"));
+  const filteredTabs = navItems.filter((navDetails) => {
+    if (navDetails.key === "notifications") return canSeeNotifications;
+    return accessTab?.includes(navDetails.key) ||
       // Shop Settings rides along with any shop tab; Plans & Trials with the
       // role-management tab, so the super admin can set prices without first
       // granting themselves the new tab.
       (navDetails.key === "shopSettings" && hasAnyShopTab) ||
-      (navDetails.key === "plans" && accessTab?.includes("user"))
-  );
+      (navDetails.key === "plans" && accessTab?.includes("user"));
+  });
+
+  // Unread event rows, for the badge. It refreshes itself while the panel is
+  // open, and the Notifications page zeroes it the moment the tab is opened
+  // (it dispatches `notifications:read`).
+  useEffect(() => {
+    if (!canSeeNotifications) return undefined;
+    let cancelled = false;
+    const loadCount = async () => {
+      const res = await notificationAPI.getNotificationCount();
+      if (!cancelled && res.success) setNotificationCount(Number(res.count) || 0);
+    };
+    loadCount();
+    const timer = setInterval(loadCount, 60000);
+    const onRead = () => setNotificationCount(0);
+    window.addEventListener("notifications:read", onRead);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+      window.removeEventListener("notifications:read", onRead);
+    };
+  }, [canSeeNotifications]);
 
   const primaryMobileTabs = filteredTabs.slice(0, 4);
   const overflowMobileTabs = filteredTabs.slice(4);
@@ -142,9 +170,9 @@ const Layout = ({ children }) => {
             >
               {item.icon}
               <span className="text-truncate">{item.label}</span>
-              {item.path === "/salonrequest" && salonRequestCount > 0 && (
+              {item.key === "notifications" && notificationCount > 0 && (
                 <span className="badge bg-danger ms-auto" style={{ fontSize: '0.65rem', padding: '0.2rem 0.4rem' }}>
-                  {salonRequestCount > 99 ? '99+' : salonRequestCount}
+                  {notificationCount > 99 ? '99+' : notificationCount}
                 </span>
               )}
             </NavLink>
@@ -324,9 +352,19 @@ const Layout = ({ children }) => {
                   className={`btn nav-link text-center p-2 mobile-nav-item border-0 bg-transparent ${showMoreDrawer ? "active text-primary" : "text-secondary"}`}
                   onClick={() => setShowMoreDrawer(true)}
                 >
-                  <div className="d-flex flex-column align-items-center">
+                  <div className="d-flex flex-column align-items-center position-relative">
                     <Menu size={20} />
                     <small className="mt-1 nav-text" style={{ fontSize: "0.68rem" }}>More</small>
+                    {/* The inbox lives in this drawer once the role has enough
+                        tabs for it to overflow the bottom bar. */}
+                    {notificationCount > 0 && overflowMobileTabs.some((item) => item.key === "notifications") && (
+                      <span
+                        className="badge bg-danger position-absolute"
+                        style={{ top: "-4px", right: "-10px", fontSize: "0.6rem" }}
+                      >
+                        {notificationCount > 99 ? '99+' : notificationCount}
+                      </span>
+                    )}
                   </div>
                 </button>
               )}
@@ -367,7 +405,12 @@ const Layout = ({ children }) => {
                       onClick={() => setShowMoreDrawer(false)}
                     >
                       <span className="text-primary">{item.icon}</span>
-                      <span>{item.label}</span>
+                      <span className="flex-grow-1">{item.label}</span>
+                      {item.key === "notifications" && notificationCount > 0 && (
+                        <span className="badge bg-danger" style={{ fontSize: '0.65rem' }}>
+                          {notificationCount > 99 ? '99+' : notificationCount}
+                        </span>
+                      )}
                     </NavLink>
                   ))}
                 </div>

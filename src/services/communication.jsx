@@ -1322,12 +1322,44 @@ export const notificationAPI = {
     }
   },
 
+  // Unread event rows, for the sidebar badge. The API answers SUCCESS with a
+  // number even on a fresh install, so callers only have to deal with `count`.
+  getNotificationCount: async () => {
+    try {
+      const response = await api.post('/api/adminNotification/get-admin-notification-count', {});
+      return {
+        success: response.data?.status === "SUCCESS",
+        count: Number(response.data?.notification) || 0
+      };
+    } catch (error) {
+      return { success: false, count: 0, message: error.response?.data?.message || "Failed to fetch notification count" };
+    }
+  },
+
+  // Opening the Notifications tab clears the badge (only the API's event rows —
+  // an admin's own sent push was never unread for them).
+  markAllNotificationsRead: async () => {
+    try {
+      const response = await api.post('/api/adminNotification/mark-admin-notifications-read', {});
+      return {
+        success: response.data?.status === "SUCCESS",
+        updated: Number(response.data?.updated) || 0,
+        message: response.data?.message
+      };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || "Failed to mark notifications as read" };
+    }
+  },
+
   // Get notifications (same as before)
-  getNotifications: async (page = 1, searchString = "") => {
+  getNotifications: async (page = 1, searchString = "", feed = "") => {
     try {
       const response = await api.post('/api/adminNotification/get-admin-notification-list', {
         page: page,
-        searchString: searchString
+        searchString: searchString,
+        // '' = both feeds, 'events' = the API's own event rows, 'sent' = pushes
+        // an admin sent from this screen.
+        feed: feed
       });
       return {
         success: response.data?.status === "SUCCESS",

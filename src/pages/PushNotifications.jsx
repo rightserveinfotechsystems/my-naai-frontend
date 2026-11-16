@@ -4,7 +4,7 @@ import Loader from "../components/Loader.jsx";
 import DeleteConfirmModal from "../components/DeleteConfirmModal.jsx";
 import SearchInput from "../components/SearchInput.jsx";
 import Pagination from "../components/Pagination.jsx";
-import { FaPaperPlane, FaTrash, FaPlus } from "react-icons/fa";
+import { FaPaperPlane, FaTrash, FaPlus, FaExternalLinkAlt } from "react-icons/fa";
 import { notificationAPI } from "../services/communication.jsx";
 import { useNavigate } from "react-router-dom";
 import SendNotificationModal from "../components/sendNotificationModal.jsx";
@@ -22,6 +22,20 @@ const targetBadge = (targetType) => {
     return { label: "All", className: "bg-dark" };
 };
 
+// The event rows the API writes are the panel's "what just happened" feed. Each
+// one belongs to a tab, so opening it from the inbox lands on the record it is
+// about (the API copy is set by services/eventNotification.service.js).
+const eventLinkFor = (title = "") => {
+    const text = String(title).toLowerCase();
+    if (/order|delivery partner/.test(text)) return "/shop-orders";
+    if (/salon registration/.test(text)) return "/salons";
+    if (/subscription|renewal/.test(text)) return "/plans";
+    if (/booking request/.test(text)) return "/booking-requests";
+    return "";
+};
+
+const isEvent = (notification) => notification?.targetType === "ADMINS";
+
 const Notifications = () => {
     const [loading, setLoading] = useState(false);
     const [recentNotifications, setRecentNotifications] = useState([]);
@@ -32,6 +46,9 @@ const Notifications = () => {
     const [showAddForm, setShowAddForm] = useState(false);
     const [showSendModal, setShowSendModal] = useState(false);
     const [deleteModal, setDeleteModal] = useState({ show: false, ids: [], loading: false });
+    // The inbox shows two feeds in one list: the API's own events and the pushes
+    // an admin sent. "All" is the default so an admin never misses either.
+    const [feed, setFeed] = useState("all");
 
     const [formData, setFormData] = useState({
         targetType: "",
@@ -41,6 +58,17 @@ const Notifications = () => {
     });
 
     const navigate = useNavigate();
+
+    // The tab is a role-access key (see utils/TabArray.js). Role management
+    // (`user`) sees it too, which is what lets the super admin open the inbox
+    // without first granting themselves the new key. A direct URL by anyone else
+    // is refused, exactly like the Booking Requests tab.
+    const canOpen = Boolean(
+        (() => {
+            const tabs = JSON.parse(localStorage.getItem("accessTab") || "null") || [];
+            return tabs.includes("notifications") || tabs.includes("user");
+        })()
+    );
 
     //debouncing
     useEffect(() => {
@@ -57,11 +85,12 @@ const Notifications = () => {
             setLoading(true);
             const res = await notificationAPI.getNotifications(
                 currentPage,
-                debouncedSearch
+                debouncedSearch,
+                feed === "all" ? "" : feed
             );
             if (res.success) {
-                setRecentNotifications(res.data.notifications || []);
-                setTotalPages(res.data.pagination?.totalPages || 1);
+                setRecentNotifications(res.data?.notifications || []);
+                setTotalPages(res.data?.pagination?.totalPages || 1);
             }
         } catch (error) {
             console.error("Fetch error:", error);
@@ -72,7 +101,7 @@ const Notifications = () => {
 
     useEffect(() => {
         fetchNotifications();
-    }, [currentPage, debouncedSearch]);
+    }, [currentPage, debouncedSearch, feed]);
 
     // Event rows (orders, registrations, renewals, delivery actions, booking
     // requests) are written by the API, not by this screen, so the list refreshes
@@ -80,7 +109,25 @@ const Notifications = () => {
     useEffect(() => {
         const timer = setInterval(() => { fetchNotifications(); }, 60000);
         return () => clearInterval(timer);
-    }, [currentPage, debouncedSearch]);
+    }, [currentPage, debouncedSearch, feed]);
+
+    // Opening the inbox is reading it: the badge in the sidebar clears on the
+    // first successful load, and `notifications:read` tells the Layout so it does
+    // not wait for its next poll.
+    const markAllRead = async ({ silent = false } = {}) => {
+        const res = await notificationAPI.markAllNotificationsRead();
+        if (res.success) {
+            window.dispatchEvent(new Event("notifications:read"));
+            if (!silent) fetchNotifications();
+        }
+    };
+
+    useEffect(() => {
+        if (!canOpen) return;
+        markAllRead({ silent: true });
+        // Runs once per visit; the badge is a convenience, not state.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [canOpen]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -120,6 +167,23 @@ const Notifications = () => {
             setDeleteModal(prev => ({ ...prev, loading: false }));
         }
     };
+    if (!canOpen) {
+        return (
+            <Layout>
+                <div className="container-fluid px-2 px-md-4 mt-2 mt-md-4">
+                    <div className="card shadow-sm border-0">
+                        <div className="card-body text-center py-5">
+                            <h5 className="fw-bold mb-2">No access to notifications</h5>
+                            <p className="text-muted mb-0">
+                                Ask the super admin to grant the <strong>Notifications</strong> tab to your role.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </Layout>
+        );
+    }
+
     return (
         <Layout>
             <div className="container-fluid px-2 px-md-4 mt-2 mt-md-4 thin-scrollbar">
@@ -210,6 +274,32 @@ const Notifications = () => {
 
                                     {/* --- DYNAMIC TOOLBAR (Responsive) --- */}
                                     <div className="p-2 p-md-3 border-bottom bg-light">
+                                        {/* The two feeds that share this list. An event is
+                                            something that happened in the business; a sent
+                                            push was written by an admin. */}
+                                        <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
+                                            {[
+                                                { key: "all", label: "All" },
+                                                { key: "events", label: "Events" },
+                                                { key: "sent", label: "Sent by admin" },
+                                            ].map((chip) => (
+                                                <button
+                                                    key={chip.key}
+                                                    type="button"
+                                                    className={`btn btn-sm ${feed === chip.key ? "buttoncolor" : "btn-outline-secondary"} px-3`}
+                                                    onClick={() => { setFeed(chip.key); setCurrentPage(1); }}
+                                                >
+                                                    {chip.label}
+                                                </button>
+                                            ))}
+                                            <button
+                                                type="button"
+                                                className="btn btn-sm btn-link ms-auto text-decoration-none"
+                                                onClick={() => markAllRead()}
+                                            >
+                                                Mark all read
+                                            </button>
+                                        </div>
                                         <div className="d-flex flex-column flex-md-row gap-2">
                                             {/* 1. Search Bar */}
                                             <div className="flex-grow-1">
@@ -271,8 +361,25 @@ const Notifications = () => {
                                                                         </span>
                                                                     </td>
                                                                     <td className="px-4 text-truncate" style={{ maxWidth: "300px" }}>
-                                                                        <div className="fw-bold text-capitalize">{notif.title}</div>
-                                                                        <div className="small text-muted text-capitalize">{notif.body}</div>
+                                                                        {(() => {
+                                                                            // An API event belongs to a tab: clicking it opens the
+                                                                            // record it is about (order → Shop Orders, registration →
+                                                                            // Salons, renewal → Plans, lead → Booking Requests).
+                                                                            const link = isEvent(notif) ? eventLinkFor(notif.title) : "";
+                                                                            return (
+                                                                                <>
+                                                                                    <div
+                                                                                        className={`fw-bold text-capitalize d-flex align-items-center gap-1 ${link ? "text-primary" : ""}`}
+                                                                                        style={link ? { cursor: "pointer" } : undefined}
+                                                                                        onClick={link ? () => navigate(link) : undefined}
+                                                                                    >
+                                                                                        <span className="text-truncate">{notif.title}</span>
+                                                                                        {link && <FaExternalLinkAlt size={10} title="Open the related tab" />}
+                                                                                    </div>
+                                                                                    <div className="small text-muted text-capitalize">{notif.body}</div>
+                                                                                </>
+                                                                            );
+                                                                        })()}
                                                                     </td>
                                                                     <td className="px-4 text-muted text-center small">{new Date(notif.createdAt).toLocaleDateString('en-GB')}</td>
                                                                     <td className="text-center">
@@ -311,8 +418,15 @@ const Notifications = () => {
 
                                                                 </div>
 
-                                                                <div className="mb-1">
-                                                                    <h6 className="fw-bold mb-0 text-truncate" style={{ fontSize: "13px" }}>{notif.title}</h6>
+                                                                <div
+                                                                    className="mb-1"
+                                                                    style={isEvent(notif) && eventLinkFor(notif.title) ? { cursor: "pointer" } : undefined}
+                                                                    onClick={isEvent(notif) && eventLinkFor(notif.title) ? () => navigate(eventLinkFor(notif.title)) : undefined}
+                                                                >
+                                                                    <h6 className="fw-bold mb-0 text-truncate d-flex align-items-center gap-1" style={{ fontSize: "13px" }}>
+                                                                        <span className="text-truncate">{notif.title}</span>
+                                                                        {isEvent(notif) && eventLinkFor(notif.title) && <FaExternalLinkAlt size={9} className="text-primary" />}
+                                                                    </h6>
                                                                     <p className="text-muted mb-0 text-truncate" style={{ fontSize: "11px" }}>{notif.body}</p>
                                                                 </div>
 
