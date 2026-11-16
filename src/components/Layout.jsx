@@ -291,19 +291,50 @@ const Layout = ({ children }) => {
                 />
               </div>
 
-              <button
-                className="btn btn-outline-secondary btn-sm flex-shrink-0 d-flex align-items-center justify-content-center profile-btn"
-                onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  padding: '0'
-                }}
-                title="Profile"
-              >
-                <span style={{ fontSize: '1.2rem' }}>👤</span>
-              </button>
+              <div className="d-flex align-items-center gap-1 flex-shrink-0">
+                {/* The phone topbar carries the inbox beside the profile button:
+                    a bell with the unread-event badge, opening the Notifications
+                    tab. Hidden for a role without the tab (or role management). */}
+                {canSeeNotifications && (
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center position-relative"
+                    onClick={() => navigate("/notifications")}
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '50%',
+                      padding: '0'
+                    }}
+                    title="Notifications"
+                    aria-label={notificationCount > 0 ? `Notifications, ${notificationCount} unread` : "Notifications"}
+                  >
+                    <Icons.Notification />
+                    {notificationCount > 0 && (
+                      <span
+                        className="badge rounded-pill bg-danger position-absolute"
+                        style={{ top: '-2px', right: '-2px', fontSize: '0.58rem', padding: '0.15rem 0.3rem' }}
+                      >
+                        {notificationCount > 99 ? '99+' : notificationCount}
+                      </span>
+                    )}
+                  </button>
+                )}
+
+                <button
+                  className="btn btn-outline-secondary btn-sm flex-shrink-0 d-flex align-items-center justify-content-center profile-btn"
+                  onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    padding: '0'
+                  }}
+                  title="Profile"
+                >
+                  <span style={{ fontSize: '1.2rem' }}>👤</span>
+                </button>
+              </div>
             </div>
           </header>
 

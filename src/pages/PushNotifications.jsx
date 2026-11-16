@@ -46,9 +46,11 @@ const Notifications = () => {
     const [showAddForm, setShowAddForm] = useState(false);
     const [showSendModal, setShowSendModal] = useState(false);
     const [deleteModal, setDeleteModal] = useState({ show: false, ids: [], loading: false });
-    // The inbox shows two feeds in one list: the API's own events and the pushes
-    // an admin sent. "All" is the default so an admin never misses either.
-    const [feed, setFeed] = useState("all");
+    // The tab is the admin's INBOX, so it opens on what the panel receives (the
+    // API's own events: a new order, a salon registration, a renewal, a
+    // delivery-partner action, a booking request). "Sent by admin" is the record
+    // of pushes written from this screen, and "All" mixes the two.
+    const [feed, setFeed] = useState("events");
 
     const [formData, setFormData] = useState({
         targetType: "",
@@ -189,8 +191,13 @@ const Notifications = () => {
             <div className="container-fluid px-2 px-md-4 mt-2 mt-md-4 thin-scrollbar">
                 <div className="row">
                     <div className="col-12">
-                        <div className="d-flex justify-content-between align-items-center mb-3">
-                            <h4 className="mb-0 fw-bold">Notifications</h4>
+                        <div className="mb-3">
+                            <h4 className="mb-1 fw-bold">Notifications</h4>
+                            <p className="text-muted mb-0" style={{ fontSize: "13px" }}>
+                                Everything the admin panel receives — new shop orders, salon
+                                registrations, subscription renewals, delivery-partner updates and
+                                booking requests. Opening this tab marks them read.
+                            </p>
                         </div>
 
                         {showAddForm ? (
@@ -279,8 +286,8 @@ const Notifications = () => {
                                             push was written by an admin. */}
                                         <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
                                             {[
+                                                { key: "events", label: "Received" },
                                                 { key: "all", label: "All" },
-                                                { key: "events", label: "Events" },
                                                 { key: "sent", label: "Sent by admin" },
                                             ].map((chip) => (
                                                 <button
@@ -392,7 +399,11 @@ const Notifications = () => {
                                                         ) : (
                                                             <tr>
                                                                 <td colSpan="5" className="text-center py-4 text-muted" style={{ fontSize: "20px" }}>
-                                                                    No notifications found
+                                                                    {feed === "sent"
+                                                                        ? "No notifications sent yet"
+                                                                        : feed === "all"
+                                                                            ? "No notifications found"
+                                                                            : "Nothing new — the panel has received no updates yet"}
                                                                 </td>
                                                             </tr>
                                                         )}
@@ -403,7 +414,13 @@ const Notifications = () => {
                                             {/* --- COMPACT MOBILE VIEW (Cards) --- */}
                                             <div className="d-md-none p-2 bg-light">
                                                 {recentNotifications.length === 0 ? (
-                                                    <div className="text-center py-4 text-muted small">No notifications found</div>
+                                                    <div className="text-center py-4 text-muted small">
+                                                        {feed === "sent"
+                                                            ? "No notifications sent yet"
+                                                            : feed === "all"
+                                                                ? "No notifications found"
+                                                                : "Nothing new — the panel has received no updates yet"}
+                                                    </div>
                                                 ) : (
                                                     recentNotifications.map((notif, idx) => (
                                                         <div key={notif.id} className="card shadow-sm mb-2 border-0" style={{ borderRadius: "8px" }}>
