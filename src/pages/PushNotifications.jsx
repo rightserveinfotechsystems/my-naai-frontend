@@ -192,12 +192,11 @@ const Notifications = () => {
                 <div className="row">
                     <div className="col-12">
                         <div className="mb-3">
-                            <h4 className="mb-1 fw-bold">Notifications</h4>
-                            <p className="text-muted mb-0" style={{ fontSize: "13px" }}>
-                                Everything the admin panel receives — new shop orders, salon
-                                registrations, subscription renewals, delivery-partner updates and
-                                booking requests. Opening this tab marks them read.
-                            </p>
+                            {/* The subtitle is gone on purpose: the feed chips below
+                                ("Received / All / Sent by admin") and the event rows say
+                                the same thing, and on a phone the paragraph took the space
+                                the first notification needed. */}
+                            <h4 className="mb-0 fw-bold">Notifications</h4>
                         </div>
 
                         {showAddForm ? (
@@ -264,7 +263,7 @@ const Notifications = () => {
                                         </div>
                                         <div className="col-12">
                                             <button
-                                                className="btn-sm buttoncolor px-3 text-nowrap"
+                                                className="btn btn-sm buttoncolor px-3"
                                                 disabled={!formData.title || !formData.body || !formData.targetType}
                                                 onClick={() => setShowSendModal(true)}
                                             >

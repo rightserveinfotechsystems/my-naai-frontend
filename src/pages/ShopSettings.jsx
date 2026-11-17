@@ -143,10 +143,10 @@ const ShopSettings = () => {
               <SlidersHorizontal size={24} />
             </div>
             <div style={{ flex: "1 1 250px", minWidth: 0 }}>
-              <h4 style={{ margin: "0 0 4px 0", fontWeight: "700", color: "#212529", fontSize: "1.2rem" }}>Shop Settings</h4>
-              <p style={{ margin: 0, color: "#6c757d", fontSize: "0.85rem", lineHeight: "1.4" }}>
-                Configure delivery charges, discounts, and Cash-on-Delivery rules for Naai Shop. Changes apply immediately to new orders.
-              </p>
+              {/* No subtitle: each field below is labelled with what it does, and
+                  on a phone the paragraph cost a full screen row before the first
+                  setting. */}
+              <h4 style={{ margin: 0, fontWeight: "700", color: "#212529", fontSize: "1.2rem" }}>Shop Settings</h4>
             </div>
           </div>
         </div>

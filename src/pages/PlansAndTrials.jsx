@@ -323,13 +323,11 @@ const PlansAndTrials = () => {
               <Sparkles size={24} />
             </div>
             <div style={{ flex: "1 1 250px", minWidth: 0 }}>
-              <h4 style={{ margin: "0 0 4px 0", fontWeight: "700", color: "#212529", fontSize: "1.2rem" }}>
+              {/* Title only — the plan table below explains itself, and the
+                  paragraph was most of the phone screen's first fold. */}
+              <h4 style={{ margin: 0, fontWeight: "700", color: "#212529", fontSize: "1.2rem" }}>
                 Plans &amp; Trials
               </h4>
-              <p style={{ margin: 0, color: "#6c757d", fontSize: "0.85rem", lineHeight: "1.4" }}>
-                What a salon pays, how long each plan runs and how long a new salon is free. The
-                website and the app read this list — a change here reaches both without an app release.
-              </p>
             </div>
             <button
               type="button"

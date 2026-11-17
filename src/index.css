@@ -2719,3 +2719,43 @@ img {
     font-size: 13px;
     margin-top: 3px;
 }
+/* ── Button labels stay inside their button ─────────────────────────────────
+   Reported from a phone: a label longer than the button it sits in was drawn
+   past the rounded edge — and in the Booking requests cards and the detail
+   modal's footer it ran out of the card entirely. A button now wraps its own
+   text instead of refusing to: the box grows a line taller, the words never
+   leave it. `min-width: 0` is what lets a flex row (`.d-flex` footers, the
+   mobile action grids) actually shrink the button rather than push the row
+   wider than the screen, and `overflow-wrap: anywhere` covers one long word.
+   The `.text-nowrap` utility still wins where a label really must not break. */
+.btn {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
+  line-height: 1.25;
+}
+.btn > svg,
+.btn > i {
+  flex: 0 0 auto;
+}
+.btn-group > .btn,
+.d-flex > .btn {
+  flex-shrink: 1;
+}
+
+/* On a phone the label drops a notch and the padding tightens, so a sentence
+   like "Accept for salon" keeps one line inside a two-column footer. */
+@media (max-width: 575.98px) {
+  .btn {
+    font-size: 0.82rem;
+    padding-left: 0.7rem;
+    padding-right: 0.7rem;
+  }
+  .btn-sm {
+    font-size: 0.78rem;
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+  }
+}

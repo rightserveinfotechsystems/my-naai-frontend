@@ -424,10 +424,10 @@ const BookingRequests = () => {
 
         <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3 px-1">
           <div style={{ minWidth: 0 }}>
-            <h1 className="h4 fw-bold mb-1">Booking requests</h1>
-            <p className="text-muted small mb-0">
-              Customer enquiries, salon answers and missed leads. Opens on today (IST); every filter narrows the list.
-            </p>
+            {/* No subtitle under the page title. It said what the tiles below it
+                already say in numbers, and on a phone it pushed the first
+                request two rows down the screen. */}
+            <h1 className="h4 fw-bold mb-0">Booking requests</h1>
           </div>
           <button className="btn btn-sm btn-outline-secondary flex-shrink-0" type="button" onClick={handleRefresh} disabled={refreshing || loading}>
             <RefreshCw size={14} className={`me-1 ${refreshing ? "spin" : ""}`} />{refreshing ? "Refreshing…" : "Refresh"}
@@ -439,7 +439,6 @@ const BookingRequests = () => {
             <div className="d-flex align-items-center justify-content-between gap-2 mb-3">
               <div style={{ minWidth: 0 }}>
                 <div className="fw-semibold">Filter requests</div>
-                <div className="small text-muted">Search, filter and page through every request on the platform.</div>
               </div>
               <button className="btn btn-sm btn-outline-secondary d-lg-none flex-shrink-0" type="button" onClick={() => setShowMobileFilters((value) => !value)} aria-expanded={showMobileFilters}>
                 <Search size={14} className="me-1" />{showMobileFilters ? "Hide filters" : `Filters${activeFilterCount ? ` (${activeFilterCount})` : ""}`}
