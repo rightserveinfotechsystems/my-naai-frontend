@@ -19,6 +19,7 @@ import Pagination from "../components/Pagination.jsx";
 import Loader from "../components/Loader.jsx";
 import BookingRequestDetailModal, { LIFECYCLE } from "../components/BookingRequestDetailModal.jsx";
 import { bookingRequestAPI } from "../services/communication.jsx";
+import { subscribeToAdminEvents } from "../services/liveSocket.js";
 import { bookingWindowShort } from "../utils/bookingWindow.js";
 
 /**
@@ -212,6 +213,31 @@ const BookingRequests = () => {
     const timer = setInterval(() => { loadSummary(); }, 20000);
     return () => clearInterval(timer);
   }, [loadSummary]);
+
+  // ── Live ──────────────────────────────────────────────────────────────────
+  // `booking_request_created` lands here the moment a customer sends a request
+  // (the API emits it into the `admin` room), and `booking_request_updated`
+  // whenever one is answered — by a salon, by an admin on this very screen, or
+  // by the sweeper expiring it. The table and the tiles re-read themselves, so
+  // the page is current without a Refresh; the toast is what tells an admin who
+  // is looking at another tab that a customer is waiting.
+  //
+  // The event carries no rows: everything shown still comes from the
+  // authenticated list endpoint, so the panel cannot display a request the
+  // database does not have.
+  useEffect(() => {
+    const offCreated = subscribeToAdminEvents("booking_request_created", (payload) => {
+      const who = payload?.customerName ? ` from ${payload.customerName}` : "";
+      toast.info(`New booking request${who}`);
+      loadList();
+      loadSummary();
+    });
+    const offUpdated = subscribeToAdminEvents("booking_request_updated", () => {
+      loadList();
+      loadSummary();
+    });
+    return () => { offCreated(); offUpdated(); };
+  }, [loadList, loadSummary]);
 
   const handleRefresh = async () => {
     setRefreshing(true);

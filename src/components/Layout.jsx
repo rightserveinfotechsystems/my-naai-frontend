@@ -5,6 +5,7 @@ import ChangePasswordModal from "./ChangePasswordModal.jsx";
 import { useUser } from "../contexts/UserContext.jsx";
 import { ClipboardList, Store, CalendarCheck, User, Users, Package, Truck, ShoppingBag, SlidersHorizontal, Menu, X, Sparkles } from "lucide-react";
 import { notificationAPI } from "../services/communication.jsx";
+import { subscribeToAdminEvents } from "../services/liveSocket.js";
 
 const Icons = {
   Salon: () => (
@@ -98,10 +99,18 @@ const Layout = ({ children }) => {
     const timer = setInterval(loadCount, 60000);
     const onRead = () => setNotificationCount(0);
     window.addEventListener("notifications:read", onRead);
+    // The badge is live too: a booking request (or its answer) re-counts the
+    // inbox the moment it happens, so the bell is right on whatever page the
+    // admin happens to be on — not only on the Booking requests tab, and not
+    // only after the next minute's tick.
+    const offCreated = subscribeToAdminEvents("booking_request_created", loadCount);
+    const offUpdated = subscribeToAdminEvents("booking_request_updated", loadCount);
     return () => {
       cancelled = true;
       clearInterval(timer);
       window.removeEventListener("notifications:read", onRead);
+      offCreated();
+      offUpdated();
     };
   }, [canSeeNotifications]);
 
